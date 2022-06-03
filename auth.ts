@@ -40,7 +40,9 @@ async function getSigningKey() {
 }
 
 export default async function authenticate(request: Request) {
-  const token = request.headers.get("Authorization")?.substring(6);
+  const token = (
+    request.headers.get("Authorization") || request.headers.get("authorization")
+  )?.substring(6);
 
   if (!token) return null;
 
