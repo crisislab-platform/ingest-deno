@@ -1,0 +1,254 @@
+const html = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>TimeChart Demo (Basic)</title>
+    <style>
+      .chart {
+        width: 100%;
+        height: 23vh;
+        margin-bottom: 1vh;
+        width: calc(100vw - 25px);
+        float: right;
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+      }
+
+      #reset-view {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        width: 100px;
+        height: 30px;
+        z-index: 999;
+        display: none;
+      }
+
+      .x-label {
+        position: fixed;
+        z-index: 999;
+        top: 22vh;
+        right: 20px;
+        font-family: sans-serif;
+        font-size: 12px;
+        transition: opacity 0.2s ease-in-out;
+      }
+
+      .y-label {
+        position: fixed;
+        z-index: 999;
+        top: 22vh;
+        left: -55px;
+        font-family: sans-serif;
+        transform: rotate(-90deg);
+        font-size: 12px;
+        transition: opacity 0.2s ease-in-out;
+      }
+
+      chart-legend {
+        border: none;
+        background: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Button to reset view -->
+    <button onclick="resetView()" id="reset-view">Autoscroll</button>
+
+    <script>
+      const ws = new WebSocket(location.toString().replace('http', 'ws'))
+      // const ws = new WebSocket(
+      //  'wss://ingest-worker.benhong.workers.dev/consume/1',
+      // )
+      // const ws = new WebSocket('ws://localhost:8787/consume/0')
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3-array@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-color@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-format@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-interpolate@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-time@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-time-format@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-scale@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-selection@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-axis@3"></script>
+
+    <script src="https://huww98.github.io/TimeChart/dist/timechart.min.js"></script>
+
+    <script>
+      const data = {}
+      const graphs = {}
+      const aliases = {
+        EH3: 'Vertical Geophone (counts)',
+        EN3: 'Y axis acceleration (m/s²)',
+        EN1: 'X axis acceleration (m/s²)',
+        EN2: 'Z axis acceleration (m/s²)',
+        EHZ: 'Vertical Geophone (counts)',
+        ENN: 'Y axis acceleration (m/s²)',
+        ENE: 'X axis acceleration (m/s²)',
+        ENZ: 'Z axis acceleration (m/s²)',
+      }
+      let current = {}
+      let chart
+      let start
+      let currentHeight = 22.5
+
+      function setAttributes(el, attrs) {
+        for (var key in attrs) {
+          el.setAttribute(key, attrs[key])
+        }
+      }
+
+      function resetView() {
+        for (i of Object.values(graphs)) i.options.realTime = true
+      }
+
+      const resetButton = document.getElementById('reset-view')
+
+      setInterval(() => {
+        resetButton.style.display = 'none'
+        for (const i in graphs) {
+          const graph = graphs[i]
+          if (!graph.options.realTime) {
+            resetButton.style.display = 'block'
+          }
+        }
+      }, 100)
+
+      function handleData(packet) {
+        const [channel, timestampSeconds, ...measurements] = packet
+
+        const timestamp = timestampSeconds * 1000
+
+        start ||= timestamp
+        data[channel] ||= []
+        current[channel] ||= 0
+
+        for (i of measurements) {
+          data[channel].push({
+            // x: timestamp - start,
+            x: (current[channel] += 5),
+            y: channel.startsWith('EN') ? i / 3.845e5 : i,
+          })
+        }
+
+        if (!graphs[channel]) {
+          let el = document.createElement('div')
+          el.className = 'chart'
+          el.id = channel
+          document.body.appendChild(el)
+          graphs[channel] = new TimeChart(el, {
+            series: [
+              { data: data[channel], name: aliases[channel] || channel },
+            ],
+            zoom: {
+              x: {
+                autoRange: true,
+              },
+              y: {
+                autoRange: true,
+              },
+            },
+            baseTime: start,
+            legend: false,
+            xScaleType: d3.scaleTime,
+            xRange: { min: 200, max: 10000 },
+            realTime: true,
+          })
+
+          el.style.opacity = 1
+
+          document
+            .querySelector('#' + channel)
+            .shadowRoot.querySelector('svg > g:nth-child(2) > path')
+            .setAttribute('fill', 'white')
+
+          // document
+          //   .querySelector('#' + channel)
+          //   .shadowRoot.querySelector('chart-legend').style.background = 'none'
+          // document
+          //   .querySelector('#' + channel)
+          //   .shadowRoot.querySelector('chart-legend').style.border = 'none'
+
+          // document
+          //   .querySelector('#' + channel)
+          //   .shadowRoot.querySelector('chart-legend')
+          //   .shadowRoot.querySelector('div > label').style.fontFamily =
+          //   'sans-serif'
+
+          // document
+          //   .querySelector('#' + channel)
+          //   .shadowRoot.querySelector('chart-legend')
+          //   .shadowRoot.querySelector('div > label').style.fontWeight = 600
+
+          const bg = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'rect',
+          )
+          setAttributes(bg, {
+            width: '45px',
+            height: '100%',
+            fill: 'white',
+            transform: 'translate(-50, 0)',
+          })
+
+          document
+            .querySelector('#' + channel)
+            .shadowRoot.querySelector('svg > g:nth-child(2)')
+            .appendChild(bg)
+
+          const xLabel = document.createElement('p')
+          xLabel.innerHTML = 'Time (seconds)'
+          xLabel.className = 'x-label'
+          xLabel.style.top = currentHeight + 'vh'
+          document.body.appendChild(xLabel)
+          xLabel.style.opacity = 1
+
+          const yLabel = document.createElement('p')
+          yLabel.innerHTML = aliases[channel] || channel
+          yLabel.className = 'y-label'
+          yLabel.style.top = currentHeight - 14 + 'vh'
+          document.body.appendChild(yLabel)
+          yLabel.style.opacity = 1
+
+          currentHeight += 24
+        }
+
+        if (
+          graphs[channel].model.xScale.domain()[1] / 5 >
+          data[channel].length - 100
+        ) {
+          // autoscale
+          // Get data that's in view
+          const start = Math.max(
+            graphs[channel].model.xScale.domain()[0] / 5,
+            0,
+          )
+          const end = graphs[channel].model.xScale.domain()[1] / 5
+          const dataInView = data[channel].slice(start)
+
+          // Get the max and min values
+          const max = d3.max(dataInView, (d) => d.y)
+          const min = d3.min(dataInView, (d) => d.y)
+
+          // Set the domain of the yScale
+          graphs[channel].options.yRange = { min, max }
+        }
+
+        graphs[channel].update()
+      }
+
+      ws.addEventListener('message', ({ data }) => {
+        let packets = JSON.parse('[' + data.replaceAll('][', '],[') + ']')
+        for (let packet of packets) {
+          handleData(packet)
+        }
+      })
+    </script>
+  </body>
+</html>
+`
+
+export default html
