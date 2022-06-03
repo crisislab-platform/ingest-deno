@@ -1,9 +1,9 @@
-function getCookie(cookieString, name) {
+function getCookie(cookieString: string, name: string) {
   const value = "; " + cookieString;
   const parts = value.split("; " + name + "=");
   try {
     if (parts.length == 2) {
-      const vlu = parts.pop().split(";").shift();
+      const vlu = parts.pop()!.split(";").shift()!;
       const decode_vlu = decodeURIComponent(vlu);
       const replace_vlu = decode_vlu.replace(/[+]/g, " ");
       return replace_vlu;
@@ -13,7 +13,7 @@ function getCookie(cookieString, name) {
   }
 }
 
-let signingKey;
+let signingKey: CryptoKey;
 
 async function getSigningKey() {
   if (signingKey) return signingKey;
@@ -39,10 +39,8 @@ async function getSigningKey() {
   return signingKey;
 }
 
-export default async function authenticate(request) {
-  const token =
-    request.headers.get("Authorization")?.substring(6) ||
-    getCookie(request.headers.get("Cookie"), "X-Authorization");
+export default async function authenticate(request: Request) {
+  const token = request.headers.get("Authorization")?.substring(6);
 
   if (!token) return null;
 
@@ -54,8 +52,10 @@ export default async function authenticate(request) {
   // const { kid } = JSON.parse(atob(rawHeader))
   const key = await getSigningKey();
 
-  let signature = atob(rawSignature.replace(/_/g, "/").replace(/-/g, "+"));
-  signature = new Uint8Array(Array.from(signature).map((c) => c.charCodeAt(0)));
+  const signature = atob(rawSignature.replace(/_/g, "/").replace(/-/g, "+"));
+  const signatureBuf = new Uint8Array(
+    Array.from(signature).map((c) => c.charCodeAt(0))
+  );
 
   const content = new TextEncoder().encode([rawHeader, rawPayload].join("."));
 
@@ -67,7 +67,7 @@ export default async function authenticate(request) {
     !(await crypto.subtle.verify(
       { name: "ECDSA", hash: "SHA-256" },
       key,
-      signature,
+      signatureBuf,
       content
     ))
   ) {
@@ -85,7 +85,7 @@ export default async function authenticate(request) {
       (await crypto.subtle.verify(
         { name: "ECDSA", hash: "SHA-256" },
         key,
-        signature,
+        signatureBuf,
         content
       )) &&
       payload.iss === "https://crisislab.org.nz" &&
@@ -98,7 +98,7 @@ export default async function authenticate(request) {
       await crypto.subtle.verify(
         { name: "ECDSA", hash: "SHA-256" },
         key,
-        signature,
+        signatureBuf,
         content
       ),
       payload.iss === "shake_ingest",

@@ -1,4 +1,4 @@
-import authenticate from "./auth.js";
+import authenticate from "./auth.ts";
 
 const clients = new Map<number, Array<WebSocket>>();
 
@@ -60,6 +60,7 @@ export function clientHandler(request: Request) {
 
   socket.addEventListener("close", () => {
     sensorClients!.splice(sensorClients!.indexOf(socket), 1);
+    // console.log("client disconnected", sensorClients);
   });
 
   return response;

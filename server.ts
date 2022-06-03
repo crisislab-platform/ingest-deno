@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std/http/mod.ts";
-import { sensorHandler, clientHandler } from "./websocketHandler3.ts";
-import graphPage from "./graphPage.js";
+import { sensorHandler, clientHandler } from "./websocketHandler.ts";
+import graphPage from "./graphPage.ts";
 
 function reqHandler(request: Request) {
   //   if (req.headers.get("upgrade") != "websocket") {
