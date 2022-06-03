@@ -2,6 +2,9 @@ import authenticate from "./auth.ts";
 
 const clients = new Map<number, Array<WebSocket>>();
 
+const latestSessions = new Map<number, number>();
+const online = new Set<number>();
+
 export async function sensorHandler(request: Request) {
   const sensor = await authenticate(request);
 
@@ -13,6 +16,53 @@ export async function sensorHandler(request: Request) {
     return new Response(null, { status: 501 });
   }
   const { socket: server, response } = Deno.upgradeWebSocket(request);
+
+  const connectTime = Date.now();
+
+  latestSessions.set(sensor.id, connectTime);
+
+  if (!online.has(sensor.id)) {
+    online.add(sensor.id);
+    const token = (
+      request.headers.get("Authorization") ||
+      request.headers.get("authorization")
+    )?.substring(6);
+    console.log(`${sensor.id} connected`);
+    fetch(
+      "https://internship-worker.benhong.workers.dev/api/v0/sensors/updateMetadata",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          online: true,
+        }),
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      }
+    );
+  }
+
+  server.addEventListener("close", () => {
+    setTimeout(() => {
+      if (latestSessions.get(sensor.id) === connectTime) {
+        online.add(sensor.id);
+        console.log(`${sensor.id} disconnected`);
+        online.delete(sensor.id);
+        fetch(
+          "https://internship-worker.benhong.workers.dev/api/v0/sensors/updateMetadata",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              online: false,
+            }),
+            headers: {
+              Authorization: "Bearer " + sensor.token,
+            },
+          }
+        );
+      }
+    }, 5000);
+  });
 
   server.addEventListener("message", ({ data }) => {
     clients.set(

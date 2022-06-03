@@ -1,18 +1,3 @@
-function getCookie(cookieString: string, name: string) {
-  const value = "; " + cookieString;
-  const parts = value.split("; " + name + "=");
-  try {
-    if (parts.length == 2) {
-      const vlu = parts.pop()!.split(";").shift()!;
-      const decode_vlu = decodeURIComponent(vlu);
-      const replace_vlu = decode_vlu.replace(/[+]/g, " ");
-      return replace_vlu;
-    } else return "";
-  } catch (_e) {
-    return "";
-  }
-}
-
 let signingKey: CryptoKey;
 
 async function getSigningKey() {
@@ -43,6 +28,8 @@ export default async function authenticate(request: Request) {
   const token = (
     request.headers.get("Authorization") || request.headers.get("authorization")
   )?.substring(6);
+
+  console.log("token", token, typeof token);
 
   if (!token) return null;
 
