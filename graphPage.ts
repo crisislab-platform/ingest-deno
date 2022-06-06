@@ -1,10 +1,10 @@
-const html = `<!DOCTYPE html>
+const html = (sensor: number) => `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>TimeChart Demo (Basic)</title>
+    <title>Sensor ${sensor} realtime data</title>
     <style>
       .chart {
         width: 100%;
@@ -249,6 +249,6 @@ const html = `<!DOCTYPE html>
     </script>
   </body>
 </html>
-`
+`;
 
-export default html
+export default html;

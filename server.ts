@@ -26,7 +26,7 @@ function reqHandler(request: Request) {
 
     if (request.headers.get("Upgrade") != "websocket") {
       console.log("Upgrade header is not websocket");
-      return new Response(graphPage, {
+      return new Response(graphPage(sensor), {
         headers: {
           "content-type": "text/html;charset=UTF-8",
         },
