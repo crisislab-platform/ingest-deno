@@ -58,7 +58,7 @@ const html = (sensor: number) => `<!DOCTYPE html>
     <button onclick="resetView()" id="reset-view">Autoscroll</button>
 
     <script>
-      const ws = new WebSocket(location.toString().replace('http', 'ws'))
+      const ws = new WebSocket(location.toString().replace("http", "ws"));
       // const ws = new WebSocket(
       //  'wss://ingest-worker.benhong.workers.dev/consume/1',
       // )
@@ -78,69 +78,69 @@ const html = (sensor: number) => `<!DOCTYPE html>
     <script src="https://huww98.github.io/TimeChart/dist/timechart.min.js"></script>
 
     <script>
-      const data = {}
-      const graphs = {}
+      const data = {};
+      const graphs = {};
       const aliases = {
-        EH3: 'Vertical Geophone (counts)',
-        EN3: 'Y axis acceleration (m/s²)',
-        EN1: 'X axis acceleration (m/s²)',
-        EN2: 'Z axis acceleration (m/s²)',
-        EHZ: 'Vertical Geophone (counts)',
-        ENN: 'Y axis acceleration (m/s²)',
-        ENE: 'X axis acceleration (m/s²)',
-        ENZ: 'Z axis acceleration (m/s²)',
-      }
-      let current = {}
-      let chart
-      let start
-      let currentHeight = 22.5
+        EH3: "Vertical Geophone (counts)",
+        EN3: "Y axis acceleration (m/s²)",
+        EN1: "X axis acceleration (m/s²)",
+        EN2: "Z axis acceleration (m/s²)",
+        EHZ: "Vertical Geophone (counts)",
+        ENN: "Y axis acceleration (m/s²)",
+        ENE: "X axis acceleration (m/s²)",
+        ENZ: "Z axis acceleration (m/s²)",
+      };
+      let current = {};
+      let chart;
+      let start;
+      let currentHeight = 22.5;
 
       function setAttributes(el, attrs) {
         for (var key in attrs) {
-          el.setAttribute(key, attrs[key])
+          el.setAttribute(key, attrs[key]);
         }
       }
 
       function resetView() {
-        for (i of Object.values(graphs)) i.options.realTime = true
+        for (i of Object.values(graphs)) i.options.realTime = true;
       }
 
-      const resetButton = document.getElementById('reset-view')
+      const resetButton = document.getElementById("reset-view");
 
       setInterval(() => {
-        resetButton.style.display = 'none'
+        resetButton.style.display = "none";
         for (const i in graphs) {
-          const graph = graphs[i]
+          const graph = graphs[i];
           if (!graph.options.realTime) {
-            resetButton.style.display = 'block'
+            resetButton.style.display = "block";
           }
         }
-      }, 100)
+      }, 100);
 
       function handleData(packet) {
-        const [channel, timestampSeconds, ...measurements] = packet
+        const [channel, timestampSeconds, ...measurements] = packet;
 
-        const timestamp = timestampSeconds * 1000
+        const timestamp = timestampSeconds * 1000;
 
-        start ||= timestamp
-        data[channel] ||= []
-        current[channel] ||= 0
+        start ||= timestamp;
+        data[channel] ||= [];
+        current[channel] ||= 0;
 
         for (i of measurements) {
           data[channel].push({
             x: timestamp - start + (current[channel] += 10),
             // x: (current[channel] += 10),
-            y: channel.startsWith('EN') ? i / 3.845e5 : i,
-          })
+            y: channel.startsWith("EN") ? i / 3.845e5 : i,
+          });
         }
 
-        current[channel] = 0
+        current[channel] = 0;
 
         if (!graphs[channel]) {
-          let el = document.createElement('div')
-          el.className = 'chart'
-          el.id = channel
-          document.body.appendChild(el)
+          let el = document.createElement("div");
+          el.className = "chart";
+          el.id = channel;
+          document.body.appendChild(el);
           graphs[channel] = new TimeChart(el, {
             series: [
               { data: data[channel], name: aliases[channel] || channel },
@@ -158,14 +158,14 @@ const html = (sensor: number) => `<!DOCTYPE html>
             xScaleType: d3.scaleTime,
             xRange: { min: 200, max: 10000 },
             realTime: true,
-          })
+          });
 
-          el.style.opacity = 1
+          el.style.opacity = 1;
 
           document
-            .querySelector('#' + channel)
-            .shadowRoot.querySelector('svg > g:nth-child(2) > path')
-            .setAttribute('fill', 'white')
+            .querySelector("#" + channel)
+            .shadowRoot.querySelector("svg > g:nth-child(2) > path")
+            .setAttribute("fill", "white");
 
           // document
           //   .querySelector('#' + channel)
@@ -186,71 +186,72 @@ const html = (sensor: number) => `<!DOCTYPE html>
           //   .shadowRoot.querySelector('div > label').style.fontWeight = 600
 
           const bg = document.createElementNS(
-            'http://www.w3.org/2000/svg',
-            'rect',
-          )
+            "http://www.w3.org/2000/svg",
+            "rect"
+          );
           setAttributes(bg, {
-            width: '45px',
-            height: '100%',
-            fill: 'white',
-            transform: 'translate(-50, 0)',
-          })
+            width: "45px",
+            height: "100%",
+            fill: "white",
+            transform: "translate(-50, 0)",
+          });
 
           document
-            .querySelector('#' + channel)
-            .shadowRoot.querySelector('svg > g:nth-child(2)')
-            .appendChild(bg)
+            .querySelector("#" + channel)
+            .shadowRoot.querySelector("svg > g:nth-child(2)")
+            .appendChild(bg);
 
-          const xLabel = document.createElement('p')
-          xLabel.innerHTML = 'Time (seconds)'
-          xLabel.className = 'x-label'
-          xLabel.style.top = currentHeight + 'vh'
-          document.body.appendChild(xLabel)
-          xLabel.style.opacity = 1
+          const xLabel = document.createElement("p");
+          xLabel.innerHTML = "Time (seconds)";
+          xLabel.className = "x-label";
+          xLabel.style.top = currentHeight + "vh";
+          document.body.appendChild(xLabel);
+          xLabel.style.opacity = 1;
 
-          const yLabel = document.createElement('p')
-          yLabel.innerHTML = aliases[channel] || channel
-          yLabel.className = 'y-label'
-          yLabel.style.top = currentHeight - 14 + 'vh'
-          document.body.appendChild(yLabel)
-          yLabel.style.opacity = 1
+          const yLabel = document.createElement("p");
+          yLabel.innerHTML = aliases[channel] || channel;
+          yLabel.className = "y-label";
+          yLabel.style.top = currentHeight - 14 + "vh";
+          document.body.appendChild(yLabel);
+          yLabel.style.opacity = 1;
 
-          currentHeight += 24
+          currentHeight += 24;
         }
 
         if (
-          graphs[channel].model.xScale.domain()[1] / 5 >
+          graphs[channel].model.xScale.domain()[1] / 10 >
           data[channel].length - 100
         ) {
           // autoscale
           // Get data that's in view
           const start = Math.max(
-            graphs[channel].model.xScale.domain()[0] / 5,
-            0,
-          )
-          const end = graphs[channel].model.xScale.domain()[1] / 5
-          const dataInView = data[channel].slice(start)
+            graphs[channel].model.xScale.domain()[0] / 10,
+            0
+          );
+          const end = graphs[channel].model.xScale.domain()[1] / 10;
+          const dataInView = data[channel].slice(start);
 
           // Get the max and min values
-          const max = d3.max(dataInView, (d) => d.y)
-          const min = d3.min(dataInView, (d) => d.y)
+          const max = d3.max(dataInView, (d) => d.y);
+          const min = d3.min(dataInView, (d) => d.y);
 
           // Set the domain of the yScale
-          graphs[channel].options.yRange = { min, max }
+          graphs[channel].options.yRange = { min, max };
         }
 
-        graphs[channel].update()
+        graphs[channel].update();
       }
 
-      ws.addEventListener('message', ({ data }) => {
-        let packets = JSON.parse('[' + data.replaceAll('][', '],[') + ']')
+      ws.addEventListener("message", ({ data }) => {
+        let packets = JSON.parse("[" + data.replaceAll("][", "],[") + "]");
         for (let packet of packets) {
-          handleData(packet)
+          handleData(packet);
         }
-      })
+      });
     </script>
   </body>
 </html>
+
 `;
 
 export default html;

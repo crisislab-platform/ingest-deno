@@ -128,11 +128,13 @@
 
         for (i of measurements) {
           data[channel].push({
-            // x: timestamp - start,
-            x: (current[channel] += 10),
+            x: timestamp - start + (current[channel] += 10),
+            // x: (current[channel] += 10),
             y: channel.startsWith("EN") ? i / 3.845e5 : i,
           });
         }
+
+        current[channel] = 0;
 
         if (!graphs[channel]) {
           let el = document.createElement("div");
@@ -217,16 +219,16 @@
         }
 
         if (
-          graphs[channel].model.xScale.domain()[1] / 5 >
+          graphs[channel].model.xScale.domain()[1] / 10 >
           data[channel].length - 100
         ) {
           // autoscale
           // Get data that's in view
           const start = Math.max(
-            graphs[channel].model.xScale.domain()[0] / 5,
+            graphs[channel].model.xScale.domain()[0] / 10,
             0
           );
-          const end = graphs[channel].model.xScale.domain()[1] / 5;
+          const end = graphs[channel].model.xScale.domain()[1] / 10;
           const dataInView = data[channel].slice(start);
 
           // Get the max and min values
