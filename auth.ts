@@ -96,5 +96,9 @@ export default async function authenticate(request: Request) {
     );
     return null;
   }
+
+  if (payload.id && typeof payload.id === "string") {
+    payload.id = parseInt(payload.id);
+  }
   return payload;
 }
