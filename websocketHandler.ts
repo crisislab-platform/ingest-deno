@@ -97,6 +97,8 @@ export function clientHandler(request: Request) {
     return new Response(null, { status: 404 });
   }
 
+  console.log(`client streaming ${sensorId} connected`);
+
   const { socket, response } = Deno.upgradeWebSocket(request);
 
   let sensorClients = clients.get(sensorId);
