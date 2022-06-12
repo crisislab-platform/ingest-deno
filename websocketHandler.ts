@@ -78,6 +78,28 @@ export async function sensorHandler(request: Request) {
     );
   });
 
+  server.addEventListener("error", () => {
+    setTimeout(() => {
+      if (latestSessions.get(sensor.id) === connectTime) {
+        online.add(sensor.id);
+        console.log(`${sensor.id} disconnected`);
+        online.delete(sensor.id);
+        fetch(
+          "https://internship-worker.benhong.workers.dev/api/v0/sensors/updateMetadata",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              online: false,
+            }),
+            headers: {
+              Authorization: "Bearer " + sensor.token,
+            },
+          }
+        );
+      }
+    }, 5000);
+  })
+
   return response;
 }
 
