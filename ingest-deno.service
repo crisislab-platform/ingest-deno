@@ -1,0 +1,13 @@
+[Unit]
+Description=Service to forward sensor data to web
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart=/home/ubuntu/.cargo/bin/deno run --allow-net /home/ubuntu/ingest-deno/server.ts
+
+[Install]
+WantedBy=multi-user.target
