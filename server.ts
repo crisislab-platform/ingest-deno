@@ -39,4 +39,12 @@ function reqHandler(request: Request) {
   return new Response("", { status: 404 });
 }
 
+fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
+  headers: {
+    authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTY0ODc5MTEuNjc0LCJleHAiOjE2NTcwOTI3MTEuNjc0LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=._kIvhTQTbQ1v7a5bHuecXEajpjMUueoyw1l-PTfBXNY2Ddv4WZhLinM79gFK3xUBpyqzJpd3DaX53WoEd-ZIiw"
+  },
+  method: "POST",
+  body: JSON.stringify({ all: true, timestamp: Date.now(), state: false })
+})
+
 serve(reqHandler, { port: 80 });

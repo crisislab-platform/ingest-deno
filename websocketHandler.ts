@@ -21,50 +21,40 @@ export async function sensorHandler(request: Request) {
 
   latestSessions.set(sensor.id, connectTime);
 
-  if (!online.has(sensor.id)) {
-    online.add(sensor.id);
-    const token = (
-      request.headers.get("Authorization") ||
-      request.headers.get("authorization")
-    )?.substring(6);
-    console.log(`${sensor.id} connected`);
-    fetch(
-      "https://internship-worker.benhong.workers.dev/api/v0/sensors/updateMetadata",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          online: true,
-        }),
-        headers: {
-          Authorization: "Bearer " + token,
-        },
-      }
-    );
-  }
-
   server.addEventListener("close", () => {
     setTimeout(() => {
       if (latestSessions.get(sensor.id) === connectTime) {
         online.add(sensor.id);
         console.log(`${sensor.id} disconnected`);
         online.delete(sensor.id);
-        fetch(
-          "https://internship-worker.benhong.workers.dev/api/v0/sensors/updateMetadata",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              online: false,
-            }),
-            headers: {
-              Authorization: "Bearer " + sensor.token,
-            },
-          }
-        );
+        fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
+          headers: {
+            authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTY0ODc5MTEuNjc0LCJleHAiOjE2NTcwOTI3MTEuNjc0LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=._kIvhTQTbQ1v7a5bHuecXEajpjMUueoyw1l-PTfBXNY2Ddv4WZhLinM79gFK3xUBpyqzJpd3DaX53WoEd-ZIiw"
+          },
+          method: "POST",
+          body: JSON.stringify({ sensor: sensor.id, timestamp: Date.now(), state: false })
+        })
       }
     }, 5000);
   });
 
   server.addEventListener("message", ({ data }) => {
+    if (!online.has(sensor.id)) {
+      online.add(sensor.id);
+      const token = (
+        request.headers.get("Authorization") ||
+        request.headers.get("authorization")
+      )?.substring(6);
+      console.log(`${sensor.id} connected`);
+      fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
+        headers: {
+          authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTY0ODc5MTEuNjc0LCJleHAiOjE2NTcwOTI3MTEuNjc0LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=._kIvhTQTbQ1v7a5bHuecXEajpjMUueoyw1l-PTfBXNY2Ddv4WZhLinM79gFK3xUBpyqzJpd3DaX53WoEd-ZIiw"
+        },
+        method: "POST",
+        body: JSON.stringify({ sensor: sensor.id, timestamp: Date.now(), state: true })
+      })
+    }
+
     clients.set(
       sensor.id,
       (clients.get(sensor.id) || []).filter((client) => {
@@ -84,18 +74,13 @@ export async function sensorHandler(request: Request) {
         online.add(sensor.id);
         console.log(`${sensor.id} disconnected`);
         online.delete(sensor.id);
-        fetch(
-          "https://internship-worker.benhong.workers.dev/api/v0/sensors/updateMetadata",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              online: false,
-            }),
-            headers: {
-              Authorization: "Bearer " + sensor.token,
-            },
-          }
-        );
+        fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
+          headers: {
+            authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTY0ODc5MTEuNjc0LCJleHAiOjE2NTcwOTI3MTEuNjc0LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=._kIvhTQTbQ1v7a5bHuecXEajpjMUueoyw1l-PTfBXNY2Ddv4WZhLinM79gFK3xUBpyqzJpd3DaX53WoEd-ZIiw"
+          },
+          method: "POST",
+          body: JSON.stringify({ sensor: sensor.id, timestamp: Date.now(), state: false })
+        })
       }
     }, 5000);
   })
