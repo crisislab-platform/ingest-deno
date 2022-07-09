@@ -53,7 +53,7 @@ export async function sensorHandler(request: Request) {
     if (!online.has(sensor.id)) {
       setState(true);
       const interval = setInterval(() => {
-        if (lastMessage.get(sensor.id) || 0 < Date.now() - 10000) {
+        if ((lastMessage.get(sensor.id) || 0) < Date.now() - 10000) {
           setState(false);
           clearInterval(interval);
         }
