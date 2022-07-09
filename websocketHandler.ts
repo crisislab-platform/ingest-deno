@@ -3,10 +3,29 @@ import authenticate from "./auth.ts";
 const clients = new Map<number, Array<WebSocket>>();
 
 const latestSessions = new Map<number, number>();
+const lastMessage = new Map<number, number>();
 const online = new Set<number>();
+
+function _setState(sensor: number, state: boolean) {
+  console.log(`${sensor} state:`, state);
+  if (state) {
+    online.add(sensor);
+  } else {
+    online.delete(sensor);
+  }
+  fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
+    headers: {
+      authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTY0ODc5MTEuNjc0LCJleHAiOjE2NTcwOTI3MTEuNjc0LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=._kIvhTQTbQ1v7a5bHuecXEajpjMUueoyw1l-PTfBXNY2Ddv4WZhLinM79gFK3xUBpyqzJpd3DaX53WoEd-ZIiw"
+    },
+    method: "POST",
+    body: JSON.stringify({ sensor, timestamp: Date.now(), state })
+  })
+}
 
 export async function sensorHandler(request: Request) {
   const sensor = await authenticate(request);
+
+  const setState = (state: boolean) => _setState(sensor.id, state);
 
   if (!sensor) {
     return new Response("Unauthorized", { status: 401 });
@@ -23,37 +42,24 @@ export async function sensorHandler(request: Request) {
 
   server.addEventListener("close", () => {
     setTimeout(() => {
-      if (latestSessions.get(sensor.id) === connectTime) {
-        online.add(sensor.id);
-        console.log(`${sensor.id} disconnected`);
-        online.delete(sensor.id);
-        fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
-          headers: {
-            authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTY0ODc5MTEuNjc0LCJleHAiOjE2NTcwOTI3MTEuNjc0LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=._kIvhTQTbQ1v7a5bHuecXEajpjMUueoyw1l-PTfBXNY2Ddv4WZhLinM79gFK3xUBpyqzJpd3DaX53WoEd-ZIiw"
-          },
-          method: "POST",
-          body: JSON.stringify({ sensor: sensor.id, timestamp: Date.now(), state: false })
-        })
-      }
+      if (latestSessions.get(sensor.id) === connectTime)
+        setState(false)
     }, 5000);
   });
 
   server.addEventListener("message", ({ data }) => {
+    lastMessage.set(sensor.id, Date.now());
+
     if (!online.has(sensor.id)) {
-      online.add(sensor.id);
-      const token = (
-        request.headers.get("Authorization") ||
-        request.headers.get("authorization")
-      )?.substring(6);
-      console.log(`${sensor.id} connected`);
-      fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
-        headers: {
-          authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTY0ODc5MTEuNjc0LCJleHAiOjE2NTcwOTI3MTEuNjc0LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=._kIvhTQTbQ1v7a5bHuecXEajpjMUueoyw1l-PTfBXNY2Ddv4WZhLinM79gFK3xUBpyqzJpd3DaX53WoEd-ZIiw"
-        },
-        method: "POST",
-        body: JSON.stringify({ sensor: sensor.id, timestamp: Date.now(), state: true })
-      })
+      setState(true);
+      const interval = setInterval(() => {
+        if (lastMessage.get(sensor.id) || 0 < Date.now() - 10000) {
+          setState(false);
+          clearInterval(interval);
+        }
+      }, 5000);
     }
+
 
     clients.set(
       sensor.id,
@@ -70,18 +76,8 @@ export async function sensorHandler(request: Request) {
 
   server.addEventListener("error", () => {
     setTimeout(() => {
-      if (latestSessions.get(sensor.id) === connectTime) {
-        online.add(sensor.id);
-        console.log(`${sensor.id} disconnected`);
-        online.delete(sensor.id);
-        fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
-          headers: {
-            authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTY0ODc5MTEuNjc0LCJleHAiOjE2NTcwOTI3MTEuNjc0LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=._kIvhTQTbQ1v7a5bHuecXEajpjMUueoyw1l-PTfBXNY2Ddv4WZhLinM79gFK3xUBpyqzJpd3DaX53WoEd-ZIiw"
-          },
-          method: "POST",
-          body: JSON.stringify({ sensor: sensor.id, timestamp: Date.now(), state: false })
-        })
-      }
+      if (latestSessions.get(sensor.id) === connectTime)
+        setState(false)
     }, 5000);
   })
 
