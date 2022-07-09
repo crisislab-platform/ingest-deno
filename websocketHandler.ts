@@ -15,11 +15,11 @@ function _setState(sensor: number, state: boolean) {
   }
   fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
     headers: {
-      authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTY0ODc5MTEuNjc0LCJleHAiOjE2NTcwOTI3MTEuNjc0LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=._kIvhTQTbQ1v7a5bHuecXEajpjMUueoyw1l-PTfBXNY2Ddv4WZhLinM79gFK3xUBpyqzJpd3DaX53WoEd-ZIiw"
+      authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTczNDEzMjEuODY1LCJleHAiOjE2ODg4NzczMjEuODY1LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=.9jaINkWZNNT3iMvq-XmsNVv4ARiEFkzZA8lD_2Uw2F6dXZ-EbwK1FVzDlG8AZLlozmOXtc6YX3O52u8Tm6oEiw"
     },
     method: "POST",
     body: JSON.stringify({ sensor, timestamp: Date.now(), state })
-  }).then((res) => { console.log(res.status); }).catch((err) => { console.log(err); });
+  }).then((res) => { console.log(res.status); res.text().then(a => console.log(a)) }).catch((err) => { console.log(err); });
 }
 
 export async function sensorHandler(request: Request) {
