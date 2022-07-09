@@ -7,7 +7,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User=root
-ExecStart=/home/ubuntu/.cargo/bin/deno run --allow-net /home/ubuntu/ingest-deno/server.ts
+ExecStart=/home/ubuntu/.cargo/bin/deno run --allow-net --allow-read /home/ubuntu/ingest-deno/server.ts
 
 [Install]
 WantedBy=multi-user.target

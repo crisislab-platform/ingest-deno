@@ -1,0 +1,3 @@
+[submodule "live-data-graphs"]
+	path = live-data-graphs
+	url = https://github.com/rs-Web-Interface-CRISiSLab/live-data-graphs

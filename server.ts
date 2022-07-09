@@ -1,21 +1,13 @@
 import { serve } from "https://deno.land/std/http/mod.ts";
+import { serveFile } from 'https://deno.land/std/http/file_server.ts';
 import { sensorHandler, clientHandler } from "./websocketHandler.ts";
-import graphPage from "./graphPage.ts";
 
-function reqHandler(request: Request) {
-  //   if (req.headers.get("upgrade") != "websocket") {
-  //     return new Response(null, { status: 501 });
-  //   }
-  //   const { socket: ws, response } = Deno.upgradeWebSocket(req);
-  //   return response;
+async function reqHandler(request: Request) {
   const url = new URL(request.url);
   const pathname = url.pathname;
 
-  switch (pathname) {
-    case "/":
-      return new Response("", { status: 404 });
-    case "/ingest/websocket":
-      return sensorHandler(request);
+  if (pathname == "/ingest/websocket") {
+    return sensorHandler(request);
   }
 
   if (pathname.startsWith("/consume/")) {
@@ -26,17 +18,13 @@ function reqHandler(request: Request) {
 
     if (request.headers.get("Upgrade") != "websocket") {
       console.log("Upgrade header is not websocket");
-      return new Response(graphPage(sensor), {
-        headers: {
-          "content-type": "text/html;charset=UTF-8",
-        },
-      });
+      return await serveFile(request, "/home/ubuntu/ingest-deno/live-data-graphs/dist/index.html");
     }
 
     return clientHandler(request);
   }
 
-  return new Response("", { status: 404 });
+  return await serveFile(request, "/home/ubuntu/ingest-deno/live-data-graphs/dist" + pathname);
 }
 
 fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
