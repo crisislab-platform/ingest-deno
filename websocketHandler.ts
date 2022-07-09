@@ -19,7 +19,7 @@ function _setState(sensor: number, state: boolean) {
     },
     method: "POST",
     body: JSON.stringify({ sensor, timestamp: Date.now(), state })
-  })
+  }).then((res) => { console.log(res.status); }).catch((err) => { console.log(err); });
 }
 
 export async function sensorHandler(request: Request) {
