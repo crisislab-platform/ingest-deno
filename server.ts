@@ -46,4 +46,4 @@ fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
     sensorHandler(addr, data);
 })()
 
-serve(reqHandler, { port: 80 });
+serve(reqHandler, { port: 8080 });

@@ -59,7 +59,7 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
   const message = new TextDecoder().decode(data);
   const json = message.replaceAll("'", '"').replace('{', '[').replace('}', ']');
 
-  console.log(json)
+  console.log("ip:", ip.hostname, "id:", sensor.id)
 
   lastMessage.set(sensor.id, Date.now());
 
