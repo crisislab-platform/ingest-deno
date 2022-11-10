@@ -1,10 +1,8 @@
-import authenticate from "./auth.ts";
-
 const clients = new Map<number, Array<WebSocket>>();
 
-const latestSessions = new Map<number, number>();
 const lastMessage = new Map<number, number>();
 const online = new Set<number>();
+const ipMap = new Map<string, Sensor>();
 
 function _setState(sensor: number, state: boolean) {
   console.log(`${sensor} state:`, state);
@@ -13,6 +11,7 @@ function _setState(sensor: number, state: boolean) {
   } else {
     online.delete(sensor);
   }
+
   fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
     headers: {
       authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTczNDEzMjEuODY1LCJleHAiOjE2ODg4NzczMjEuODY1LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=.9jaINkWZNNT3iMvq-XmsNVv4ARiEFkzZA8lD_2Uw2F6dXZ-EbwK1FVzDlG8AZLlozmOXtc6YX3O52u8Tm6oEiw"
@@ -22,66 +21,70 @@ function _setState(sensor: number, state: boolean) {
   }).then((res) => { console.log(res.status); res.text().then(a => console.log(a)) }).catch((err) => { console.log(err); });
 }
 
-export async function sensorHandler(request: Request) {
-  const sensor = await authenticate(request);
+let lastUpdate = 0;
 
-  const setState = (state: boolean) => _setState(sensor.id, state);
-
-  if (!sensor) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  if (request.headers.get("upgrade") != "websocket") {
-    return new Response(null, { status: 501 });
-  }
-  const { socket: server, response } = Deno.upgradeWebSocket(request);
-
-  const connectTime = Date.now();
-
-  latestSessions.set(sensor.id, connectTime);
-
-  server.addEventListener("close", () => {
-    setTimeout(() => {
-      if (latestSessions.get(sensor.id) === connectTime)
-        setState(false)
-    }, 5000);
+async function updateIpMap() {
+  if (Date.now() - lastUpdate < 60000) return;
+  const res = await fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors", {
+    headers: {
+      authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTczNDEzMjEuODY1LCJleHAiOjE2ODg4NzczMjEuODY1LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=.9jaINkWZNNT3iMvq-XmsNVv4ARiEFkzZA8lD_2Uw2F6dXZ-EbwK1FVzDlG8AZLlozmOXtc6YX3O52u8Tm6oEiw"
+    },
+    method: "GET"
   });
+  const json = await res.json();
+  for (const sensor of Object.values(json.sensors)) {
+    ipMap.set(sensor.ip, sensor);
+  }
 
-  server.addEventListener("message", ({ data }) => {
-    lastMessage.set(sensor.id, Date.now());
+  console.log("ipMap", ipMap);
 
-    if (!online.has(sensor.id)) {
-      setState(true);
-      const interval = setInterval(() => {
-        if ((lastMessage.get(sensor.id) || 0) < Date.now() - 10000) {
-          setState(false);
-          clearInterval(interval);
-        }
-      }, 5000);
+  lastUpdate = Date.now();
+}
+
+export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
+  const ip = addr as Deno.NetAddr;
+  let sensorTemp = ipMap.get(ip.hostname);
+  if (!sensorTemp) {
+    await updateIpMap();
+    sensorTemp = ipMap.get(ip.hostname);
+    if (!sensorTemp) {
+      console.log("Unknown sensor", ip.hostname);
+      return;
     }
+  }
 
+  // Const is needed for type safety
+  const sensor = sensorTemp;
 
-    clients.set(
-      sensor.id,
-      (clients.get(sensor.id) || []).filter((client) => {
-        try {
-          client.send(data);
-          return true;
-        } catch (_err) {
-          return false;
-        }
-      })
-    );
-  });
+  const message = new TextDecoder().decode(data);
+  const json = message.replaceAll("'", '"').replace('{', '[').replace('}', ']');
 
-  server.addEventListener("error", () => {
-    setTimeout(() => {
-      if (latestSessions.get(sensor.id) === connectTime)
-        setState(false)
+  console.log(json)
+
+  lastMessage.set(sensor.id, Date.now());
+
+  if (!online.has(sensor.id)) {
+    _setState(sensor.id, true);
+    const interval = setInterval(() => {
+      if ((lastMessage.get(sensor.id) || 0) < Date.now() - 10000) {
+        _setState(sensor.id, false);
+        clearInterval(interval);
+      }
     }, 5000);
-  })
+  }
 
-  return response;
+
+  clients.set(
+    sensor.id,
+    (clients.get(sensor.id) || []).filter((client) => {
+      try {
+        client.send(json);
+        return true;
+      } catch (_err) {
+        return false;
+      }
+    })
+  );
 }
 
 export function clientHandler(request: Request) {

@@ -1,14 +1,14 @@
 import { serve } from "https://deno.land/std/http/mod.ts";
 import { serveFile } from 'https://deno.land/std/http/file_server.ts';
-import { sensorHandler, clientHandler } from "./websocketHandler.ts";
+import { sensorHandler, clientHandler } from "./connectionHandler.ts";
 
 async function reqHandler(request: Request) {
   const url = new URL(request.url);
   const pathname = url.pathname;
 
-  if (pathname == "/ingest/websocket") {
-    return sensorHandler(request);
-  }
+  // if (pathname == "/ingest/websocket") {
+  //   return sensorHandler(request);
+  // }
 
   if (pathname.startsWith("/consume/")) {
     const sensor = parseInt(pathname.split("/").pop()!);
@@ -18,13 +18,13 @@ async function reqHandler(request: Request) {
 
     if (request.headers.get("Upgrade") != "websocket") {
       console.log("Upgrade header is not websocket");
-      return await serveFile(request, "/home/ubuntu/ingest-deno/live-data-graphs/dist/index.html");
+      return await serveFile(request, "./live-data-graphs/dist/index.html");
     }
 
     return clientHandler(request);
   }
 
-  return await serveFile(request, "/home/ubuntu/ingest-deno/live-data-graphs/dist" + pathname);
+  return await serveFile(request, "./live-data-graphs/dist" + pathname);
 }
 
 fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
@@ -34,5 +34,16 @@ fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors/online", {
   method: "POST",
   body: JSON.stringify({ all: true, timestamp: Date.now(), state: false })
 }).then((res) => { console.log(res.status); res.text().then(a => console.log(a)) }).catch((err) => { console.log(err); });
+
+(async () => {
+  const socket = await Deno.listenDatagram({
+    port: 2098,
+    transport: "udp",
+    hostname: "0.0.0.0"
+  });
+
+  for await (const [data, addr] of socket)
+    sensorHandler(addr, data);
+})()
 
 serve(reqHandler, { port: 80 });
