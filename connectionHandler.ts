@@ -25,6 +25,7 @@ let lastUpdate = 0;
 
 async function updateIpMap() {
   if (Date.now() - lastUpdate < 60000) return;
+  lastUpdate = Date.now();
   const res = await fetch("https://internship-worker.benhong.workers.dev/api/v0/sensors", {
     headers: {
       authorization: "bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzZW5zb3JzOm9ubGluZSJdLCJlbWFpbCI6ImluZ2VzdEBiZW5ob25nLm1lIiwibmFtZSI6IkxpdmUgRGF0YSBTZXJ2ZXIiLCJpYXQiOjE2NTczNDEzMjEuODY1LCJleHAiOjE2ODg4NzczMjEuODY1LCJpc3MiOiJodHRwczovL2NyaXNpc2xhYi5vcmcubnoiLCJhdWQiOlsiYWRtaW4iXX0=.9jaINkWZNNT3iMvq-XmsNVv4ARiEFkzZA8lD_2Uw2F6dXZ-EbwK1FVzDlG8AZLlozmOXtc6YX3O52u8Tm6oEiw"
@@ -37,8 +38,6 @@ async function updateIpMap() {
   }
 
   console.log("ipMap", ipMap);
-
-  lastUpdate = Date.now();
 }
 
 export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
@@ -103,7 +102,7 @@ export function clientHandler(request: Request) {
     return new Response(null, { status: 404 });
   }
 
-  console.log(`client streaming ${sensorId} connected`);
+  // console.log(`client streaming ${sensorId} connected`);
 
   const { socket, response } = Deno.upgradeWebSocket(request);
 
