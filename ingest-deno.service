@@ -1,25 +1,14 @@
 [Unit]
-
 Description=Service to forward sensor data to web
-
 StartLimitIntervalSec=0
 
-
-
 [Service]
-
 Type=simple
-
 Restart=always
-
 RestartSec=1
-
-User=root
-
-ExecStart=/home/b/bhong/.deno/bin/deno run --unstable  --allow-net --allow-read /home/b/bhong/ingest-deno2/server.ts
-
-
+WorkingDirectory=/home/b/bhong/ingest-deno2/
+User=bhong
+ExecStart=deno run --unstable  --allow-net --allow-read src/server.ts
 
 [Install]
-
 WantedBy=multi-user.target

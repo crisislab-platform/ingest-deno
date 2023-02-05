@@ -5,6 +5,7 @@ interface RootObject {
 interface Sensor {
     id: number;
     SI: number;
+    ip?: string;
     online: boolean;
     type: string;
     location: Location;
