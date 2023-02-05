@@ -30,9 +30,11 @@ let lastUpdate = 0;
 async function updateIpMap() {
   if (Date.now() - lastUpdate < 60000) return; // Wait for 1 minute before updating again
 
+  console.log("Fetching IPs")
+
   lastUpdate = Date.now();
 
-  const res = await fetchAPI("https://internship-worker.benhong.workers.dev/api/v0/sensors");
+  const res = await fetchAPI("sensors");
   const json = await res.json();
 
   for (const sensor of Object.values(json.sensors) as Sensor[]) {
@@ -67,6 +69,7 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
   lastMessage.set(sensor.id, Date.now());
 
   if (!online.has(sensor.id)) {
+    console.log("Sensor connected", sensor)
     setState(sensor.id, true);
     // Check every 5 seconds if the sensor has sent a message in the last 10 seconds
     // If not, set the sensor to offline
