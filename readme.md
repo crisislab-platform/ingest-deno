@@ -15,7 +15,7 @@ curl -fsSL https://deno.land/x/install/install.sh | sh
 Modify the .env file to have the correct API token and the desired ports.
 Then run:
 ```bash
-deno run --allow-net --allow-read --allow-env server.ts
+deno run --allow-net --allow-read --allow-env --watch server.ts
 ```
 You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:
 ```bash
@@ -34,6 +34,9 @@ npm install
 npm run build
 ```
 You may need to install Node.js and npm first.
+### Running on Massey VM
+The `ingest` user has been setup for running the ingest server. Ask Ben or Zade for the password.
+It's been given sudo privileges for just `service ingest-deno *` commands as well.
 ## Troubleshooting
 ### Deno was not found
 Make sure you have Deno installed and that it is in your PATH. If you're running as root, such as in a service, it will not be in your PATH by default. You can either add it to your PATH or run the server as your user.

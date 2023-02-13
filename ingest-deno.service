@@ -6,9 +6,9 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-WorkingDirectory=/home/b/bhong/ingest-deno2/
-User=bhong
-ExecStart=deno run --unstable  --allow-net --allow-read src/server.ts
+WorkingDirectory=/home/ingest/ingest-deno
+User=ingest
+ExecStart=/home/ingest/.deno/bin/deno run --unstable --allow-env --allow-net --allow-read --watch src/server.ts
 
 [Install]
 WantedBy=multi-user.target
