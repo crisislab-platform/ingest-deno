@@ -39,7 +39,7 @@ The `ingest` user has been setup for running the ingest server. Ask Ben or Zade 
 It's been given sudo privileges for just `service ingest-deno *` commands as well.
 ## Troubleshooting
 ### Deno was not found
-Make sure you have Deno installed and that it is in your PATH. If you're running as root, such as in a service, it will not be in your PATH by default. You can either add it to your PATH or run the server as your user.
+Make sure you have Deno installed and that it is in your PATH. If you're running as root, such as in a service, it will not be in your PATH by default. You can either add it to your PATH or use the absolute path.
 ### Sensor status is wrong
 Make sure you're running only one instance of the server. To temporarily fix the problem, just restart the server.
 ### The server is not receiving data
