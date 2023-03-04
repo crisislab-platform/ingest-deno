@@ -68,8 +68,6 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
 
   lastMessage.set(sensor.id, Date.now());
 
-  console.log(`Data from sensor #${sensor.id}`);
-
   if (!onlineIDs.has(sensor.id)) {
     console.log("Sensor connected", sensor);
     setState(sensor.id, true);
