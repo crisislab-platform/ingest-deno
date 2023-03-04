@@ -11,28 +11,29 @@ function noSensorFound() {
 
 function startGraphing() {
 	if (!location.pathname.includes("/consume/")) {
-		noSensorFound()
-		return
+		noSensorFound();
+		return;
 	}
 
-	let sensorNumber = location.pathname.split("/")[2];
+	const sensorNumber = location.pathname.split("/")[2];
 	if (!sensorNumber) {
 		noSensorFound();
-		return
+		return;
 	}
 	// Page title
 
-	document.title = "Sensor " + sensorNumber + " realtime data";
+	document.title = `Sensor ${sensorNumber} realtime data`;
 
 	// Websocket connection handler
 	let connectionAttempts = 0;
 	function connectSocket() {
 		const ws = window.ws;
 		statusText.style.display = "block";
+		statusText.innerText = "Connecting...";
 
 		ws.addEventListener("open", function () {
 			console.info("Connected");
-			statusText.style.display = "none";
+			statusText.innerText = "Waiting for data...";
 		});
 		ws.addEventListener("close", function () {
 			console.info("Disconnected");
@@ -64,12 +65,12 @@ function startGraphing() {
 		ENE: "X axis acceleration (m/s²)",
 		ENZ: "Z axis acceleration (m/s²)",
 	};
-	let current = {};
+	const current = {};
 	let start;
 	let currentHeight = 22.5;
 
 	function setAttributes(el, attrs) {
-		for (var key in attrs) {
+		for (const key in attrs) {
 			el.setAttribute(key, attrs[key]);
 		}
 	}
@@ -92,12 +93,13 @@ function startGraphing() {
 	}, 100);
 
 	let initCount = 0;
+	let haveRenderedPacket = false;
 
 	function handleData(packet) {
 		const [channel, timestampSeconds, ...measurements] = packet;
 
-		if (initCount < 5 && channel != "EHZ") {
-			initCount++
+		if (initCount < 5 && channel !== "EHZ") {
+			initCount++;
 			return;
 		} else {
 			initCount = 10;
@@ -119,7 +121,7 @@ function startGraphing() {
 		current[channel] = 0;
 
 		if (!graphs[channel]) {
-			let el = document.createElement("div");
+			const el = document.createElement("div");
 			el.className = "chart";
 			el.id = channel;
 			document.body.appendChild(el);
@@ -148,7 +150,7 @@ function startGraphing() {
 			el.style.opacity = 1;
 
 			document
-				.querySelector("#" + channel)
+				.querySelector(`#${channel}`)
 				.shadowRoot.querySelector("svg > g:nth-child(2) > path")
 				.setAttribute("fill", "white");
 
@@ -165,21 +167,21 @@ function startGraphing() {
 			});
 
 			document
-				.querySelector("#" + channel)
+				.querySelector(`#${channel}`)
 				.shadowRoot.querySelector("svg > g:nth-child(2)")
 				.appendChild(bg);
 
 			const xLabel = document.createElement("p");
 			xLabel.innerHTML = "Time (seconds)";
 			xLabel.className = "x-label";
-			xLabel.style.top = currentHeight + "vh";
+			xLabel.style.top = `${currentHeight}vh`;
 			document.body.appendChild(xLabel);
 			xLabel.style.opacity = 1;
 
 			const yLabel = document.createElement("p");
 			yLabel.innerHTML = aliases[channel] || channel;
 			yLabel.className = "y-label";
-			yLabel.style.top = currentHeight - 14 + "vh";
+			yLabel.style.top = `${currentHeight - 14}vh`;
 			document.body.appendChild(yLabel);
 			yLabel.style.opacity = 1;
 
@@ -208,18 +210,23 @@ function startGraphing() {
 		}
 
 		graphs[channel].update();
+
+		if (!haveRenderedPacket) {
+			statusText.style.display = "none";
+			haveRenderedPacket = true;
+		}
 	}
 
 	let connected = false;
 
 	function handleMessage({ data }) {
 		if (!connected) {
-			console.info("Connected");
-			statusText.style.display = "none";
+			console.info("Received first packet");
+			statusText.innerText = "Rendering data...";
 			connected = true;
 		}
-		let packets = JSON.parse("[" + data.replaceAll("][", "],[") + "]");
-		for (let packet of packets) {
+		const packets = JSON.parse(`[${data.replaceAll("][", "],[")}]`);
+		for (const packet of packets) {
 			handleData(packet);
 		}
 	}
