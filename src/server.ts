@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std/http/mod.ts";
-import { serveFile } from 'https://deno.land/std/http/file_server.ts';
+import { serve } from "https://deno.land/std@0.178.0/http/mod.ts";
+import { serveFile } from "https://deno.land/std@0.178.0/http/file_server.ts";
 import { sensorHandler, clientHandler } from "./connectionHandler.ts";
 import { fetchAPI } from "./utils.ts";
 
@@ -8,7 +8,7 @@ async function reqHandler(request: Request) {
   const url = new URL(request.url);
   const pathname = url.pathname;
 
-  console.log("request:", "'" + pathname + "'")
+  console.log("request:", `'${pathname}'`);
 
   if (pathname.startsWith("/consume/")) {
     const sensor = parseInt(pathname.split("/").pop()!);
@@ -16,7 +16,7 @@ async function reqHandler(request: Request) {
     if (isNaN(sensor))
       return new Response("Invalid sensor id", { status: 400 });
 
-    if (request.headers.get("Upgrade") != "websocket") {
+    if (request.headers.get("Upgrade") !== "websocket") {
       console.log("Upgrade header is not websocket");
       return await serveFile(request, "live-data-graphs/dist/index.html");
     }
@@ -25,19 +25,22 @@ async function reqHandler(request: Request) {
     return clientHandler(request, sensor);
   }
 
-  if (pathname === "/") return await serveFile(request, "live-data-graphs/dist/index.html");
+  if (pathname === "/")
+    return await serveFile(request, "live-data-graphs/dist/index.html");
 
-  return await serveFile(request, "live-data-graphs/dist" + pathname); // sketchy, possible path traversal
+  return await serveFile(request, `live-data-graphs/dist${pathname}`); // sketchy, possible path traversal
 }
 
 // Start the HTTP server
-serve(reqHandler, { port: Number(Deno.env.get("HTTP_PORT") || 8080) })
+serve(reqHandler, { port: Number(Deno.env.get("HTTP_PORT") || 8080) });
 
 // Reset all sensors to offline
-const res = await (await fetchAPI("sensors/online", {
-  method: "POST",
-  body: JSON.stringify({ all: true, timestamp: Date.now(), state: false })
-})).text();
+const res = await (
+  await fetchAPI("sensors/online", {
+    method: "POST",
+    body: JSON.stringify({ all: true, timestamp: Date.now(), state: false }),
+  })
+).text();
 
 console.log("Reset all sensors to offline:", res);
 
@@ -45,11 +48,10 @@ console.log("Reset all sensors to offline:", res);
 const socket = await Deno.listenDatagram({
   port: Number(Deno.env.get("UDP_PORT") || 2098),
   transport: "udp",
-  hostname: "0.0.0.0"
+  hostname: "0.0.0.0",
 });
 
 console.log("UDP listening on", socket.addr);
 
 // Handle incoming UDP packets
-for await (const [data, addr] of socket)
-  sensorHandler(addr, data);
+for await (const [data, addr] of socket) sensorHandler(addr, data);
