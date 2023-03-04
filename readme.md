@@ -39,15 +39,10 @@ sudo systemctl enable ingest-deno.service
 sudo systemctl start ingest-deno.service
 ```
 
-If you want to host the viewer as well, clone submodules:
+If you want to host the viewer as well, you need to build it:
 
 ```bash
-git submodule update --init --recursive
-```
-
-Then build the viewer:
-
-```bash
+cd live-data-graphs
 npm install
 npm run build
 ```
