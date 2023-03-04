@@ -81,4 +81,4 @@ Make sure you're using the correct API token, and that it's not expired. The API
 
 ## Network overview diagram
 
-![Network overview diagram](CRISiSLab SHAKENET systems overview.excalidraw.png)
+![Network overview diagram](CRISiSLab_SHAKENET_systems_overview.excalidraw.png)
