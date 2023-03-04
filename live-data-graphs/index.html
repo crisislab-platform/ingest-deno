@@ -5,17 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
 		<title>Sensor realtime data</title>
-		<script>
-			if (
-				location.pathname.includes("/consume/") &&
-				location.pathname.split("/")[2]
-			) {
-				const ws = new WebSocket(
-					"wss://crisislab-data.massey.ac.nz" + location.pathname,
-				);
-				window.ws = ws;
-			}
-		</script>
+
 		<style>
 			* {
 				box-sizing: border-box;
@@ -23,6 +13,11 @@
 				padding: 0;
 				border: 0;
 				font-family: Avenir, Helvetica, Arial, sans-serif;
+			}
+
+			html,
+			body {
+				background-color: white;
 			}
 
 			.chart {
@@ -118,6 +113,18 @@
 				width: auto;
 			}
 		</style>
+
+		<script>
+			if (
+				location.pathname.includes("/consume/") &&
+				location.pathname.split("/")[2]
+			) {
+				const ws = new WebSocket(
+					"wss://crisislab-data.massey.ac.nz" + location.pathname,
+				);
+				window.ws = ws;
+			}
+		</script>
 	</head>
 
 	<body>
