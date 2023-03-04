@@ -21,11 +21,13 @@ To run the server, first install Deno:
 curl -fsSL https://deno.land/x/install/install.sh | sh
 ```
 
+> Deno 1.31.1 has been tested, no grantees for other versions
+
 Modify the .env file to have the correct API token and the desired ports.
 Then run:
 
 ```bash
-deno run --allow-net --allow-read --allow-env --watch server.ts
+deno run --unstable --allow-net --allow-read --allow-env --watch src/server.ts
 ```
 
 You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:
