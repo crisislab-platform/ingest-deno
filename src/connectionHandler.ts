@@ -8,7 +8,7 @@ const ipToSensorMap = new Map<string, Sensor>();
 
 // Every 5 seconds, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
-setInterval(() => {
+const _offlineCheckInterval = setInterval(() => {
   for (const sensor of ipToSensorMap.values()) {
     if ((lastMessageTimestampMap.get(sensor.id) || 0) < Date.now() - 10000) {
       setState(sensor.id, false);
