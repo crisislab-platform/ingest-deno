@@ -23,10 +23,9 @@ async function setState(sensorID: number, state: boolean) {
   // Avoid spamming the API by not updating things if they haven't changed.
   const currentState = onlineIDs.has(sensorID);
   if (state !== currentState) {
-    console.log(`${sensorID} state:`, state);
-
     if (state === true) {
       onlineIDs.add(sensorID);
+      console.info("Sensor connected", sensorID);
     } else {
       onlineIDs.delete(sensorID);
     }
@@ -37,7 +36,7 @@ async function setState(sensorID: number, state: boolean) {
     });
 
     if (res.status !== 200) {
-      console.log("Error setting state:", await res.text());
+      console.warn("Error setting state:", await res.text());
     }
   }
 }
@@ -69,7 +68,7 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
     await updateIpMap();
     sensorTemp = ipToSensorMap.get(ip.hostname);
     if (!sensorTemp) {
-      console.log("Unknown sensor", ip.hostname);
+      console.info("Unknown sensor", ip.hostname);
       return;
     }
   }
@@ -83,19 +82,7 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
 
   lastMessageTimestampMap.set(sensor.id, Date.now());
 
-  if (!onlineIDs.has(sensor.id)) {
-    console.log("Sensor connected", sensor);
-    setState(sensor.id, true);
-    // TODO: Use one big global interval to check this
-    // Check every 5 seconds if the sensor has sent a message in the last 10 seconds
-    // If not, set the sensor to offline
-    const interval = setInterval(() => {
-      if ((lastMessageTimestampMap.get(sensor.id) || 0) < Date.now() - 10000) {
-        setState(sensor.id, false);
-        clearInterval(interval);
-      }
-    }, 5000);
-  }
+  setState(sensor.id, true);
 
   // Send the message to all clients, and filter out the ones that have disconnected
   clientsMap.set(
