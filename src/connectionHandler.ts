@@ -2,9 +2,9 @@ import "./types.d.ts"; // goddamn typescript
 import { fetchAPI } from "./utils.ts";
 
 const clientsMap = new Map<number, Array<WebSocket>>();
-const lastMessage = new Map<number, number>();
+const lastMessageTimestampMap = new Map<number, number>();
 const onlineIDs = new Set<number>();
-const ipMap = new Map<string, Sensor>();
+const ipToSensorMap = new Map<string, Sensor>();
 
 // Update the sensor state in both the the online set and the API
 async function setState(sensor: number, state: boolean) {
@@ -39,20 +39,20 @@ async function updateIpMap() {
 
   for (const sensor of Object.values(json.sensors) as Sensor[]) {
     if (!sensor.ip) continue;
-    ipMap.set(sensor.ip, sensor);
+    ipToSensorMap.set(sensor.ip, sensor);
   }
 
-  console.log("ipMap", ipMap);
+  console.log("ipMap", ipToSensorMap);
 }
 
 // Called when a sensor sends a UDP packet. Data is then forwarded to the websockets
 export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
   // First get the sensor id from the ip address
   const ip = addr as Deno.NetAddr;
-  let sensorTemp = ipMap.get(ip.hostname);
+  let sensorTemp = ipToSensorMap.get(ip.hostname);
   if (!sensorTemp) {
     await updateIpMap();
-    sensorTemp = ipMap.get(ip.hostname);
+    sensorTemp = ipToSensorMap.get(ip.hostname);
     if (!sensorTemp) {
       console.log("Unknown sensor", ip.hostname);
       return;
@@ -66,15 +66,16 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
   const message = new TextDecoder().decode(data);
   const json = message.replaceAll("'", '"').replace("{", "[").replace("}", "]");
 
-  lastMessage.set(sensor.id, Date.now());
+  lastMessageTimestampMap.set(sensor.id, Date.now());
 
   if (!onlineIDs.has(sensor.id)) {
     console.log("Sensor connected", sensor);
     setState(sensor.id, true);
+    // TODO: Use one big global interval to check this
     // Check every 5 seconds if the sensor has sent a message in the last 10 seconds
     // If not, set the sensor to offline
     const interval = setInterval(() => {
-      if ((lastMessage.get(sensor.id) || 0) < Date.now() - 10000) {
+      if ((lastMessageTimestampMap.get(sensor.id) || 0) < Date.now() - 10000) {
         setState(sensor.id, false);
         clearInterval(interval);
       }
