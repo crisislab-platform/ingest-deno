@@ -53,7 +53,7 @@ setTimeout(
       })
     ).text();
 
-    console.log("Reset all sensors to offline:", res);
+    console.info("Reset all sensors to offline:", res);
   },
   60 * 1000 // 1 Minute
 );
@@ -65,7 +65,7 @@ const socket = await Deno.listenDatagram({
   hostname: "0.0.0.0",
 });
 
-console.log("UDP listening on", socket.addr);
+console.info("UDP listening on", socket.addr);
 
 // Handle incoming UDP packets
 for await (const [data, addr] of socket) sensorHandler(addr, data);
