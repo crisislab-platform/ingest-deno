@@ -6,22 +6,39 @@ const lastMessageTimestampMap = new Map<number, number>();
 const onlineIDs = new Set<number>();
 const ipToSensorMap = new Map<string, Sensor>();
 
-// Update the sensor state in both the the online set and the API
-async function setState(sensor: number, state: boolean) {
-  console.log(`${sensor} state:`, state);
-  if (state) {
-    onlineIDs.add(sensor);
-  } else {
-    onlineIDs.delete(sensor);
+// Every 5 seconds, check all sensors to see if they've sent message in the last 10 seconds.
+// If not, set the sensor to offline
+setInterval(() => {
+  for (const sensor of ipToSensorMap.values()) {
+    if ((lastMessageTimestampMap.get(sensor.id) || 0) < Date.now() - 10000) {
+      setState(sensor.id, false);
+    } else {
+      setState(sensor.id, true);
+    }
   }
+}, 5000);
 
-  const res = await fetchAPI("sensors/online", {
-    method: "POST",
-    body: JSON.stringify({ sensor, timestamp: Date.now(), state }),
-  });
+// Update the sensor state in both the the online set and the API
+async function setState(sensorID: number, state: boolean) {
+  // Avoid spamming the API by not updating things if they haven't changed.
+  const currentState = onlineIDs.has(sensorID);
+  if (state !== currentState) {
+    console.log(`${sensorID} state:`, state);
 
-  if (res.status !== 200) {
-    console.log("Error setting state:", await res.text());
+    if (state === true) {
+      onlineIDs.add(sensorID);
+    } else {
+      onlineIDs.delete(sensorID);
+    }
+
+    const res = await fetchAPI("sensors/online", {
+      method: "POST",
+      body: JSON.stringify({ sensor: sensorID, timestamp: Date.now(), state }),
+    });
+
+    if (res.status !== 200) {
+      console.log("Error setting state:", await res.text());
+    }
   }
 }
 
@@ -30,7 +47,7 @@ let lastUpdate = 0;
 async function updateIpMap() {
   if (Date.now() - lastUpdate < 60 * 1000) return; // Wait for 1 minute before updating again
 
-  console.log("Fetching IPs");
+  console.info("Fetching IPs");
 
   lastUpdate = Date.now();
 
@@ -41,11 +58,9 @@ async function updateIpMap() {
     if (!sensor.ip) continue;
     ipToSensorMap.set(sensor.ip, sensor);
   }
-
-  console.log("ipMap", ipToSensorMap);
 }
 
-// Called when a sensor sends a UDP packet. Data is then forwarded to the websockets
+// Called when a sensor sends a UDP packet. Data is then forwarded to the connected websockets
 export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
   // First get the sensor id from the ip address
   const ip = addr as Deno.NetAddr;
