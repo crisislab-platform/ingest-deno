@@ -25,9 +25,10 @@ async function setState(sensorID: number, state: boolean) {
   if (state !== currentState) {
     if (state === true) {
       onlineIDs.add(sensorID);
-      console.info("Sensor connected", sensorID);
+      console.info(`Sensor connected: # ${sensorID}`);
     } else {
       onlineIDs.delete(sensorID);
+      console.info(`Sensor disconnected: # ${sensorID}`);
     }
 
     const res = await fetchAPI("sensors/online", {
@@ -41,12 +42,12 @@ async function setState(sensorID: number, state: boolean) {
   }
 }
 
+// Download sensor list from internship-worker
 let lastUpdate = 0;
-
-async function updateIpMap() {
+export async function updateIpMap() {
   if (Date.now() - lastUpdate < 60 * 1000) return; // Wait for 1 minute before updating again
 
-  console.info("Fetching IPs");
+  console.info("Fetching sensor list...");
 
   lastUpdate = Date.now();
 
@@ -68,7 +69,7 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
     await updateIpMap();
     sensorTemp = ipToSensorMap.get(ip.hostname);
     if (!sensorTemp) {
-      console.info("Unknown sensor", ip.hostname);
+      console.info(`Packet received from unknown sensor: ip: ${ip.hostname}`);
       return;
     }
   }
@@ -98,6 +99,7 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
   );
 }
 
+// Handle websocket connections
 export function clientHandler(request: Request, sensorId: number) {
   const { socket, response } = Deno.upgradeWebSocket(request);
 

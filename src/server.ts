@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.178.0/http/mod.ts";
 import { serveFile } from "https://deno.land/std@0.178.0/http/file_server.ts";
-import { sensorHandler, clientHandler } from "./connectionHandler.ts";
-import { fetchAPI } from "./utils.ts";
-
-console.log(Deno.env.get("DEV_MODE"));
+import {
+  sensorHandler,
+  clientHandler,
+  updateIpMap,
+} from "./connectionHandler.ts";
 
 // HTTP request handler
 async function reqHandler(request: Request) {
@@ -32,6 +33,9 @@ async function reqHandler(request: Request) {
 
   return await serveFile(request, `live-data-graphs/dist${pathname}`); // sketchy, possible path traversal
 }
+
+// Get the list of sensors
+updateIpMap();
 
 // Start the HTTP server
 serve(reqHandler, { port: Number(Deno.env.get("HTTP_PORT") || 8080) });
