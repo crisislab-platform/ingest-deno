@@ -6,9 +6,6 @@ import {
 	updateIpMap,
 } from "./connectionHandler.ts";
 
-// Load .env file
-import "https://deno.land/std@0.178.0/dotenv/load.ts";
-
 // HTTP request handler
 async function reqHandler(request: Request) {
 	const url = new URL(request.url);

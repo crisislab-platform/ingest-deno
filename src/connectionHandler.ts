@@ -1,6 +1,9 @@
 import "./types.d.ts"; // goddamn typescript
 import { fetchAPI } from "./utils.ts";
 
+// Load .env file
+import "https://deno.land/std@0.178.0/dotenv/load.ts";
+
 const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
 const onlineIDs = new Set<number>();
