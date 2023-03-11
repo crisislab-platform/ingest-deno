@@ -2,11 +2,27 @@ import TimeChart from "timechart";
 import { min as d3Min, max as d3Max, scaleTime } from "d3";
 
 const statusText = document.getElementById("status");
+const reloadButton = document.getElementById("reload");
+reloadButton.addEventListener("click", () => {
+	const confirmed = confirm(
+		"Are you sure you want to reload? You won't be able to see older data any more.",
+	);
+
+	if (confirmed) {
+		location.reload();
+	}
+});
 
 function noSensorFound() {
 	statusText.style.display = "block";
 	statusText.innerText =
 		"No sensor found. Go to /consume/4 to see some sensor data.";
+}
+
+function getNewWS() {
+	const ws = new WebSocket(window.wsURL);
+	window.ws = ws;
+	return ws;
 }
 
 function startGraphing() {
@@ -20,16 +36,25 @@ function startGraphing() {
 		noSensorFound();
 		return;
 	}
-	// Page title
 
+	// Page title
 	document.title = `Sensor ${sensorNumber} realtime data`;
+
+	// Used later
+	let haveRenderedPacket = false;
 
 	// Websocket connection handler
 	let connectionAttempts = 0;
-	function connectSocket() {
-		const ws = window.ws;
+	function connectSocket(retry = false) {
+		// Websocket to use
+		const ws = retry ? getNewWS() : window.ws;
+
+		// Status message
 		statusText.style.display = "block";
 		statusText.innerText = "Connecting...";
+
+		// Reset
+		haveRenderedPacket = false;
 
 		ws.addEventListener("open", function () {
 			console.info("Connected");
@@ -38,13 +63,15 @@ function startGraphing() {
 		ws.addEventListener("close", function () {
 			console.info("Disconnected");
 
+			reloadButton.toggleAttribute("disabled", false);
+
 			if (connectionAttempts < 5) {
 				statusText.innerText = "Reconnecting...";
-				setTimeout(connectSocket, 1000);
+				setTimeout(() => connectSocket(true), 1000);
 				connectionAttempts++;
 			} else {
 				statusText.innerText =
-					"Disconnected too many times, please refresh";
+					"Disconnected too many times, please reload";
 			}
 			statusText.style.display = "block";
 		});
@@ -93,7 +120,6 @@ function startGraphing() {
 	}, 100);
 
 	let initCount = 0;
-	let haveRenderedPacket = false;
 
 	function handleData(packet) {
 		const [channel, timestampSeconds, ...measurements] = packet;
@@ -214,6 +240,7 @@ function startGraphing() {
 		if (!haveRenderedPacket) {
 			statusText.style.display = "none";
 			haveRenderedPacket = true;
+			reloadButton.toggleAttribute("disabled", true);
 		}
 	}
 

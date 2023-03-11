@@ -61,10 +61,6 @@
 				box-shadow: 0 3px 10px 0px #00000080;
 			}
 
-			button:active {
-				background-color: white;
-			}
-
 			button:disabled {
 				/* background-color: #c8c8c8;
 				color: #000; */
@@ -112,6 +108,13 @@
 				color: black;
 				width: auto;
 			}
+
+			#reload {
+				position: absolute;
+				bottom: 8px;
+				left: 8px;
+				z-index: 9999;
+			}
 		</style>
 
 		<script>
@@ -119,9 +122,9 @@
 				location.pathname.includes("/consume/") &&
 				location.pathname.split("/")[2]
 			) {
-				const ws = new WebSocket(
-					"wss://crisislab-data.massey.ac.nz" + location.pathname,
-				);
+				window.wsURL =
+					"wss://crisislab-data.massey.ac.nz" + location.pathname;
+				const ws = new WebSocket(window.wsURL);
 				window.ws = ws;
 			}
 		</script>
@@ -131,6 +134,7 @@
 		<h1 id="status">Connecting...</h1>
 		<!-- Button to reset view -->
 		<button id="reset-view" disabled>Autoscroll</button>
+		<button id="reload" disabled>Reload</button>
 		<script type="module" src="/main.js"></script>
 	</body>
 </html>
