@@ -11,19 +11,27 @@ const ipToSensorMap = new Map<string, Sensor>();
 const _offlineCheckInterval = setInterval(() => {
   for (const sensor of ipToSensorMap.values()) {
     if ((lastMessageTimestampMap.get(sensor.id) || 0) < Date.now() - 10000) {
-      setState(sensor.id, false);
+      setState({ sensorID: sensor.id, connected: false });
     } else {
-      setState(sensor.id, true);
+      setState({ sensorID: sensor.id, connected: true });
     }
   }
 }, 5000);
 
 // Update the sensor state in both the the online set and the API
-async function setState(sensorID: number, state: boolean) {
+async function setState({
+  sensorID,
+  connected,
+  forceUpdate = false,
+}: {
+  sensorID: number;
+  connected: boolean;
+  forceUpdate?: boolean;
+}) {
   // Avoid spamming the API by not updating things if they haven't changed.
-  const currentState = onlineIDs.has(sensorID);
-  if (state !== currentState) {
-    if (state === true) {
+  const currentlyConnected = onlineIDs.has(sensorID);
+  if (forceUpdate || connected !== currentlyConnected) {
+    if (connected === true) {
       onlineIDs.add(sensorID);
       console.info(`Sensor connected: # ${sensorID}`);
     } else {
@@ -33,7 +41,11 @@ async function setState(sensorID: number, state: boolean) {
 
     const res = await fetchAPI("sensors/online", {
       method: "POST",
-      body: JSON.stringify({ sensor: sensorID, timestamp: Date.now(), state }),
+      body: JSON.stringify({
+        sensor: sensorID,
+        timestamp: Date.now(),
+        connected,
+      }),
     });
 
     if (res.status !== 200) {
@@ -68,7 +80,10 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
   if (!sensorTemp) {
     await updateIpMap();
     sensorTemp = ipToSensorMap.get(ip.hostname);
-    if (!sensorTemp) {
+    if (sensorTemp) {
+      // Aways update the state when a new sensor connects
+      setState({ sensorID: sensorTemp.id, connected: true, forceUpdate: true });
+    } else {
       console.info(`Packet received from unknown sensor: ip: ${ip.hostname}`);
       return;
     }
@@ -83,7 +98,7 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
 
   lastMessageTimestampMap.set(sensor.id, Date.now());
 
-  setState(sensor.id, true);
+  setState({ sensorID: sensor.id, connected: true });
 
   // Send the message to all clients, and filter out the ones that have disconnected
   clientsMap.set(
