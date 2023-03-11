@@ -5,23 +5,6 @@ const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
 const onlineIDs = new Set<number>();
 const ipToSensorMap = new Map<string, Sensor>();
-async function sendTeamsMessage(msg: string) {
-	const teamID = Deno.env.get("MS_TEAMS_NOTIFICATION_TEAM_ID");
-	const channelID = Deno.env.get("MS_TEAMS_NOTIFICATION_CHANNEL_ID");
-	const token = Deno.env.get("MS_TEAMS_ACCOUNT_TOKEN");
-
-	await fetch(
-		`https://graph.microsoft.com/v1.0/teams/${teamID}/channels/${channelID}/messages`,
-		{
-			method: "POST",
-			body: JSON.stringify({ content: `[Bot] ${msg}` }),
-			headers: {
-				"Content-Type": "application/json",
-				Authorisation: `Bearer ${token}`,
-			},
-		}
-	);
-}
 
 // Every 5 seconds, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
@@ -51,21 +34,11 @@ async function setState({
 		if (connected === true) {
 			onlineIDs.add(sensorID);
 			console.info(`Sensor connected: # ${sensorID}`);
-
-			// Notify people it's online
-			sendTeamsMessage(
-				`Sensor #${sensorID} has connected. No further action needed.`
-			);
 		} else {
 			// Remove from online list
 			onlineIDs.delete(sensorID);
 
 			console.info(`Sensor disconnected: # ${sensorID}`);
-
-			// Send teams messages, try and restart sensors, etc
-			sendTeamsMessage(
-				`Sensor #${sensorID} has become disconnected. Please restart it manually if it doesn't come back online shortly.`
-			);
 		}
 
 		const res = await fetchAPI("sensors/online", {
