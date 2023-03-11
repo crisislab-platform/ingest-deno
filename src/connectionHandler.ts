@@ -6,6 +6,14 @@ const lastMessageTimestampMap = new Map<number, number>();
 const onlineIDs = new Set<number>();
 const ipToSensorMap = new Map<string, Sensor>();
 
+// Called when a sensor has disconnected
+function sensorDisconnectedCallback(sensorID: number) {
+  // Find the whole sensor object
+  const sensor = [...ipToSensorMap.values()].find((s) => s.id === sensorID)!;
+
+  // TODO: Send emails
+}
+
 // Every 5 seconds, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
 const _offlineCheckInterval = setInterval(() => {
@@ -35,8 +43,13 @@ async function setState({
       onlineIDs.add(sensorID);
       console.info(`Sensor connected: # ${sensorID}`);
     } else {
+      // Remove from online list
       onlineIDs.delete(sensorID);
+
       console.info(`Sensor disconnected: # ${sensorID}`);
+
+      // Send emails, send teams messages, try and restart sensors, etc
+      sensorDisconnectedCallback(sensorID);
     }
 
     const res = await fetchAPI("sensors/online", {
