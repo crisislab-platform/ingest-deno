@@ -1,37 +1,40 @@
 import { serve } from "https://deno.land/std@0.178.0/http/mod.ts";
 import { serveFile } from "https://deno.land/std@0.178.0/http/file_server.ts";
 import {
-  sensorHandler,
-  clientHandler,
-  updateIpMap,
+	sensorHandler,
+	clientHandler,
+	updateIpMap,
 } from "./connectionHandler.ts";
+
+// Load .env file
+import "https://deno.land/std@0.178.0/dotenv/load.ts";
 
 // HTTP request handler
 async function reqHandler(request: Request) {
-  const url = new URL(request.url);
-  const pathname = url.pathname;
+	const url = new URL(request.url);
+	const pathname = url.pathname;
 
-  console.log("request:", `'${pathname}'`);
+	console.log("request:", `'${pathname}'`);
 
-  if (pathname.startsWith("/consume/")) {
-    const sensor = parseInt(pathname.split("/").pop()!);
+	if (pathname.startsWith("/consume/")) {
+		const sensor = parseInt(pathname.split("/").pop()!);
 
-    if (isNaN(sensor))
-      return new Response("Invalid sensor id", { status: 400 });
+		if (isNaN(sensor))
+			return new Response("Invalid sensor id", { status: 400 });
 
-    if (request.headers.get("Upgrade") !== "websocket") {
-      console.log("Upgrade header is not websocket");
-      return await serveFile(request, "live-data-graphs/dist/index.html");
-    }
+		if (request.headers.get("Upgrade") !== "websocket") {
+			console.log("Upgrade header is not websocket");
+			return await serveFile(request, "live-data-graphs/dist/index.html");
+		}
 
-    // if the client is requesting a websocket
-    return clientHandler(request, sensor);
-  }
+		// if the client is requesting a websocket
+		return clientHandler(request, sensor);
+	}
 
-  if (pathname === "/")
-    return await serveFile(request, "live-data-graphs/dist/index.html");
+	if (pathname === "/")
+		return await serveFile(request, "live-data-graphs/dist/index.html");
 
-  return await serveFile(request, `live-data-graphs/dist${pathname}`); // sketchy, possible path traversal
+	return await serveFile(request, `live-data-graphs/dist${pathname}`); // sketchy, possible path traversal
 }
 
 // Get the list of sensors
@@ -42,9 +45,9 @@ serve(reqHandler, { port: Number(Deno.env.get("HTTP_PORT") || 8080) });
 
 // Start the UDP server
 const socket = await Deno.listenDatagram({
-  port: Number(Deno.env.get("UDP_PORT") || 2098),
-  transport: "udp",
-  hostname: "0.0.0.0",
+	port: Number(Deno.env.get("UDP_PORT") || 2098),
+	transport: "udp",
+	hostname: "0.0.0.0",
 });
 
 console.info("UDP listening on", socket.addr);
