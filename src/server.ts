@@ -36,27 +36,27 @@ async function reqHandler(request: Request) {
 // Start the HTTP server
 serve(reqHandler, { port: Number(Deno.env.get("HTTP_PORT") || 8080) });
 
-// Reset all sensors to offline.
-// We'll wait 1 minute before doing this, to give
-// sensors a chance to prove that they're online
-// by sending a data packet.
-// We'll keep the timestamp from when the server started,
-// so that any sensors that posted data after it started
-// aren't set to offline unfairly.
-const startedAt = Date.now();
-setTimeout(
-  async () => {
-    const res = await (
-      await fetchAPI("sensors/online", {
-        method: "POST",
-        body: JSON.stringify({ all: true, timestamp: startedAt, state: false }),
-      })
-    ).text();
+// // Reset all sensors to offline.
+// // We'll wait 1 minute before doing this, to give
+// // sensors a chance to prove that they're online
+// // by sending a data packet.
+// // We'll keep the timestamp from when the server started,
+// // so that any sensors that posted data after it started
+// // aren't set to offline unfairly.
+// const startedAt = Date.now();
+// setTimeout(
+//   async () => {
+//     const res = await (
+//       await fetchAPI("sensors/online", {
+//         method: "POST",
+//         body: JSON.stringify({ all: true, timestamp: startedAt, state: false }),
+//       })
+//     ).text();
 
-    console.info("Reset all sensors to offline:", res);
-  },
-  60 * 1000 // 1 Minute
-);
+//     console.info("Reset all sensors to offline:", res);
+//   },
+//   60 * 1000 // 1 Minute
+// );
 
 // Start the UDP server
 const socket = await Deno.listenDatagram({
