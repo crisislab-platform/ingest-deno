@@ -11,15 +11,22 @@ const ipToSensorMap = new Map<string, Sensor>();
 
 // Every 5 seconds, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
-const _offlineCheckInterval = setInterval(() => {
-	for (const sensor of ipToSensorMap.values()) {
-		if ((lastMessageTimestampMap.get(sensor.id) || 0) < Date.now() - 10000) {
-			setState({ sensorID: sensor.id, connected: false });
-		} else {
-			setState({ sensorID: sensor.id, connected: true });
+setInterval(
+	() => {
+		for (const sensor of ipToSensorMap.values()) {
+			// If no messages in the last 10 seconds, disable it
+			if (
+				(lastMessageTimestampMap.get(sensor.id) || 0) <
+				Date.now() - 10 * 1000 // 10 seconds
+			) {
+				setState({ sensorID: sensor.id, connected: false });
+			} else {
+				setState({ sensorID: sensor.id, connected: true });
+			}
 		}
-	}
-}, 5000);
+	},
+	5 * 1000 // 5 seconds
+);
 
 // Update the sensor state in both the the online set and the API
 async function setState({
@@ -33,7 +40,7 @@ async function setState({
 }) {
 	// Avoid spamming the API by not updating things if they haven't changed.
 	const currentlyConnected = onlineIDs.has(sensorID);
-	if (forceUpdate || connected !== currentlyConnected) {
+	if (connected !== currentlyConnected || forceUpdate) {
 		if (connected === true) {
 			onlineIDs.add(sensorID);
 			console.info(`Sensor connected: # ${sensorID}`);
@@ -61,7 +68,7 @@ async function setState({
 
 // Download sensor list from internship-worker
 let lastUpdate = 0;
-export async function updateIpMap() {
+export async function downloadSensorList() {
 	if (Date.now() - lastUpdate < 60 * 1000) return; // Wait for 1 minute before updating again
 
 	console.info("Fetching sensor list...");
@@ -83,7 +90,7 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
 	const ip = addr as Deno.NetAddr;
 	let sensorTemp = ipToSensorMap.get(ip.hostname);
 	if (!sensorTemp) {
-		await updateIpMap();
+		await downloadSensorList();
 		sensorTemp = ipToSensorMap.get(ip.hostname);
 		if (sensorTemp) {
 			// Aways update the state when a new sensor connects

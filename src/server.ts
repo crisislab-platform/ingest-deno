@@ -3,7 +3,7 @@ import { serveFile } from "https://deno.land/std@0.178.0/http/file_server.ts";
 import {
 	sensorHandler,
 	clientHandler,
-	updateIpMap,
+	downloadSensorList,
 } from "./connectionHandler.ts";
 
 // HTTP request handler
@@ -35,7 +35,7 @@ async function reqHandler(request: Request) {
 }
 
 // Get the list of sensors
-updateIpMap();
+await downloadSensorList();
 
 // Start the HTTP server
 serve(reqHandler, { port: Number(Deno.env.get("HTTP_PORT") || 8080) });
