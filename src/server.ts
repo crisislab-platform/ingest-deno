@@ -6,6 +6,10 @@ import {
 	downloadSensorList,
 } from "./connectionHandler.ts";
 
+// Get the list of sensors.
+// Need to do this absolute first thing to avoid spamming stuff.
+await downloadSensorList();
+
 // HTTP request handler
 async function reqHandler(request: Request) {
 	const url = new URL(request.url);
@@ -33,9 +37,6 @@ async function reqHandler(request: Request) {
 
 	return await serveFile(request, `live-data-graphs/dist${pathname}`); // sketchy, possible path traversal
 }
-
-// Get the list of sensors
-await downloadSensorList();
 
 // Start the HTTP server
 serve(reqHandler, { port: Number(Deno.env.get("HTTP_PORT") || 8080) });

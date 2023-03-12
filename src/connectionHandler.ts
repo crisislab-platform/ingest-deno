@@ -6,7 +6,6 @@ import "https://deno.land/std@0.178.0/dotenv/load.ts";
 
 const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
-const onlineIDs = new Set<number>();
 const ipToSensorMap = new Map<string, Sensor>();
 
 // Every 5 seconds, check all sensors to see if they've sent message in the last 10 seconds.
@@ -32,22 +31,19 @@ setInterval(
 async function setState({
 	sensorID,
 	connected,
-	forceUpdate = false,
 }: {
 	sensorID: number;
 	connected: boolean;
-	forceUpdate?: boolean;
 }) {
 	// Avoid spamming the API by not updating things if they haven't changed.
-	const currentlyConnected = onlineIDs.has(sensorID);
-	if (connected !== currentlyConnected || forceUpdate) {
+	const sensor = [...ipToSensorMap.values()].find((s) => s.id === sensorID);
+	if (sensor && connected !== sensor.online) {
+		// Update sensor object
+		sensor.online = connected;
+
 		if (connected === true) {
-			onlineIDs.add(sensorID);
 			console.info(`Sensor connected: # ${sensorID}`);
 		} else {
-			// Remove from online list
-			onlineIDs.delete(sensorID);
-
 			console.info(`Sensor disconnected: # ${sensorID}`);
 		}
 
@@ -92,11 +88,10 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
 	if (!sensorTemp) {
 		await downloadSensorList();
 		sensorTemp = ipToSensorMap.get(ip.hostname);
-		if (sensorTemp) {
-			// Aways update the state when a new sensor connects
-			setState({ sensorID: sensorTemp.id, connected: true, forceUpdate: true });
-		} else {
-			console.info(`Packet received from unknown sensor: ip: ${ip.hostname}`);
+		if (!sensorTemp) {
+			console.info(
+				`Packet received from unknown sensor IP address: ${ip.hostname}`
+			);
 			return;
 		}
 	}
