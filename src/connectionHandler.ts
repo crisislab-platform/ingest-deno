@@ -27,6 +27,14 @@ setInterval(
 	5 * 1000 // 5 seconds
 );
 
+// Every hour, re-download the sensor list
+setInterval(
+	() => {
+		downloadSensorList();
+	},
+	60 * 60 * 1000 // 1 hour
+);
+
 // Update the sensor state in both the the online set and the API
 async function setState({
 	sensorID,
