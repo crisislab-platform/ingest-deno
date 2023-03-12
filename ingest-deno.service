@@ -8,7 +8,7 @@ Restart=always
 RestartSec=1
 WorkingDirectory=/home/ingest/ingest-deno
 User=ingest
-ExecStart=/home/ingest/.deno/bin/deno run --unstable --allow-env --allow-net --allow-read --watch src/server.ts
+ExecStart=/home/ingest/.deno/bin/deno run --unstable --allow-env --allow-net --allow-read src/server.ts
 StandardOutput=append:/home/ingest/ingest-deno/stdout.log
 StandardError=append:/home/ingest/ingest-deno/stderr.log
 
