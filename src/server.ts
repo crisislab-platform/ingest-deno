@@ -6,6 +6,9 @@ import {
 	downloadSensorList,
 } from "./connectionHandler.ts";
 
+// Load .env file
+import "https://deno.land/std@0.178.0/dotenv/load.ts";
+
 // Get the list of sensors.
 // Need to do this absolute first thing to avoid spamming stuff.
 await downloadSensorList();
@@ -13,29 +16,33 @@ await downloadSensorList();
 // HTTP request handler
 async function reqHandler(request: Request) {
 	const url = new URL(request.url);
-	const pathname = url.pathname;
 
-	console.log("request:", `'${pathname}'`);
+	const sections = url.pathname.slice(1).split("/");
 
-	if (pathname.startsWith("/consume/")) {
-		const sensor = parseInt(pathname.split("/").pop()!);
+	if (sections[0] === "consume") {
+		const sensor = parseInt(sections[1]!);
 
 		if (isNaN(sensor))
 			return new Response("Invalid sensor id", { status: 400 });
 
-		if (request.headers.get("Upgrade") !== "websocket") {
-			console.log("Upgrade header is not websocket");
-			return await serveFile(request, "live-data-graphs/dist/index.html");
+		// Websockets
+		if (sections[2] === "live") {
+			if (request.headers.get("Upgrade") !== "websocket")
+				return new Response("Needs websocket Upgrade header", { status: 400 });
+
+			return clientHandler(request, sensor);
 		}
 
-		// if the client is requesting a websocket
-		return clientHandler(request, sensor);
+		return await serveFile(request, "live-data-graphs/dist/index.html");
 	}
 
-	if (pathname === "/")
+	if (sections[0] === "assets" && sections[1].endsWith(".js"))
+		return await serveFile(request, `live-data-graphs/dist${url.pathname}`); // sketchy, possible path traversal
+
+	if (url.pathname === "/")
 		return await serveFile(request, "live-data-graphs/dist/index.html");
 
-	return await serveFile(request, `live-data-graphs/dist${pathname}`); // sketchy, possible path traversal
+	return new Response("No matching route found - 404", { status: 404 });
 }
 
 // Start the HTTP server
