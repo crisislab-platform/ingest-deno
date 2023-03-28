@@ -70,7 +70,7 @@ if (devMode) {
 		on_floor: 0,
 		secondary_id: "AM.RCB47.00",
 		port: null,
-		ip: "10.241.114.66",
+		ip: "192.168.1.3",
 		timestamp: 1678492758141,
 		publicLocation: [174.82027, -41.32732],
 		latitude: -41.3270016,
