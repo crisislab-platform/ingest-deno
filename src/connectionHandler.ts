@@ -8,15 +8,15 @@ const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
 
-// Every 5 seconds, check all sensors to see if they've sent message in the last 10 seconds.
+// Every minute, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
 setInterval(
 	() => {
 		for (const sensor of ipToSensorMap.values()) {
-			// If no messages in the last 10 seconds, disable it
+			// If no messages in the last  2 minutes, set it as offline
 			if (
 				(lastMessageTimestampMap.get(sensor.id) || 0) <
-				Date.now() - 10 * 1000 // 10 seconds
+				Date.now() - 2 * 60 * 1000 // 2 minutes
 			) {
 				setState({ sensorID: sensor.id, connected: false });
 			} else {
@@ -24,7 +24,7 @@ setInterval(
 			}
 		}
 	},
-	5 * 1000 // 5 seconds
+	60 * 1000 // Every minute
 );
 
 // Every hour, re-download the sensor list
@@ -73,7 +73,7 @@ async function setState({
 // Download sensor list from internship-worker
 let lastUpdate = 0;
 export async function downloadSensorList() {
-	if (Date.now() - lastUpdate < 60 * 1000) return; // Wait for 1 minute before updating again
+	if (Date.now() - lastUpdate < 5 * 60 * 1000) return; // Wait for 5 minutes before updating again
 
 	console.info("Fetching sensor list...");
 
@@ -94,6 +94,7 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
 	const ip = addr as Deno.NetAddr;
 	let sensorTemp = ipToSensorMap.get(ip.hostname);
 	if (!sensorTemp) {
+		// If we don't recognise it, it might be new - download the list.
 		await downloadSensorList();
 		sensorTemp = ipToSensorMap.get(ip.hostname);
 		if (!sensorTemp) {
