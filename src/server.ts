@@ -7,7 +7,9 @@ import {
 } from "./connectionHandler.ts";
 
 // Load .env file
-import "https://deno.land/std@0.178.0/dotenv/load.ts";
+import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
+
+loadSync({ export: true });
 
 // Get the list of sensors.
 // Need to do this absolute first thing to avoid spamming stuff.
