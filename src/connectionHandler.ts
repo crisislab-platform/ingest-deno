@@ -157,6 +157,10 @@ setInterval(
 	60 * 60 * 1000 // 1 hour
 );
 
+function getSensor(sensorID: number): Sensor | undefined {
+	return [...ipToSensorMap.values()].find((s) => s.id === sensorID);
+}
+
 // Update the sensor state in both the the online set and the API
 async function setState({
 	sensorID,
@@ -166,7 +170,7 @@ async function setState({
 	connected: boolean;
 }) {
 	// Avoid spamming the API by not updating things if they haven't changed.
-	const sensor = [...ipToSensorMap.values()].find((s) => s.id === sensorID);
+	const sensor = getSensor(sensorID);
 	if (sensor && connected !== sensor.online) {
 		// Update sensor object
 		sensor.online = connected;
@@ -259,20 +263,32 @@ export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
 }
 
 // Handle websocket connections
-export function clientHandler(request: Request, sensorId: number) {
+export function clientHandler(request: Request, sensorId: number): Response {
+	const sensor = getSensor(sensorId);
+
+	if (!sensor) {
+		return new Response("Couldn't find a sensor with that ID", { status: 404 });
+	}
+
 	const { socket, response } = Deno.upgradeWebSocket(request);
 
-	let sensorClients = clientsMap.get(sensorId);
+	const _sensorClients = clientsMap.get(sensorId);
 
-	if (!sensorClients) {
-		sensorClients = [];
-		clientsMap.set(sensorId, sensorClients);
-	}
+	const sensorClients: WebSocket[] = _sensorClients
+		? _sensorClients
+		: (clientsMap.set(sensorId, []).get(sensorId) as WebSocket[]);
 
 	sensorClients.push(socket);
 
+	socket.send(
+		JSON.stringify({
+			type: "sensor-meta",
+			data: sensor,
+		})
+	);
+
 	socket.addEventListener("close", () => {
-		sensorClients!.splice(sensorClients!.indexOf(socket), 1);
+		sensorClients.splice(sensorClients.indexOf(socket), 1);
 	});
 
 	return response;

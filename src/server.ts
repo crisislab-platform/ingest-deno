@@ -21,24 +21,30 @@ async function reqHandler(request: Request) {
 
 	const sections = url.pathname.slice(1).split("/");
 
-	if (sections[0] === "consume") {
-		const sensor = parseInt(sections[1]!);
+	if (sections[0] === "consume" && sections[1]) {
+		let sensorID: number;
+		try {
+			sensorID = parseInt(sections[1]);
+		} catch (err) {
+			console.warn("Failed to get sensor ID from URL: ", err);
+			return new Response("Failed to get sensor ID from URL", { status: 400 });
+		}
 
-		if (isNaN(sensor))
-			return new Response("Invalid sensor id", { status: 400 });
+		if (isNaN(sensorID))
+			return new Response("Invalid sensor ID", { status: 400 });
 
 		// Websockets
 		if (sections[2] === "live") {
 			if (request.headers.get("Upgrade") !== "websocket")
 				return new Response("Needs websocket Upgrade header", { status: 400 });
 
-			return clientHandler(request, sensor);
+			return clientHandler(request, sensorID);
 		}
 
 		return await serveFile(request, "live-data-graphs/dist/index.html");
 	}
 
-	if (sections[0] === "assets" && sections[1].endsWith(".js"))
+	if (sections[0] === "assets" && sections[1]?.endsWith(".js"))
 		return await serveFile(request, `live-data-graphs/dist${url.pathname}`); // sketchy, possible path traversal
 
 	if (url.pathname === "/")
