@@ -221,45 +221,51 @@ export async function downloadSensorList() {
 }
 
 // Called when a sensor sends a UDP packet. Data is then forwarded to the connected websockets
-export async function sensorHandler(addr: Deno.Addr, data: Uint8Array) {
+export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
 	// First get the sensor id from the ip address
 	const ip = addr as Deno.NetAddr;
-	let sensorTemp = ipToSensorMap.get(ip.hostname);
-	if (!sensorTemp) {
-		// If we don't recognise it, it might be new - download the list.
-		await downloadSensorList();
-		sensorTemp = ipToSensorMap.get(ip.hostname);
-		if (!sensorTemp) {
-			console.info(
-				`Packet received from unknown sensor IP address: ${ip.hostname}`
-			);
-			return;
-		}
+	const sensor = ipToSensorMap.get(ip.hostname);
+	if (!sensor) {
+		console.info(
+			`Packet received from unknown sensor IP address: ${ip.hostname}`
+		);
+		return;
 	}
 
-	// Const is needed for type safety
-	const sensor = sensorTemp;
+	try {
+		// Convert the data to a JSON array to make it easier for browser clients to parse
+		const message = new TextDecoder().decode(rawData);
+		const parsedData = JSON.parse(
+			`[${message
+				.replaceAll("'", '"')
+				.replace("{", "[")
+				.replace("}", "]")
+				.replaceAll("][", "],[")}]`
+		);
+		lastMessageTimestampMap.set(sensor.id, Date.now());
 
-	// Convert the data to a JSON array to make it easier for browser clients to parse
-	const message = new TextDecoder().decode(data);
-	const json = message.replaceAll("'", '"').replace("{", "[").replace("}", "]");
+		setState({ sensorID: sensor.id, connected: true });
 
-	lastMessageTimestampMap.set(sensor.id, Date.now());
-
-	setState({ sensorID: sensor.id, connected: true });
-
-	// Send the message to all clients, and filter out the ones that have disconnected
-	clientsMap.set(
-		sensor.id,
-		(clientsMap.get(sensor.id) || []).filter((client) => {
-			try {
-				client.send(json);
-				return true;
-			} catch (_err) {
-				return false;
-			}
-		})
-	);
+		// Send the message to all clients, and filter out the ones that have disconnected
+		clientsMap.set(
+			sensor.id,
+			(clientsMap.get(sensor.id) || []).filter((client) => {
+				try {
+					client.send(
+						JSON.stringify({
+							type: "datagram",
+							data: parsedData,
+						})
+					);
+					return true;
+				} catch (_err) {
+					return false;
+				}
+			})
+		);
+	} catch (err) {
+		console.warn("Failure when parsing/forwarding datagram: ", err);
+	}
 }
 
 // Handle websocket connections

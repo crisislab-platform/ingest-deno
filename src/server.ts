@@ -66,4 +66,6 @@ const socket = await Deno.listenDatagram({
 console.info("UDP listening on", socket.addr);
 
 // Handle incoming UDP packets
-for await (const [data, addr] of socket) sensorHandler(addr, data);
+for await (const [data, addr] of socket) {
+	sensorHandler(addr, data);
+}

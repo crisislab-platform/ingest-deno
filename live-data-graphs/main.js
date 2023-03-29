@@ -247,14 +247,16 @@ function startGraphing() {
 	let connected = false;
 
 	function handleMessage({ data }) {
-		if (!connected) {
-			console.info("Received first packet");
-			statusText.innerText = "Rendering data...";
-			connected = true;
-		}
-		const packets = JSON.parse(`[${data.replaceAll("][", "],[")}]`);
-		for (const packet of packets) {
-			handleData(packet);
+		const parsed = JSON.parse(data);
+		if (parsed.type === "datagram") {
+			if (!connected) {
+				console.info("Received first packet");
+				statusText.innerText = "Rendering data...";
+				connected = true;
+			}
+			for (const packet of parsed.data) {
+				handleData(packet);
+			}
 		}
 	}
 }
