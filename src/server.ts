@@ -1,18 +1,19 @@
+// Load .env file. This needs to happen before other files run
+import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
+loadSync({ export: true });
+
+// Imports
+import {
+	// serveTls,
+	serve,
+} from "https://deno.land/std@0.178.0/http/mod.ts";
 import { serveFile } from "https://deno.land/std@0.178.0/http/file_server.ts";
+
 import {
 	sensorHandler,
 	clientWebSocketHandler,
 	downloadSensorList,
 } from "./connectionHandler.ts";
-
-// Load .env file
-import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
-import {
-	// serveTls,
-	serve,
-} from "https://deno.land/std@0.178.0/http/mod.ts";
-
-loadSync({ export: true });
 
 // Get the list of sensors.
 // Need to do this absolute first thing to avoid spamming stuff.

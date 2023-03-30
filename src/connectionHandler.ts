@@ -1,133 +1,23 @@
+// Load .env file. This needs to happen before other files run
+import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
+loadSync({ export: true });
+
+// Imports
 import "./types.d.ts"; // goddamn typescript
 import { fetchAPI } from "./utils.ts";
-
-const devMode = Boolean(Deno.env.get("DEV"));
 
 const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
 
+const devMode = Boolean(Deno.env.get("DEV"));
+console.info("Dev mode: ", devMode);
+
 if (devMode) {
-	ipToSensorMap.set("192.168.1.3", {
-		_id: "62bade2be7a35b6a25b55cb7",
-		id: 3,
-		SI: 5000,
-		segmentDuration: 25,
-		packetLength: 50,
-		online: false,
-		type: "Raspberry Shake 4D",
-		geoFeatures: {
-			id: "address.1361664119000500",
-			type: "Feature",
-			place_type: ["address"],
-			relevance: 1,
-			properties: {
-				accuracy: "point",
-			},
-			text: "Ngaio Road",
-			place_name: "23 Ngaio Road, Kelburn, Wellington 6012, New Zealand",
-			center: [174.7631385, -41.2860664],
-			geometry: {
-				type: "Point",
-				coordinates: [174.7631385, -41.2860664],
-			},
-			address: "23",
-			context: [
-				{
-					id: "postcode.18137773744869070",
-					text: "6012",
-				},
-				{
-					id: "locality.8131085753785140",
-					text: "Kelburn",
-				},
-				{
-					id: "place.13409477143181890",
-					wikidata: "Q23661",
-					text: "Wellington",
-				},
-				{
-					id: "region.16657726640200620",
-					short_code: "NZ-WGN",
-					wikidata: "Q856010",
-					text: "Wellington",
-				},
-				{
-					id: "country.3612777343649920",
-					wikidata: "Q664",
-					short_code: "nz",
-					text: "New Zealand",
-				},
-			],
-		},
-		location: {
-			type: "Point",
-			coordinates: [174.8205568, -41.3270016],
-		},
-		name: "Zade 1 - being fixed",
-		elevation: 0,
-		total_floors: 0,
-		on_floor: 0,
-		secondary_id: "AM.RCB47.00",
-		port: null,
-		ip: "192.168.1.3",
-		timestamp: 1678492758141,
-		publicLocation: [174.82027, -41.32732],
-		latitude: -41.3270016,
-		longitude: 174.8205568,
-		publicGeoFeatures: {
-			id: "address.7191551292873338",
-			type: "Feature",
-			place_type: ["address"],
-			relevance: 1,
-			properties: {
-				accuracy: "point",
-				mapbox_id:
-					"dXJuOm1ieGFkcjo5MDczM2M3NC1lNGJlLTQxMTYtYWQyOS1mYTliYTYzZDA1NDc=",
-			},
-			text: "Strathmore Avenue",
-			place_name:
-				"52 Strathmore Avenue, Strathmore Park, Wellington 6022, New Zealand",
-			center: [174.8203545, -41.3272984],
-			geometry: {
-				type: "Point",
-				coordinates: [174.8203545, -41.3272984],
-			},
-			address: "52",
-			context: [
-				{
-					id: "postcode.5942957",
-					mapbox_id: "dXJuOm1ieHBsYzpXcTZ0",
-					text: "6022",
-				},
-				{
-					id: "locality.33278637",
-					mapbox_id: "dXJuOm1ieHBsYzpBZnZLclE",
-					text: "Strathmore Park",
-				},
-				{
-					id: "place.2721965",
-					wikidata: "Q23661",
-					mapbox_id: "dXJuOm1ieHBsYzpLWWl0",
-					text: "Wellington",
-				},
-				{
-					id: "region.132269",
-					short_code: "NZ-WGN",
-					wikidata: "Q856010",
-					mapbox_id: "dXJuOm1ieHBsYzpBZ1N0",
-					text: "Wellington",
-				},
-				{
-					id: "country.8877",
-					short_code: "nz",
-					wikidata: "Q664",
-					mapbox_id: "dXJuOm1ieHBsYzpJcTA",
-					text: "New Zealand",
-				},
-			],
-		},
-	});
+	ipToSensorMap.set(
+		"192.168.1.3",
+		JSON.parse(await Deno.readTextFile("dev-sensor.json"))
+	);
 }
 
 // Every minute, check all sensors to see if they've sent message in the last 10 seconds.
