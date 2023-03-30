@@ -9,7 +9,7 @@ import { fetchAPI } from "./utils.ts";
 const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
-const devMode = Boolean(parseInt(Deno.env.get("DEV")));
+const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 console.info("Dev mode: ", devMode);
 
 if (devMode) {
@@ -189,7 +189,10 @@ export function clientWebSocketHandler(
 			);
 		} else {
 			console.warn(`Couldn't find a sensor with that ID (${sensorID}).`);
-			socket.close(4404, `Couldn't find a sensor with that ID (${sensorID}).`);
+			socket.close(
+				4404,
+				`Couldn't find a sensor with that ID (${sensorID}). Make sure it has an IP set in the dashboard.`
+			);
 		}
 	});
 
