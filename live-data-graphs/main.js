@@ -25,6 +25,63 @@ function getNewWS() {
 	return ws;
 }
 
+// Websocket connection handler
+let connectionAttempts = 0;
+// Used later
+let haveRenderedPacket = false;
+
+function connectSocket(retry = false) {
+	// Websocket to use
+	const ws = retry ? getNewWS() : window.ws;
+
+	// Status message
+	statusText.style.display = "block";
+	statusText.innerText = "Connecting...";
+
+	// Reset
+	haveRenderedPacket = false;
+
+	ws.addEventListener("open", function () {
+		console.info("Connected");
+		statusText.innerText = "Waiting for data...";
+	});
+	ws.addEventListener("close", function () {
+		console.info("Disconnected");
+
+		reloadButton.toggleAttribute("disabled", false);
+
+		if (connectionAttempts < 5) {
+			statusText.innerText = "Reconnecting...";
+			setTimeout(() => connectSocket(true), 1000);
+			connectionAttempts++;
+		} else {
+			statusText.innerText = "Disconnected too many times, please reload";
+		}
+		statusText.style.display = "block";
+	});
+	ws.addEventListener("message", handleMessage);
+}
+
+let connected = false;
+
+function handleMessage({ data }) {
+	const parsed = JSON.parse(data);
+	if (parsed?.type === "datagram") {
+		if (!connected) {
+			console.info("Received first packet");
+			statusText.innerText = "Rendering data...";
+			connected = true;
+		}
+		for (const packet of parsed.data) {
+			handleData(packet);
+		}
+	} else if (parsed?.type === "sensor-meta") {
+		if (parsed?.data?.online === false) {
+			statusText.innerText = "Connected, but sensor seems to be offline.";
+		}
+	}
+}
+
 function startGraphing() {
 	if (!location.pathname.includes("/consume/")) {
 		noSensorFound();
@@ -40,43 +97,6 @@ function startGraphing() {
 	// Page title
 	document.title = `Sensor ${sensorNumber} realtime data`;
 
-	// Used later
-	let haveRenderedPacket = false;
-
-	// Websocket connection handler
-	let connectionAttempts = 0;
-	function connectSocket(retry = false) {
-		// Websocket to use
-		const ws = retry ? getNewWS() : window.ws;
-
-		// Status message
-		statusText.style.display = "block";
-		statusText.innerText = "Connecting...";
-
-		// Reset
-		haveRenderedPacket = false;
-
-		ws.addEventListener("open", function () {
-			console.info("Connected");
-			statusText.innerText = "Waiting for data...";
-		});
-		ws.addEventListener("close", function () {
-			console.info("Disconnected");
-
-			reloadButton.toggleAttribute("disabled", false);
-
-			if (connectionAttempts < 5) {
-				statusText.innerText = "Reconnecting...";
-				setTimeout(() => connectSocket(true), 1000);
-				connectionAttempts++;
-			} else {
-				statusText.innerText =
-					"Disconnected too many times, please reload";
-			}
-			statusText.style.display = "block";
-		});
-		ws.addEventListener("message", handleMessage);
-	}
 	connectSocket();
 
 	// Graphs
@@ -137,7 +157,7 @@ function startGraphing() {
 		data[channel] ||= [];
 		current[channel] ||= 0;
 
-		for (let i of measurements) {
+		for (const i of measurements) {
 			data[channel].push({
 				x: timestamp - start + (current[channel] += 10),
 				y: channel.startsWith("EN") ? i / 3.845e5 : i,
@@ -241,22 +261,6 @@ function startGraphing() {
 			statusText.style.display = "none";
 			haveRenderedPacket = true;
 			reloadButton.toggleAttribute("disabled", true);
-		}
-	}
-
-	let connected = false;
-
-	function handleMessage({ data }) {
-		const parsed = JSON.parse(data);
-		if (parsed.type === "datagram") {
-			if (!connected) {
-				console.info("Received first packet");
-				statusText.innerText = "Rendering data...";
-				connected = true;
-			}
-			for (const packet of parsed.data) {
-				handleData(packet);
-			}
 		}
 	}
 }

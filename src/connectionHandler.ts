@@ -286,12 +286,22 @@ export function clientHandler(request: Request, sensorId: number): Response {
 
 	sensorClients.push(socket);
 
-	socket.send(
-		JSON.stringify({
-			type: "sensor-meta",
-			data: sensor,
-		})
-	);
+	socket.addEventListener("open", () => {
+		console.log("Opened");
+		socket.send(
+			JSON.stringify({
+				type: "sensor-meta",
+				data: {
+					// Doing this manually to avoid sending sensitive data
+					id: sensor.id,
+					secondary_id: sensor.secondary_id,
+					type: sensor.type,
+					online: sensor.online,
+				},
+			})
+		);
+		console.log("Sent sensor meta");
+	});
 
 	socket.addEventListener("close", () => {
 		sensorClients.splice(sensorClients.indexOf(socket), 1);
