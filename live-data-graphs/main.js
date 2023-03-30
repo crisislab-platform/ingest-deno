@@ -1,6 +1,8 @@
 import TimeChart from "timechart";
 import { min as d3Min, max as d3Max, scaleTime } from "d3";
 
+let sensorMeta;
+
 const statusText = document.getElementById("status");
 const reloadButton = document.getElementById("reload");
 reloadButton.addEventListener("click", () => {
@@ -45,17 +47,22 @@ function connectSocket(retry = false) {
 		console.info("Connected");
 		statusText.innerText = "Waiting for data...";
 	});
-	ws.addEventListener("close", function () {
-		console.info("Disconnected");
+	ws.addEventListener("close", function (event) {
+		console.info("Disconnected: ", event.code, event.reason);
 
 		reloadButton.toggleAttribute("disabled", false);
 
-		if (connectionAttempts < 5) {
-			statusText.innerText = "Reconnecting...";
-			setTimeout(() => connectSocket(true), 1000);
-			connectionAttempts++;
+		if (event.code === 4404) {
+			statusText.innerText = event.reason ?? "Not found";
 		} else {
-			statusText.innerText = "Disconnected too many times, please reload";
+			if (connectionAttempts < 5) {
+				statusText.innerText = "Reconnecting...";
+				setTimeout(() => connectSocket(true), 1000);
+				connectionAttempts++;
+			} else {
+				statusText.innerText =
+					"Disconnected too many times, please reload";
+			}
 		}
 		statusText.style.display = "block";
 	});
@@ -76,8 +83,11 @@ function handleMessage({ data }) {
 			handleData(packet);
 		}
 	} else if (parsed?.type === "sensor-meta") {
-		if (parsed?.data?.online === false) {
-			statusText.innerText = "Connected, but sensor seems to be offline.";
+		sensorMeta = parsed?.data;
+		if (sensorMeta?.online === false) {
+			statusText.innerText = `Connected, but sensor${
+				sensorMeta?.id ? ` #${sensorMeta.id}` : ""
+			} seems to be offline.`;
 		}
 	}
 }

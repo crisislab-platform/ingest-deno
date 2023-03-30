@@ -1,13 +1,16 @@
-import { serve } from "https://deno.land/std@0.178.0/http/mod.ts";
 import { serveFile } from "https://deno.land/std@0.178.0/http/file_server.ts";
 import {
 	sensorHandler,
-	clientHandler,
+	clientWebSocketHandler,
 	downloadSensorList,
 } from "./connectionHandler.ts";
 
 // Load .env file
 import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
+import {
+	// serveTls,
+	serve,
+} from "https://deno.land/std@0.178.0/http/mod.ts";
 
 loadSync({ export: true });
 
@@ -35,10 +38,12 @@ async function reqHandler(request: Request) {
 
 		// Websockets
 		if (sections[2] === "live") {
-			if (request.headers.get("Upgrade") !== "websocket")
+			if (request.headers.get("Upgrade") !== "websocket") {
 				return new Response("Needs websocket Upgrade header", { status: 400 });
+			}
+			console.info("WebSocket!");
 
-			return clientHandler(request, sensorID);
+			return clientWebSocketHandler(request, sensorID);
 		}
 
 		return await serveFile(request, "live-data-graphs/dist/index.html");
@@ -54,7 +59,15 @@ async function reqHandler(request: Request) {
 }
 
 // Start the HTTP server
-serve(reqHandler, { port: Number(Deno.env.get("HTTP_PORT") || 8080) });
+// serveTls(reqHandler, {
+// 	port: Number(Deno.env.get("HTTP_PORT") || 8080),
+// 	certFile: Deno.env.get("TLS_CERT_FILE"),
+// 	keyFile: Deno.env.get("TLS_KEY_FILE"),
+// });
+
+serve(reqHandler, {
+	port: Number(Deno.env.get("HTTP_PORT") || 8080),
+});
 
 // Start the UDP server
 const socket = await Deno.listenDatagram({

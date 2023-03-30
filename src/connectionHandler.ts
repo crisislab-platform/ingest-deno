@@ -158,7 +158,11 @@ setInterval(
 );
 
 function getSensor(sensorID: number): Sensor | undefined {
-	return [...ipToSensorMap.values()].find((s) => s.id === sensorID);
+	for (const sensor of ipToSensorMap.values()) {
+		if (sensor.id === sensorID) {
+			return sensor;
+		}
+	}
 }
 
 // Update the sensor state in both the the online set and the API
@@ -269,38 +273,39 @@ export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
 }
 
 // Handle websocket connections
-export function clientHandler(request: Request, sensorId: number): Response {
-	const sensor = getSensor(sensorId);
-
-	if (!sensor) {
-		return new Response("Couldn't find a sensor with that ID", { status: 404 });
-	}
-
+export function clientWebSocketHandler(
+	request: Request,
+	sensorID: number
+): Response {
 	const { socket, response } = Deno.upgradeWebSocket(request);
 
-	const _sensorClients = clientsMap.get(sensorId);
+	const _sensorClients = clientsMap.get(sensorID);
 
 	const sensorClients: WebSocket[] = _sensorClients
 		? _sensorClients
-		: (clientsMap.set(sensorId, []).get(sensorId) as WebSocket[]);
+		: (clientsMap.set(sensorID, []).get(sensorID) as WebSocket[]);
 
 	sensorClients.push(socket);
 
 	socket.addEventListener("open", () => {
-		console.log("Opened");
-		socket.send(
-			JSON.stringify({
-				type: "sensor-meta",
-				data: {
-					// Doing this manually to avoid sending sensitive data
-					id: sensor.id,
-					secondary_id: sensor.secondary_id,
-					type: sensor.type,
-					online: sensor.online,
-				},
-			})
-		);
-		console.log("Sent sensor meta");
+		const sensor = getSensor(sensorID);
+
+		if (sensor) {
+			socket.send(
+				JSON.stringify({
+					type: "sensor-meta",
+					data: {
+						// Doing this manually to avoid sending sensitive data
+						id: sensor.id,
+						secondary_id: sensor.secondary_id,
+						type: sensor.type,
+						online: sensor.online,
+					},
+				})
+			);
+		} else {
+			socket.close(4404, `Couldn't find a sensor with that ID (${sensorID}).`);
+		}
 	});
 
 	socket.addEventListener("close", () => {
