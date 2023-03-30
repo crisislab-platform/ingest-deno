@@ -42,7 +42,6 @@ async function reqHandler(request: Request) {
 			if (request.headers.get("Upgrade") !== "websocket") {
 				return new Response("Needs websocket Upgrade header", { status: 400 });
 			}
-			console.info("WebSocket!");
 
 			return clientWebSocketHandler(request, sensorID);
 		}
