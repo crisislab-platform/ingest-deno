@@ -237,9 +237,9 @@ function startGraphing() {
 		}
 	}
 
-	function connectSocket(retry = false) {
+	function connectSocket() {
 		// Websocket to use
-		const ws = retry ? getNewWS() : window.ws;
+		const ws = getNewWS();
 
 		// Status message
 		statusText.style.display = "block";
@@ -262,7 +262,7 @@ function startGraphing() {
 			} else {
 				if (connectionAttempts < 5) {
 					statusText.innerText = "Reconnecting...";
-					setTimeout(() => connectSocket(true), 1000);
+					setTimeout(() => connectSocket(), 1000);
 					connectionAttempts++;
 				} else {
 					statusText.innerText =
