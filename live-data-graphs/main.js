@@ -32,66 +32,6 @@ let connectionAttempts = 0;
 // Used later
 let haveRenderedPacket = false;
 
-function connectSocket(retry = false) {
-	// Websocket to use
-	const ws = retry ? getNewWS() : window.ws;
-
-	// Status message
-	statusText.style.display = "block";
-	statusText.innerText = "Connecting...";
-
-	// Reset
-	haveRenderedPacket = false;
-
-	ws.addEventListener("open", function () {
-		console.info("Connected");
-		statusText.innerText = "Waiting for data...";
-	});
-	ws.addEventListener("close", function (event) {
-		console.info("Disconnected: ", event.code, event.reason);
-
-		reloadButton.toggleAttribute("disabled", false);
-
-		if (event.code === 4404) {
-			statusText.innerText = event.reason ?? "Not found";
-		} else {
-			if (connectionAttempts < 5) {
-				statusText.innerText = "Reconnecting...";
-				setTimeout(() => connectSocket(true), 1000);
-				connectionAttempts++;
-			} else {
-				statusText.innerText =
-					"Disconnected too many times, please reload";
-			}
-		}
-		statusText.style.display = "block";
-	});
-	ws.addEventListener("message", handleMessage);
-}
-
-let connected = false;
-
-function handleMessage({ data }) {
-	const parsed = JSON.parse(data);
-	if (parsed?.type === "datagram") {
-		if (!connected) {
-			console.info("Received first packet");
-			statusText.innerText = "Rendering data...";
-			connected = true;
-		}
-		for (const packet of parsed.data) {
-			handleData(packet);
-		}
-	} else if (parsed?.type === "sensor-meta") {
-		sensorMeta = parsed?.data;
-		if (sensorMeta?.online === false) {
-			statusText.innerText = `Connected, but sensor${
-				sensorMeta?.id ? ` #${sensorMeta.id}` : ""
-			} seems to be offline.`;
-		}
-	}
-}
-
 function startGraphing() {
 	if (!location.pathname.includes("/consume/")) {
 		noSensorFound();
@@ -272,6 +212,66 @@ function startGraphing() {
 			haveRenderedPacket = true;
 			reloadButton.toggleAttribute("disabled", true);
 		}
+	}
+
+	let connected = false;
+
+	function handleMessage({ data }) {
+		const parsed = JSON.parse(data);
+		if (parsed?.type === "datagram") {
+			if (!connected) {
+				console.info("Received first packet");
+				statusText.innerText = "Rendering data...";
+				connected = true;
+			}
+			for (const packet of parsed.data) {
+				handleData(packet);
+			}
+		} else if (parsed?.type === "sensor-meta") {
+			sensorMeta = parsed?.data;
+			if (sensorMeta?.online === false) {
+				statusText.innerText = `Connected, but sensor${
+					sensorMeta?.id ? ` #${sensorMeta.id}` : ""
+				} seems to be offline.`;
+			}
+		}
+	}
+
+	function connectSocket(retry = false) {
+		// Websocket to use
+		const ws = retry ? getNewWS() : window.ws;
+
+		// Status message
+		statusText.style.display = "block";
+		statusText.innerText = "Connecting...";
+
+		// Reset
+		haveRenderedPacket = false;
+
+		ws.addEventListener("open", function () {
+			console.info("Connected");
+			statusText.innerText = "Waiting for data...";
+		});
+		ws.addEventListener("close", function (event) {
+			console.info("Disconnected: ", event.code, event.reason);
+
+			reloadButton.toggleAttribute("disabled", false);
+
+			if (event.code === 4404) {
+				statusText.innerText = event.reason ?? "Not found";
+			} else {
+				if (connectionAttempts < 5) {
+					statusText.innerText = "Reconnecting...";
+					setTimeout(() => connectSocket(true), 1000);
+					connectionAttempts++;
+				} else {
+					statusText.innerText =
+						"Disconnected too many times, please reload";
+				}
+			}
+			statusText.style.display = "block";
+		});
+		ws.addEventListener("message", handleMessage);
 	}
 }
 

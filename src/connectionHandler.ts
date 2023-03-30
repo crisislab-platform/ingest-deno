@@ -211,9 +211,9 @@ export async function downloadSensorList() {
 
 	lastUpdate = Date.now();
 
-	if (devMode) {
-		return;
-	}
+	// if (devMode) {
+	// 	return;
+	// }
 
 	const res = await fetchAPI("sensors");
 	const json = await res.json();
