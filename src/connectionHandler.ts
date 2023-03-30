@@ -92,13 +92,8 @@ async function setState({
 }
 
 // Download sensor list from internship-worker
-let lastUpdate = 0;
 export async function downloadSensorList() {
-	if (Date.now() - lastUpdate < 60 * 60 * 1000) return; // Wait for an hour
-
 	console.info("Fetching sensor list...");
-
-	lastUpdate = Date.now();
 
 	// if (devMode) {
 	// 	return;
