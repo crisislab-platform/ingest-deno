@@ -1,6 +1,6 @@
 import TimeChart from "timechart";
 import { min as d3Min, max as d3Max, scaleTime } from "d3";
-
+import { unpack } from "msgpackr";
 let sensorMeta;
 
 const statusText = document.getElementById("status");
@@ -23,6 +23,7 @@ function noSensorFound() {
 
 function getNewWS() {
 	const ws = new WebSocket(window.wsURL);
+	ws.binaryType = "arraybuffer";
 	window.ws = ws;
 	return ws;
 }
@@ -217,7 +218,7 @@ function startGraphing() {
 	let connected = false;
 
 	function handleMessage({ data }) {
-		const parsed = JSON.parse(data);
+		const parsed = unpack(new Uint8Array(data));
 		if (parsed?.type === "datagram") {
 			if (!connected) {
 				console.info("Received first packet");

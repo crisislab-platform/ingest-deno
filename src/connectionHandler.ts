@@ -5,6 +5,8 @@ loadSync({ export: true });
 // Imports
 import "./types.d.ts"; // goddamn typescript
 import { fetchAPI } from "./utils.ts";
+// @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
+import { pack } from "https://deno.land/x/msgpackr@v1.8.3/index.js";
 
 const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
@@ -140,7 +142,7 @@ export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
 			(clientsMap.get(sensor.id) || []).filter((client) => {
 				try {
 					client.send(
-						JSON.stringify({
+						pack({
 							type: "datagram",
 							data: parsedData,
 						})
@@ -162,6 +164,7 @@ export function clientWebSocketHandler(
 	sensorID: number
 ): Response {
 	const { socket, response } = Deno.upgradeWebSocket(request);
+	socket.binaryType = "arraybuffer";
 
 	const _sensorClients = clientsMap.get(sensorID);
 
@@ -176,7 +179,7 @@ export function clientWebSocketHandler(
 
 		if (sensor) {
 			socket.send(
-				JSON.stringify({
+				pack({
 					type: "sensor-meta",
 					data: {
 						// Doing this manually to avoid sending sensitive data
