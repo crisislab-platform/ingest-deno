@@ -120,7 +120,11 @@
 		<script>
 			const sensor = location.pathname.slice(1).split("/")[1];
 			if (location.pathname.includes("/consume/") && sensor) {
-				window.wsURL = `ws://${location.host}/consume/${sensor}/live`;
+				window.wsURL = `${
+					location.host.startsWith("localhost")
+						? `ws://${location.host}`
+						: `wss://${location.host}`
+				}/consume/${sensor}/live`;
 				const ws = new WebSocket(window.wsURL);
 				window.ws = ws;
 			}
