@@ -40,12 +40,12 @@ setInterval(
 	60 * 1000 // Every minute
 );
 
-// Every hour, re-download the sensor list
+// Every 30 minutes, re-download the sensor list
 setInterval(
 	() => {
 		downloadSensorList();
 	},
-	60 * 60 * 1000 // 1 hour
+	30 * 60 * 1000 // 1 hour
 );
 
 function getSensor(sensorID: number): Sensor | undefined {
