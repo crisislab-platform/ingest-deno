@@ -23,7 +23,7 @@ if (devMode) {
 
 // Every minute, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
-setInterval(
+const onlineInterval = setInterval(
 	() => {
 		for (const sensor of ipToSensorMap.values()) {
 			// If no messages in the last  2 minutes, set it as offline
@@ -40,12 +40,12 @@ setInterval(
 	60 * 1000 // Every minute
 );
 
-// Every 30 minutes, re-download the sensor list
-setInterval(
+// Every 15 minutes, re-download the sensor list
+const downloadInterval = setInterval(
 	() => {
 		downloadSensorList();
 	},
-	30 * 60 * 1000 // 1 hour
+	15 * 60 * 1000 // 15 minutes hour
 );
 
 function getSensor(sensorID: number): Sensor | undefined {
