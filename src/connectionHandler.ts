@@ -45,7 +45,7 @@ const downloadInterval = setInterval(
 	() => {
 		downloadSensorList();
 	},
-	15 * 60 * 1000 // 15 minutes hour
+	15 * 60 * 1000 // Every 15 minutes
 );
 
 function getSensor(sensorID: number): Sensor | undefined {
