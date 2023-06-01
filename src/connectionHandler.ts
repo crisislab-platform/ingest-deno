@@ -44,6 +44,7 @@ const onlineInterval = setInterval(
 // Every 15 minutes, re-download the sensor list
 const downloadInterval = setInterval(
 	() => {
+		console.info("About to download sensor list from interval");
 		downloadSensorList();
 	},
 	15 * 60 * 1000 // Every 15 minutes
@@ -107,12 +108,14 @@ export async function downloadSensorList() {
 
 	for (const sensor of Object.values(json.sensors) as Sensor[]) {
 		if (!sensor.ip) {
-			const client = clientsMap.get(sensor?.id);
-			if (client) {
+			const clients = clientsMap.get(sensor?.id);
+			if (clients) {
 				// Close clients for sensors that don't exist
-				client.close(
-					4404,
-					`Couldn't find a sensor with that ID (${sensorID}). Make sure it has an IP set in the dashboard.`
+				clients.forEach((c) =>
+					c.close(
+						4404,
+						`Couldn't find a sensor with that ID (${sensor.id}). Make sure it has an IP set in the dashboard.`
+					)
 				);
 			}
 			continue;
@@ -176,8 +179,8 @@ export function clientWebSocketHandler(
 	request: Request,
 	sensorID: number
 ): Response {
-	const { socket, response } = Deno.upgradeWebSocket(request);
-	socket.binaryType = "arraybuffer";
+	const { socket: client, response } = Deno.upgradeWebSocket(request);
+	client.binaryType = "arraybuffer";
 
 	const _sensorClients = clientsMap.get(sensorID);
 
@@ -185,13 +188,13 @@ export function clientWebSocketHandler(
 		? _sensorClients
 		: (clientsMap.set(sensorID, []).get(sensorID) as WebSocket[]);
 
-	sensorClients.push(socket);
+	sensorClients.push(client);
 
-	socket.addEventListener("open", () => {
+	client.addEventListener("open", () => {
 		const sensor = getSensor(sensorID);
 
 		if (sensor) {
-			socket.send(
+			client.send(
 				pack({
 					type: "sensor-meta",
 					data: {
@@ -208,16 +211,23 @@ export function clientWebSocketHandler(
 			if (hasDownloadedSensorsYet) {
 				// If we've already downloaded the list, close the websocket.
 				// Otherwise, keep it open in hope.
-				socket.close(
+				client.close(
 					4404,
 					`Couldn't find a sensor with that ID (${sensorID}). Make sure it has an IP set in the dashboard.`
+				);
+			} else {
+				client.send(
+					pack({
+						type: "message",
+						data: { message: "Awaiting sensor list..." },
+					})
 				);
 			}
 		}
 	});
 
-	socket.addEventListener("close", () => {
-		sensorClients.splice(sensorClients.indexOf(socket), 1);
+	client.addEventListener("close", () => {
+		sensorClients.splice(sensorClients.indexOf(client), 1);
 	});
 
 	return response;

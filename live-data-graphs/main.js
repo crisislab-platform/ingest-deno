@@ -208,8 +208,8 @@ function startGraphing() {
 
 		graphs[channel].update();
 
+		statusText.style.display = "none";
 		if (!haveRenderedPacket) {
-			statusText.style.display = "none";
 			haveRenderedPacket = true;
 			reloadButton.toggleAttribute("disabled", true);
 		}
@@ -234,6 +234,12 @@ function startGraphing() {
 				statusText.innerText = `Connected, but sensor${
 					sensorMeta?.id ? ` #${sensorMeta.id}` : ""
 				} seems to be offline.`;
+			}
+		} else if (parsed?.type === "message") {
+			const message = parsed?.data?.message;
+			if (message) {
+				statusText.innerText = message;
+				statusText.style.display = "block";
 			}
 		}
 	}
