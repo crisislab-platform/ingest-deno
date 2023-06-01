@@ -66,7 +66,7 @@ async function setState({
 }) {
 	// Avoid spamming the API by not updating things if they haven't changed.
 	const sensor = getSensor(sensorID);
-	if (sensor && connected !== sensor.online) {
+	if (sensor && sensor.online !== connected) {
 		// Update sensor object
 		sensor.online = connected;
 
