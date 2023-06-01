@@ -12,6 +12,7 @@ const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
+let hasDownloadedSensorsYet = false;
 console.info("Dev mode: ", devMode);
 
 if (devMode) {
@@ -105,9 +106,21 @@ export async function downloadSensorList() {
 	const json = await res.json();
 
 	for (const sensor of Object.values(json.sensors) as Sensor[]) {
-		if (!sensor.ip) continue;
+		if (!sensor.ip) {
+			const client = clientsMap.get(sensor?.id);
+			if (client) {
+				// Close clients for sensors that don't exist
+				client.close(
+					4404,
+					`Couldn't find a sensor with that ID (${sensorID}). Make sure it has an IP set in the dashboard.`
+				);
+			}
+			continue;
+		}
 		ipToSensorMap.set(sensor.ip, sensor);
 	}
+
+	hasDownloadedSensorsYet = true;
 }
 
 // Called when a sensor sends a UDP packet. Data is then forwarded to the connected websockets
@@ -192,10 +205,14 @@ export function clientWebSocketHandler(
 			);
 		} else {
 			console.warn(`Couldn't find a sensor with that ID (${sensorID}).`);
-			socket.close(
-				4404,
-				`Couldn't find a sensor with that ID (${sensorID}). Make sure it has an IP set in the dashboard.`
-			);
+			if (hasDownloadedSensorsYet) {
+				// If we've already downloaded the list, close the websocket.
+				// Otherwise, keep it open in hope.
+				socket.close(
+					4404,
+					`Couldn't find a sensor with that ID (${sensorID}). Make sure it has an IP set in the dashboard.`
+				);
+			}
 		}
 	});
 
