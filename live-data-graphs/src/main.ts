@@ -45,10 +45,9 @@ else {
 
 		window.CRISiSLab.wsURL = `${
 			location.host.startsWith("localhost")
-				? `ws://${location.host}`
+				? "wss://crisislab-data.massey.ac.nz"
 				: `wss://${location.host}`
 		}/consume/${sensorID}/live`;
 	}
+	connectSocket(handleData);
 }
-
-connectSocket(handleData);

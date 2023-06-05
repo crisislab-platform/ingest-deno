@@ -8,7 +8,7 @@ export type HandleDataFunction = (data: any) => void;
 export function connectSocket(handleData: HandleDataFunction) {
 	// Websocket to use
 	if (window.CRISiSLab.wsURL === null) {
-		showMessage("Sensor WebSocket URL missing");
+		// An error is shown by other things
 		return;
 	}
 

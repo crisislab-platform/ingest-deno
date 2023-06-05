@@ -17,7 +17,7 @@ const aliases = {
 };
 const current = {};
 let start;
-let currentHeight = 22.5;
+let currentHeight = 25;
 
 function setAttributes(el: Element, attrs: Record<string, string>) {
 	for (const key in attrs) {
