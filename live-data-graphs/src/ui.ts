@@ -9,13 +9,7 @@ export const resetButton = document.getElementById(
 ) as HTMLButtonElement;
 
 reloadButton.addEventListener("click", () => {
-	const confirmed = confirm(
-		"Are you sure you want to reload? You won't be able to see older data any more.",
-	);
-
-	if (confirmed) {
-		location.reload();
-	}
+	location.reload();
 });
 
 export function showMessage(message: string) {
