@@ -116,17 +116,6 @@
 				z-index: 9999;
 			}
 		</style>
-
-		<script>
-			const sensor = location.pathname.slice(1).split("/")[1];
-			if (location.pathname.includes("/consume/") && sensor) {
-				window.wsURL = `${
-					location.host.startsWith("localhost")
-						? `ws://${location.host}`
-						: `wss://${location.host}`
-				}/consume/${sensor}/live`;
-			}
-		</script>
 	</head>
 
 	<body>
@@ -134,6 +123,6 @@
 		<!-- Button to reset view -->
 		<button id="reset-view" disabled>Autoscroll</button>
 		<button id="reload" disabled>Reload</button>
-		<script type="module" src="/main.js"></script>
+		<script type="module" src="/src/main.ts"></script>
 	</body>
 </html>

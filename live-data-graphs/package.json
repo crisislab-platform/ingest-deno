@@ -9,11 +9,12 @@
 		"preview": "vite preview"
 	},
 	"devDependencies": {
-		"vite": "^4.1.4"
+		"typescript": "^5.1.3",
+		"vite": "^4.3.9"
 	},
 	"dependencies": {
-		"d3": "^7.5.0",
-		"msgpackr": "^1.8.5",
+		"d3": "^7.8.5",
+		"msgpackr": "^1.9.3",
 		"timechart": "^0.5.2"
 	}
 }
