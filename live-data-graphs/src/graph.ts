@@ -19,7 +19,7 @@ const current = {};
 let start;
 let currentHeight = 22.5;
 
-function setAttributes(el, attrs) {
+function setAttributes(el: Element, attrs: Record<string, string>) {
 	for (const key in attrs) {
 		el.setAttribute(key, attrs[key]);
 	}
