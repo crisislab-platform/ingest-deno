@@ -17,7 +17,7 @@ const aliases = {
 };
 const current = {};
 let start;
-let currentHeight = 25;
+let currentHeight = 23;
 
 function setAttributes(el: Element, attrs: Record<string, string>) {
 	for (const key in attrs) {
@@ -131,7 +131,7 @@ export function handleData(packet) {
 		const yLabel = document.createElement("p");
 		yLabel.innerHTML = aliases[channel] || channel;
 		yLabel.className = "y-label";
-		yLabel.style.top = `${currentHeight - 14}vh`;
+		yLabel.style.top = `${currentHeight - 12}vh`;
 		document.body.appendChild(yLabel);
 		yLabel.style.opacity = "1";
 
