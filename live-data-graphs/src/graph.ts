@@ -1,6 +1,12 @@
+// import TimeChart from "timechart/core/index";
+// import { d3Axis } from "timechart/plugins/d3Axis";
+// import { nearestPoint } from "timechart/plugins/nearestPoint";
+// // import { TimeChartTooltipPlugin } from "timechart/plugins/tooltip";
+// import { TimeChartZoomPlugin } from "timechart/plugins/chartZoom";
 import TimeChart from "timechart";
 import { min as d3Min, max as d3Max, scaleTime } from "d3";
 import { hideMessages, reloadButton, resetButton } from "./ui";
+// import { LineType } from "timechart/options";
 
 // Graphs
 const data = {};
@@ -78,8 +84,34 @@ export function handleData(packet) {
 				{
 					data: data[channel],
 					name: aliases[channel] || channel,
+					// color: "red",
+					// lineWidth: 10,
+					// lineType: LineType.Step,
+					// lineWidth: 10,
 				},
 			],
+
+			// color: "black",
+			// debugWebGL: true,
+			// backgroundColor: "white",
+			// plugins: {
+			// 	d3Axis,
+			// 	nearestPoint,
+			// 	// tooltip: new TimeChartTooltipPlugin({
+			// 	// 	enabled: true,
+			// 	// 	xLabel: "Time (seconds)",
+			// 	// 	xFormatter: (x) => `${x / 1000}`,
+			// 	// }),
+			// 	zoom: new TimeChartZoomPlugin({
+			// 		x: {
+			// 			autoRange: true,
+			// 		},
+
+			// 		y: {
+			// 			autoRange: true,
+			// 		},
+			// 	}),
+			// },
 			zoom: {
 				x: {
 					autoRange: true,
@@ -89,7 +121,6 @@ export function handleData(packet) {
 				},
 			},
 			baseTime: start,
-			// legend: false,
 			xScaleType: scaleTime,
 			xRange: { min: 200, max: 10000 },
 			realTime: true,
@@ -100,6 +131,44 @@ export function handleData(packet) {
 		const channelShadowRoot = document?.querySelector(
 			`#${channel}`,
 		)?.shadowRoot;
+
+		// 		// Hover tooltip
+
+		// const tooltipStyleTag = channelShadowRoot
+		// 	?.querySelector("chart-tooltip")
+		// 	?.shadowRoot?.querySelector("style");
+		// if (tooltipStyleTag)
+		// 	tooltipStyleTag.innerText = `
+		// :host {
+		//     background: var(--background-overlay, white);
+		//     border: 1px solid hsl(0, 0%, 80%);
+		//     border-radius: 3px;
+
+		// }
+		// .item {
+		//     user-select: none;
+		// }
+
+		// .name {
+
+		//     white-space: nowrap;
+		// }
+		// .example {
+		//     display:none;
+		// }
+		// .value {
+		//     text-overflow: ellipsis;
+		//     overflow: hidden;
+		//     white-space: nowrap;
+
+		//     text-align: right;
+		// }
+		// .x-not-aligned .value {
+		//     opacity: 0.4;
+		// }
+		// `;
+
+		// Axis labels
 
 		channelShadowRoot
 			?.querySelector("svg > g:nth-child(2) > path")
