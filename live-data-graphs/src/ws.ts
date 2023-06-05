@@ -1,24 +1,19 @@
 import { showMessage, reloadButton } from "./ui";
 import { unpack } from "msgpackr";
 
-function getNewSocket(): WebSocket | null {
-	if (window.CRISiSLab.wsURL === null) {
-		// FIXME: Show error message
-		return null;
-	}
-
-	const ws = new WebSocket(window.CRISiSLab.wsURL);
-	ws.binaryType = "arraybuffer";
-	return ws;
-}
+const connectionRetryLimit = 5;
 
 export type HandleDataFunction = (data: any) => void;
 
 export function connectSocket(handleData: HandleDataFunction) {
 	// Websocket to use
-	const ws = getNewSocket();
+	if (window.CRISiSLab.wsURL === null) {
+		showMessage("Sensor WebSocket URL missing");
+		return;
+	}
 
-	if (!ws) return;
+	const ws = new WebSocket(window.CRISiSLab.wsURL);
+	ws.binaryType = "arraybuffer";
 
 	// For debugging in console
 	window.CRISiSLab.ws = ws;
@@ -41,9 +36,9 @@ export function connectSocket(handleData: HandleDataFunction) {
 		if (event.code === 4404) {
 			showMessage(event.reason ?? "Not found");
 		} else {
-			if (window.CRISiSLab.connectionAttempts < 5) {
+			if (window.CRISiSLab.connectionAttempts < connectionRetryLimit) {
 				showMessage("Reconnecting...");
-				setTimeout(() => getNewSocket(), 1000);
+				setTimeout(() => connectSocket(handleData), 1000);
 				window.CRISiSLab.connectionAttempts++;
 			} else {
 				showMessage("Disconnected too many times, please reload");
