@@ -15,12 +15,12 @@ const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 let hasDownloadedSensorsYet = false;
 console.info("Dev mode: ", devMode);
 
-if (devMode) {
-	ipToSensorMap.set(
-		"192.168.1.3",
-		JSON.parse(await Deno.readTextFile("dev-sensor.json"))
-	);
-}
+// if (devMode) {
+// 	ipToSensorMap.set(
+// 		"192.168.1.3",
+// 		JSON.parse(await Deno.readTextFile("dev-sensor.json"))
+// 	);
+// }
 
 // Every minute, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
@@ -103,10 +103,16 @@ export async function downloadSensorList() {
 	// 	return;
 	// }
 
-	const res = await fetchAPI("sensors");
-	const json = await res.json();
+	let sensors;
+	if (devMode) {
+		sensors = { 3: JSON.parse(await Deno.readTextFile("dev-sensor.json")) };
+	} else {
+		const res = await fetchAPI("sensors");
+		const json = await res.json();
+		sensors = json.sensors;
+	}
 
-	for (const sensor of Object.values(json.sensors) as Sensor[]) {
+	for (const sensor of Object.values(sensors) as Sensor[]) {
 		if (!sensor.ip) {
 			const clients = clientsMap.get(sensor?.id);
 			if (clients) {

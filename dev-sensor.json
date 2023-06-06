@@ -4,7 +4,7 @@
 	"SI": 5000,
 	"segmentDuration": 25,
 	"packetLength": 50,
-	"online": false,
+	"online": true,
 	"type": "Raspberry Shake 4D",
 	"geoFeatures": {
 		"id": "address.1361664119000500",
