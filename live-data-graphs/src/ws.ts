@@ -68,7 +68,7 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 			window.CRISiSLab.sensorMeta = parsed?.data;
 			if (window.CRISiSLab.sensorMeta?.online === false) {
 				showMessage(
-					`Connected, but sensor${window.CRISiSLab.sensorID} seems to be offline.`,
+					`Connected, but sensor ${window.CRISiSLab.sensorID} seems to be offline.`,
 				);
 			}
 		} else if (parsed?.type === "message") {
