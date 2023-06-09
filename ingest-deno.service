@@ -9,8 +9,8 @@ RestartSec=1
 WorkingDirectory=/home/ingest/ingest-deno
 User=ingest
 ExecStart=/home/ingest/.deno/bin/deno run --unstable --allow-env --allow-net --allow-read src/server.ts
-StandardOutput=append:/home/ingest/ingest-deno/stdout.log
-StandardError=append:/home/ingest/ingest-deno/stderr.log
+StandardOutput=file:/home/ingest/ingest-deno/stdout.log
+StandardError=file:/home/ingest/ingest-deno/stderr.log
 
 [Install]
 WantedBy=multi-user.target
