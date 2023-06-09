@@ -17,10 +17,22 @@ import {
 
 // Get the list of sensors.
 // Need to do this absolute first thing to avoid spamming stuff.
-await downloadSensorList();
+let downloadError: string | undefined;
+downloadError = await downloadSensorList();
+
+// Every 15 minutes, re-download the sensor list
+setInterval(
+	async () => {
+		console.info("About to download sensor list from interval");
+		downloadError = await downloadSensorList();
+	},
+	15 * 60 * 1000 // Every 15 minutes
+);
 
 // HTTP request handler
 async function reqHandler(request: Request) {
+	if (downloadError) return new Response(downloadError);
+
 	const url = new URL(request.url);
 
 	const sections = url.pathname.slice(1).split("/");

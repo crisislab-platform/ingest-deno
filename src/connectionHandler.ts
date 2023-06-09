@@ -24,7 +24,7 @@ console.info("Dev mode: ", devMode);
 
 // Every minute, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
-const onlineInterval = setInterval(
+setInterval(
 	() => {
 		for (const sensor of ipToSensorMap.values()) {
 			// If no messages in the last  2 minutes, set it as offline
@@ -39,15 +39,6 @@ const onlineInterval = setInterval(
 		}
 	},
 	60 * 1000 // Every minute
-);
-
-// Every 15 minutes, re-download the sensor list
-const downloadInterval = setInterval(
-	() => {
-		console.info("About to download sensor list from interval");
-		downloadSensorList();
-	},
-	15 * 60 * 1000 // Every 15 minutes
 );
 
 function getSensor(sensorID: number): Sensor | undefined {
@@ -96,7 +87,7 @@ async function setState({
 }
 
 // Download sensor list from internship-worker
-export async function downloadSensorList() {
+export async function downloadSensorList(): Promise<string | undefined> {
 	console.info("Fetching sensor list...");
 
 	// if (devMode) {
@@ -109,6 +100,12 @@ export async function downloadSensorList() {
 	} else {
 		const res = await fetchAPI("sensors");
 		const json = await res.json();
+
+		if (!json?.privileged) {
+			console.error("Non-privileged response received from worker!");
+			return "Invalid token! Unable to get privileged sensor data from worker.";
+		}
+
 		sensors = json.sensors;
 	}
 
