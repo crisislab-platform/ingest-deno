@@ -14,7 +14,7 @@
 	},
 	"dependencies": {
 		"d3": "^7.8.5",
-		"msgpackr": "^1.9.3",
+		"msgpackr": "^1.9.5",
 		"timechart": "^0.5.2"
 	}
 }
