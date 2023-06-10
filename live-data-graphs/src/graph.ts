@@ -1,15 +1,11 @@
-// import TimeChart from "timechart/core/index";
-// import { d3Axis } from "timechart/plugins/d3Axis";
-// import { nearestPoint } from "timechart/plugins/nearestPoint";
-// // import { TimeChartTooltipPlugin } from "timechart/plugins/tooltip";
-// import { TimeChartZoomPlugin } from "timechart/plugins/chartZoom";
 import TimeChart from "timechart";
 import { min as d3Min, max as d3Max, scaleTime } from "d3";
 import { hideMessages, reloadButton, resetButton } from "./ui";
-// import { LineType } from "timechart/options";
+import { LineType } from "timechart/options";
 
 // Graphs
-const data = {};
+const data: Record<string, Array<{ x: number; y: number }>> = {};
+const current: Record<string, number> = {};
 const graphs: Record<string, TimeChart> = {};
 const aliases = {
 	EH3: "Vertical Geophone (counts)",
@@ -21,7 +17,6 @@ const aliases = {
 	ENE: "X axis acceleration (m/s²)",
 	ENZ: "Z axis acceleration (m/s²)",
 };
-const current = {};
 let start;
 let currentHeight = 23;
 
@@ -66,8 +61,9 @@ export function handleData(packet) {
 	current[channel] ||= 0;
 
 	for (const i of measurements) {
+		current[channel] += 10;
 		data[channel].push({
-			x: timestamp - start + (current[channel] += 10),
+			x: timestamp - start + current[channel],
 			y: channel.startsWith("EN") ? i / 3.845e5 : i,
 		});
 	}
@@ -79,6 +75,7 @@ export function handleData(packet) {
 		el.className = "chart";
 		el.id = channel;
 		document.body.appendChild(el);
+		console.log(data[channel]);
 		graphs[channel] = new TimeChart(el, {
 			series: [
 				{
@@ -90,28 +87,13 @@ export function handleData(packet) {
 					// lineWidth: 10,
 				},
 			],
+			tooltip: {
+				enabled: true,
+				xLabel: "Time (seconds)",
+				xFormatter: (x) => `${x / 1000}`,
+			},
 
-			// color: "black",
-			// debugWebGL: true,
-			// backgroundColor: "white",
-			// plugins: {
-			// 	d3Axis,
-			// 	nearestPoint,
-			// 	// tooltip: new TimeChartTooltipPlugin({
-			// 	// 	enabled: true,
-			// 	// 	xLabel: "Time (seconds)",
-			// 	// 	xFormatter: (x) => `${x / 1000}`,
-			// 	// }),
-			// 	zoom: new TimeChartZoomPlugin({
-			// 		x: {
-			// 			autoRange: true,
-			// 		},
-
-			// 		y: {
-			// 			autoRange: true,
-			// 		},
-			// 	}),
-			// },
+			legend: false,
 			zoom: {
 				x: {
 					autoRange: true,
@@ -132,41 +114,41 @@ export function handleData(packet) {
 			`#${channel}`,
 		)?.shadowRoot;
 
-		// 		// Hover tooltip
+		// Hover tooltip
 
-		// const tooltipStyleTag = channelShadowRoot
-		// 	?.querySelector("chart-tooltip")
-		// 	?.shadowRoot?.querySelector("style");
-		// if (tooltipStyleTag)
-		// 	tooltipStyleTag.innerText = `
-		// :host {
-		//     background: var(--background-overlay, white);
-		//     border: 1px solid hsl(0, 0%, 80%);
-		//     border-radius: 3px;
+		const tooltipStyleTag = channelShadowRoot
+			?.querySelector("chart-tooltip")
+			?.shadowRoot?.querySelector("style");
+		if (tooltipStyleTag)
+			tooltipStyleTag.innerText = `
+		:host {
+		    background: var(--background-overlay, white);
+		    border: 1px solid hsl(0, 0%, 80%);
+		    border-radius: 3px;
 
-		// }
-		// .item {
-		//     user-select: none;
-		// }
+		}
+		.item {
+		    user-select: none;
+		}
 
-		// .name {
+		.name {
 
-		//     white-space: nowrap;
-		// }
-		// .example {
-		//     display:none;
-		// }
-		// .value {
-		//     text-overflow: ellipsis;
-		//     overflow: hidden;
-		//     white-space: nowrap;
+		    white-space: nowrap;
+		}
+		.example {
+		    display:none;
+		}
+		.value {
+		    text-overflow: ellipsis;
+		    overflow: hidden;
+		    white-space: nowrap;
 
-		//     text-align: right;
-		// }
-		// .x-not-aligned .value {
-		//     opacity: 0.4;
-		// }
-		// `;
+		    text-align: right;
+		}
+		.x-not-aligned .value {
+		    opacity: 0.4;
+		}
+		`;
 
 		// Axis labels
 
