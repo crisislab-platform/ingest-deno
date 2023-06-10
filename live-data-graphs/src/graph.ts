@@ -75,7 +75,6 @@ export function handleData(packet) {
 		el.className = "chart";
 		el.id = channel;
 		document.body.appendChild(el);
-		console.log(data[channel]);
 		graphs[channel] = new TimeChart(el, {
 			series: [
 				{
