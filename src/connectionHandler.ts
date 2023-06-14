@@ -195,19 +195,12 @@ export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
 
 		if (sensor.id == 3) {
 			const db = openDB();
-			db.query(
-				/*sql*/ `INSERT INTO sensor_data (sensor_website_id, sensor_station_id, sensor_type, sensor_ip, data_channel, data_timestamp, data_values)
-										 VALUES (:sensor_website_id, :sensor_station_id, :sensor_type, :sensor_ip, :data_channel, :data_timestamp, :data_values)`,
-				{
-					sensor_website_id: sensor.id,
-					sensor_station_id: sensor.secondary_id,
-					sensor_type: sensor.type,
-					sensor_ip: sensor.ip,
-					data_channel: parsedData[0],
-					data_timestamp: parsedData[1],
-					data_values: parsedData.slice(2).join(", "),
-				}
-			);
+			db.execute(/*sql*/ `INSERT INTO sensor_data (sensor_website_id, sensor_station_id, sensor_type, sensor_ip, data_channel, data_timestamp, data_values)
+			VALUES (${sensor.id}, '${sensor.secondary_id}', '${sensor.type}',
+			'${sensor.ip}', '${parsedData[0]}', ${parsedData[1]}, '${parsedData
+				.slice(2)
+				.join(", ")}')
+			`);
 			db.close();
 		}
 	} catch (err) {
