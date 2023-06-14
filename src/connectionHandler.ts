@@ -170,8 +170,7 @@ export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
 				.replace("{", "[")
 				.replace("}", "]")
 				.replaceAll("][", "],[")}]`
-		) as (string | number)[];
-		console.log(parsedData);
+		) as (string | number)[][];
 		lastMessageTimestampMap.set(sensor.id, Date.now());
 
 		setState({ sensorID: sensor.id, connected: true });
@@ -196,14 +195,13 @@ export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
 
 		if (sensor.id == 3) {
 			const db = openDB();
-			const query = /*sql*/ `INSERT INTO sensor_data (sensor_website_id, sensor_station_id, sensor_type, sensor_ip, data_channel, data_timestamp, data_values)
+			for (const packet of parsedData) {
+				const query = /*sql*/ `INSERT INTO sensor_data (sensor_website_id, sensor_station_id, sensor_type, sensor_ip, data_channel, data_timestamp, data_values)
 			VALUES (${sensor.id}, '${sensor.secondary_id}', '${sensor.type}',
-			'${sensor.ip}', '${parsedData[0]}', ${parsedData[1]}, '${parsedData
-				.slice(2)
-				.join(", ")}')
+			'${sensor.ip}', '${packet[0]}', ${packet[1]}, '${packet.slice(2).join(", ")}')
 			`;
-			console.log(query);
-			db.execute(query);
+				db.execute(query);
+			}
 			db.close();
 		}
 	} catch (err) {
