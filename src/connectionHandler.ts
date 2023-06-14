@@ -171,6 +171,7 @@ export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
 				.replace("}", "]")
 				.replaceAll("][", "],[")}]`
 		) as (string | number)[];
+		console.log(parsedData);
 		lastMessageTimestampMap.set(sensor.id, Date.now());
 
 		setState({ sensorID: sensor.id, connected: true });
