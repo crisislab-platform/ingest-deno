@@ -55,6 +55,8 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 		// Unpack with msgpackr
 		const parsed = unpack(new Uint8Array(data));
 
+		// console.log(parsed);
+
 		if (parsed?.type === "datagram") {
 			if (!window.CRISiSLab.connected) {
 				console.info("Received first packet");

@@ -1,12 +1,9 @@
 import TimeChart from "timechart";
 import { min as d3Min, max as d3Max, scaleTime } from "d3";
 import { hideMessages, reloadButton, resetButton } from "./ui";
-import { LineType } from "timechart/options";
 
 // Graphs
-const data: Record<string, Array<{ x: number; y: number }>> = {};
 const current: Record<string, number> = {};
-const graphs: Record<string, TimeChart> = {};
 const aliases = {
 	EH3: "Vertical Geophone (counts)",
 	EN3: "Y axis acceleration (m/s²)",
@@ -19,6 +16,7 @@ const aliases = {
 };
 let start;
 let currentHeight = 23;
+const maxDataLength = 3000;
 
 function setAttributes(el: Element, attrs: Record<string, string>) {
 	for (const key in attrs) {
@@ -27,15 +25,16 @@ function setAttributes(el: Element, attrs: Record<string, string>) {
 }
 
 function resetView() {
-	for (const i of Object.values(graphs)) i.options.realTime = true;
+	for (const i of Object.values(window.CRISiSLab.charts))
+		i.options.realTime = true;
 }
 
 resetButton.addEventListener("click", resetView);
 
 setInterval(() => {
 	resetButton.setAttribute("disabled", "disabled");
-	for (const i in graphs) {
-		const graph = graphs[i];
+	for (const i in window.CRISiSLab.charts) {
+		const graph = window.CRISiSLab.charts[i];
 		if (!graph.options.realTime) {
 			resetButton.removeAttribute("disabled");
 		}
@@ -57,28 +56,18 @@ export function handleData(packet) {
 	const timestamp = timestampSeconds * 1000;
 
 	start ||= timestamp;
-	data[channel] ||= [];
+	window.CRISiSLab.data[channel] ||= [];
 	current[channel] ||= 0;
 
-	for (const i of measurements) {
-		current[channel] += 10;
-		data[channel].push({
-			x: timestamp - start + current[channel],
-			y: channel.startsWith("EN") ? i / 3.845e5 : i,
-		});
-	}
-
-	current[channel] = 0;
-
-	if (!graphs[channel]) {
+	if (!window.CRISiSLab.charts[channel]) {
 		const el = document.createElement("div");
 		el.className = "chart";
 		el.id = channel;
 		document.body.appendChild(el);
-		graphs[channel] = new TimeChart(el, {
+		window.CRISiSLab.charts[channel] = new TimeChart(el, {
 			series: [
 				{
-					data: data[channel],
+					data: window.CRISiSLab.data[channel],
 					name: aliases[channel] || channel,
 					// color: "red",
 					// lineWidth: 10,
@@ -89,7 +78,10 @@ export function handleData(packet) {
 			tooltip: {
 				enabled: true,
 				xLabel: "Time (seconds)",
-				xFormatter: (x) => `${x / 1000}`,
+				xFormatter: (x) => {
+					// const d = new Date(x);
+					return `${x}`;
+				},
 			},
 
 			legend: false,
@@ -101,6 +93,7 @@ export function handleData(packet) {
 					autoRange: true,
 				},
 			},
+			// yRange: "auto",
 			baseTime: start,
 			xScaleType: scaleTime,
 			xRange: { min: 200, max: 10000 },
@@ -188,28 +181,42 @@ export function handleData(packet) {
 		currentHeight += 24;
 	}
 
+	for (const i of measurements) {
+		current[channel] += 10;
+		window.CRISiSLab.data[channel].push({
+			x: timestamp - start + current[channel],
+			y: channel.startsWith("EN") ? i / 3.845e5 : i,
+		});
+		if (window.CRISiSLab.data[channel].length > maxDataLength) {
+			window.CRISiSLab.data[channel].shift();
+		}
+	}
+
+	current[channel] = 0;
+
 	if (
-		graphs[channel].model.xScale.domain()[1] / 10 >
-		data[channel].length - 100
+		window.CRISiSLab.charts[channel].model.xScale.domain()[1] / 10 >
+		window.CRISiSLab.data[channel].length - 100
 	) {
 		// autoscale
 		// Get data that's in view
 		const start = Math.max(
-			graphs[channel].model.xScale.domain()[0] / 10,
+			window.CRISiSLab.charts[channel].model.xScale.domain()[0] / 10,
 			0,
 		);
-		const end = graphs[channel].model.xScale.domain()[1] / 10;
-		const dataInView = data[channel].slice(start);
+		const end =
+			window.CRISiSLab.charts[channel].model.xScale.domain()[1] / 10;
+		const dataInView = window.CRISiSLab.data[channel].slice(start);
 
 		// Get the max and min values
 		const max = d3Max(dataInView, (d) => d.y);
 		const min = d3Min(dataInView, (d) => d.y);
 
 		// Set the domain of the yScale
-		graphs[channel].options.yRange = { min, max };
+		window.CRISiSLab.charts[channel].options.yRange = { min, max };
 	}
 
-	graphs[channel].update();
+	window.CRISiSLab.charts[channel].update();
 
 	hideMessages();
 	if (!window.CRISiSLab.haveRenderedPacket) {

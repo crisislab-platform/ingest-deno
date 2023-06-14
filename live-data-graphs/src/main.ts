@@ -3,6 +3,7 @@ import "./graph";
 import { showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
 import { handleData } from "./graph";
+import TimeChart from "timechart";
 
 declare global {
 	interface Window {
@@ -18,6 +19,8 @@ declare global {
 				online?: boolean;
 				[key: string]: any;
 			};
+			charts: Record<string, TimeChart>;
+			data: Record<string, Array<{ x: number; y: number }>>;
 		};
 	}
 }
@@ -31,6 +34,8 @@ window.CRISiSLab = {
 	sensorMeta: null,
 	// For debugging in console
 	unpack,
+	charts: {},
+	data: {},
 };
 
 if (!location.pathname.includes("/consume/")) showNoSensorFound();
