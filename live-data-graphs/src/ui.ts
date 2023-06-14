@@ -4,9 +4,6 @@ export const statusText = document.getElementById(
 export const reloadButton = document.getElementById(
 	"reload",
 ) as HTMLButtonElement;
-export const resetButton = document.getElementById(
-	"reset-view",
-) as HTMLButtonElement;
 
 reloadButton.addEventListener("click", () => {
 	location.reload();
