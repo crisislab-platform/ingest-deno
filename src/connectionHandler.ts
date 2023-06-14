@@ -3,10 +3,30 @@ import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
 loadSync({ export: true });
 
 // Imports
+import { DB } from "https://deno.land/x/sqlite@v3.7.2/mod.ts";
 import "./types.d.ts"; // goddamn typescript
 import { fetchAPI } from "./utils.ts";
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
+
+function openDB(): DB {
+	return new DB("sensor-data.db");
+}
+
+const db = openDB();
+db.execute(/*sql*/ `
+  CREATE TABLE IF NOT EXISTS sensor_data (
+    record_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sensor_website_id INTEGER NOT NULL,
+	sensor_station_id TEXT,
+	sensor_type TEXT,
+	sensor_ip TEXT NOT NULL,
+	data_channel TEXT NOT NULL,
+	data_timestamp REAL NOT NULL,
+	data_values TEXT NOT NULL
+  )
+`);
+db.close();
 
 const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
@@ -150,7 +170,7 @@ export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
 				.replace("{", "[")
 				.replace("}", "]")
 				.replaceAll("][", "],[")}]`
-		);
+		) as (string | number)[];
 		lastMessageTimestampMap.set(sensor.id, Date.now());
 
 		setState({ sensorID: sensor.id, connected: true });
@@ -172,6 +192,24 @@ export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
 				}
 			})
 		);
+
+		if (sensor.id == 3) {
+			const db = openDB();
+			db.query(
+				/*sql*/ `INSERT INTO sensor_data (sensor_website_id, sensor_station_id, sensor_type, sensor_ip, data_channel, data_timestamp, data_values)
+										 VALUES (:sensor_website_id, :sensor_station_id, :sensor_type, :sensor_ip, :data_channel, :data_timestamp, :data_values)`,
+				{
+					sensor_website_id: sensor.id,
+					sensor_station_id: sensor.secondary_id,
+					sensor_type: sensor.type,
+					sensor_ip: sensor.ip,
+					data_channel: parsedData[0],
+					data_timestamp: parsedData[1],
+					data_values: parsedData.slice(2).join(", "),
+				}
+			);
+			db.close();
+		}
 	} catch (err) {
 		console.warn("Failure when parsing/forwarding datagram: ", err);
 	}

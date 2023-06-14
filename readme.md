@@ -27,7 +27,7 @@ Modify the .env file to have the correct API token and the desired ports.
 Then run:
 
 ```bash
-deno run --unstable --allow-net --allow-read --allow-env --watch src/server.ts
+deno run --unstable --allow-net --allow-write=sensor-data.db --allow-read --allow-env --watch src/server.ts
 ```
 
 You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:
@@ -55,6 +55,7 @@ The `ingest` user has been setup for running the ingest server. Ask Ben or Zade 
 It's been given sudo privileges for just `service ingest-deno *` commands as well.
 
 For instance:
+
 ```bash
 sudo service ingest-deno status
 sudo service ingest-deno restart
