@@ -90,3 +90,88 @@ export function handleData(packet) {
 		reloadButton.toggleAttribute("disabled", true);
 	}
 }
+
+let mouseX = -1;
+let mouseY = -1;
+
+window.addEventListener("mousemove", (event) => {
+	mouseX = event.pageX;
+	mouseY = event.pageY;
+});
+
+export function highlightNearestPoint() {
+	for (const chart of Object.values(window.CRISiSLab.charts)) {
+		const rect = chart.canvas.getBoundingClientRect();
+		// Check if the mouse is over the chart
+		if (
+			rect.x <= mouseX &&
+			mouseX <= rect.x + rect.width &&
+			rect.y <= mouseY &&
+			mouseY <= rect.y + rect.height
+		) {
+			const chartX = mouseX - rect.x;
+			const chartY = mouseY - rect.y;
+
+			// Thinner line
+			chart.ctx.lineWidth = 0.5;
+
+			// Dashed line
+			chart.ctx.setLineDash([10, 10]);
+
+			// Horizontal line
+			chart.ctx.beginPath();
+			chart.ctx.moveTo(0, chartY);
+			chart.ctx.lineTo(chart.width, chartY);
+			chart.ctx.stroke();
+
+			// Vertical line
+			chart.ctx.beginPath();
+			chart.ctx.moveTo(chartX, 0);
+			chart.ctx.lineTo(chartX, chart.height);
+			chart.ctx.stroke();
+
+			// Regular line
+			chart.ctx.setLineDash([]);
+
+			// Get the nearest point
+			const nearestPoint = chart.getNearestPoint(chartX, chartY);
+			if (!nearestPoint) break;
+
+			const { xOffset, xMultiplier, yOffset, yMultiplier } =
+				chart.getOffsetsAndMultipliers();
+
+			const actualPointX = TimeLine.getActualPointXOrY(
+				nearestPoint.x,
+				xOffset,
+				xMultiplier,
+			);
+			const actualPointY = TimeLine.getActualPointXOrY(
+				nearestPoint.y,
+				yOffset,
+				yMultiplier,
+			);
+
+			// Ticker line
+			chart.ctx.lineWidth = 1.2;
+
+			// Draw a marker on it
+			const r = 10;
+			chart.ctx.beginPath();
+			chart.ctx.arc(actualPointX, actualPointY, r, 0, 2 * Math.PI);
+			chart.ctx.stroke();
+
+			// Crosshair
+			chart.ctx.beginPath();
+			chart.ctx.moveTo(actualPointX, actualPointY - r);
+			chart.ctx.lineTo(actualPointX, actualPointY + r);
+			chart.ctx.stroke();
+			chart.ctx.beginPath();
+			chart.ctx.moveTo(actualPointX - r, actualPointY);
+			chart.ctx.lineTo(actualPointX + r, actualPointY);
+			chart.ctx.stroke();
+
+			// Don't bother with the other charts - the mouse will only be over one at once
+			break;
+		}
+	}
+}

@@ -2,7 +2,7 @@ import { unpack } from "msgpackr";
 import "./graph";
 import { showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
-import { handleData } from "./graph";
+import { handleData, highlightNearestPoint } from "./graph";
 import { TimeLine } from "./chart";
 
 declare global {
@@ -62,5 +62,6 @@ function draw() {
 	for (const chart of Object.values(window.CRISiSLab.charts)) {
 		chart.draw();
 	}
+	highlightNearestPoint();
 }
 requestAnimationFrame(draw);
