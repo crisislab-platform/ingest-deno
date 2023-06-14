@@ -1,5 +1,5 @@
 import { TimeLine } from "./chart";
-import { hideMessages, reloadButton, resetButton } from "./ui";
+import { hideMessages, reloadButton } from "./ui";
 
 // Graphs
 const current: Record<string, number> = {};
