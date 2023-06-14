@@ -27,7 +27,7 @@ Modify the .env file to have the correct API token and the desired ports.
 Then run:
 
 ```bash
-deno run --unstable --allow-net --allow-write=sensor-data.db --allow-read --allow-env --watch src/server.ts
+deno run --unstable --allow-net --allow-write=sensor-data.db --allow-write=sensor-data.db-journal --allow-read --allow-env --watch src/server.ts
 ```
 
 You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:
