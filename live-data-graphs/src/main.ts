@@ -3,7 +3,7 @@ import "./graph";
 import { showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
 import { handleData } from "./graph";
-import TimeChart from "timechart";
+import { TimeLine } from "./chart";
 
 declare global {
 	interface Window {
@@ -19,7 +19,7 @@ declare global {
 				online?: boolean;
 				[key: string]: any;
 			};
-			charts: Record<string, TimeChart>;
+			charts: Record<string, TimeLine>;
 			data: Record<string, Array<{ x: number; y: number }>>;
 		};
 	}
@@ -56,3 +56,11 @@ else {
 	}
 	connectSocket(handleData);
 }
+
+function draw() {
+	requestAnimationFrame(draw);
+	for (const chart of Object.values(window.CRISiSLab.charts)) {
+		chart.draw();
+	}
+}
+requestAnimationFrame(draw);
