@@ -8,6 +8,8 @@ export interface TimeLineOptions {
 	data: TimeLineDataPoint[];
 	maxPoints: number;
 	pointWidth: number;
+	label: string;
+	lineWidth?: number;
 }
 
 // NOTE: Assumes data is sorted by X value, with smallest value first in the list
@@ -18,6 +20,8 @@ export class TimeLine {
 	ctx: CanvasRenderingContext2D;
 	maxPoints: number;
 	pointWidth: number;
+	label: string;
+	lineWidth = 0.7;
 	dpr = window.devicePixelRatio || 1;
 
 	constructor(options: TimeLineOptions) {
@@ -25,6 +29,8 @@ export class TimeLine {
 		this.data = options.data;
 		this.maxPoints = options.maxPoints;
 		this.pointWidth = options.pointWidth;
+		this.label = options.label;
+		if (options.lineWidth) this.lineWidth = options.lineWidth;
 
 		// Setup canvas
 		this.canvas = document.createElement("canvas");
@@ -86,12 +92,11 @@ export class TimeLine {
 			if (point.y > biggestYValue) biggestYValue = point.y;
 			if (point.y < smallestYValue) smallestYValue = point.y;
 		}
+
 		// Get the maximum gap
 		const biggestYGap = biggestYValue - smallestYValue;
-		// console.log(biggestYValue, smallestYValue, biggestYGap);
 
-		// Now divide the available pixels by that
-
+		// Now divide the available pixels by tha
 		const yMultiplier = this.height / biggestYGap;
 
 		// Also calculate what we need to add to all the Y values so that they're visible
@@ -101,7 +106,7 @@ export class TimeLine {
 
 		// Draw in black
 		this.ctx.strokeStyle = "black";
-		this.ctx.lineWidth = 1;
+		this.ctx.lineWidth = this.lineWidth;
 		// Clear canvas
 		this.ctx.clearRect(0, 0, this.width, this.height);
 

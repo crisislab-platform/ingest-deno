@@ -46,6 +46,7 @@ export function handleData(packet) {
 			data: window.CRISiSLab.data[channel],
 			maxPoints: maxDataLength,
 			pointWidth,
+			label: aliases[channel],
 		});
 
 		container.style.opacity = "1";
