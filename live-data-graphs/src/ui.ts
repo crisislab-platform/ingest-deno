@@ -70,3 +70,7 @@ export function formatTime(time: number, long = false): string {
 	if (!long) return timeString;
 	return `${d.getFullYear()}-${d.getMonth()}-${d.getDay()} ${timeString}`;
 }
+
+export function round(n: number): number {
+	return Math.round((n + Number.EPSILON) * 10000) / 10000;
+}

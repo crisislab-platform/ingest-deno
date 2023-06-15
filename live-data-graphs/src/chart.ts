@@ -1,7 +1,11 @@
-export interface TimeLineDataPoint {
+import { formatTime, round } from "./ui";
+
+export interface Point {
 	y: number;
 	x: number;
 }
+
+export type TimeLineDataPoint = Point;
 
 export interface ComputedTimeLineDataPoint extends TimeLineDataPoint {
 	y: number;
@@ -34,7 +38,8 @@ const dpr = window.devicePixelRatio || 1;
 export class TimeLine {
 	container: HTMLElement;
 	data: TimeLineDataPoint[];
-	computedData: ComputedTimeLineDataPoint[];
+	savedData: TimeLineDataPoint[] = [];
+	computedData: ComputedTimeLineDataPoint[] = [];
 	canvas: HTMLCanvasElement;
 	ctx: CanvasRenderingContext2D;
 	maxPoints: number;
@@ -116,7 +121,7 @@ export class TimeLine {
 
 	getNearestPoint(x: number, y: number): ComputedTimeLineDataPoint | null {
 		// Sanity check
-		if (this.data.length < 1) return null;
+		if (this.computedData.length < 1) return null;
 
 		// Find closest point
 		let closestDataPoint: ComputedTimeLineDataPoint | null = null;
@@ -138,6 +143,22 @@ export class TimeLine {
 		return closestDataPoint;
 	}
 
+	getYCaps(): { yMax: number; yMin: number; maxYGap: number } {
+		let biggestYValue = Number.MIN_VALUE;
+		let smallestYValue = Number.MAX_VALUE;
+		for (const point of this.savedData) {
+			if (point.y > biggestYValue) biggestYValue = point.y;
+			if (point.y < smallestYValue) smallestYValue = point.y;
+		}
+		const biggestYGap = biggestYValue - smallestYValue;
+
+		return {
+			yMax: biggestYValue,
+			yMin: smallestYValue,
+			maxYGap: biggestYGap,
+		};
+	}
+
 	getRenderOffsetsAndMultipliers(): {
 		xOffset: number;
 		xMultiplier: number;
@@ -150,24 +171,18 @@ export class TimeLine {
 		const xMultiplier = this.width / (this.maxPoints * this.pointWidth);
 
 		// Also X offset
-		const xOffset = this.data[0].x;
+		const xOffset = this.savedData[0].x;
 
 		// Y is harder - need to find the difference between the minimum and maximum points
-		let biggestYValue = Number.MIN_VALUE;
-		let smallestYValue = Number.MAX_VALUE;
-		for (const point of this.data) {
-			if (point.y > biggestYValue) biggestYValue = point.y;
-			if (point.y < smallestYValue) smallestYValue = point.y;
-		}
+		const { yMax, yMin, maxYGap } = this.getYCaps();
 
 		// Get the maximum gap
-		const biggestYGap = biggestYValue - smallestYValue;
 
 		// Now divide the available pixels by tha
-		const yMultiplier = this.height / biggestYGap;
+		const yMultiplier = this.height / maxYGap;
 
 		// Also calculate what we need to add to all the Y values so that they're visible
-		const yOffset = smallestYValue;
+		const yOffset = yMin;
 
 		return { xOffset, xMultiplier, yOffset, yMultiplier };
 	}
@@ -182,6 +197,8 @@ export class TimeLine {
 		// Don't try and compute if less than 2 points
 		if (this.data.length < 2) return;
 
+		this.savedData = [...this.data];
+
 		// Draw the lines
 		const { xOffset, xMultiplier, yOffset, yMultiplier } =
 			this.getRenderOffsetsAndMultipliers();
@@ -190,7 +207,7 @@ export class TimeLine {
 		this.computedData = [];
 
 		// Compute values for each point
-		for (const point of this.data) {
+		for (const point of this.savedData) {
 			const computedPoint: ComputedTimeLineDataPoint = {
 				...point,
 				renderX: computeRenderValue(point.x, xOffset, xMultiplier),
@@ -208,6 +225,7 @@ export class TimeLine {
 		this.ctx.strokeStyle = "black";
 		this.ctx.lineWidth = this.lineWidth;
 		this.ctx.setLineDash([]);
+
 		// Clear canvas
 		this.ctx.clearRect(0, 0, this.width, this.height);
 
@@ -229,4 +247,50 @@ export class TimeLine {
 		// Draw the path
 		this.ctx.stroke();
 	}
+}
+
+export function drawAxis(chart: TimeLine, xMarks = 5, yMarks = 3) {
+	const xPointGap = Math.floor(chart.maxPoints / xMarks);
+
+	for (let i = 0; i < xMarks; i++) {
+		const point = chart.computedData[i * xPointGap];
+		if (!point) continue;
+
+		// Vertical line
+		chart.ctx.lineWidth = 0.5;
+		chart.ctx.beginPath();
+		chart.ctx.moveTo(point.renderX, 0);
+		chart.ctx.lineTo(point.renderX, chart.height);
+		chart.ctx.stroke();
+
+		// Maker values
+		chart.ctx.fillText(
+			formatTime(point.x),
+			point.renderX + 5,
+			chart.height - 5,
+		);
+	}
+
+	// const ySorted = [...chart.computedData].sort((a, b) => a.y - b.y);
+	// for (const point of [
+	// 	ySorted[0],
+	// 	ySorted[Math.floor(ySorted.length / 2)],
+	// 	ySorted[ySorted.length - 1],
+	// ]) {
+	// 	// Horizontal line line
+	// 	chart.ctx.lineWidth = 0.5;
+	// 	chart.ctx.beginPath();
+	// 	chart.ctx.moveTo(0, point.renderY);
+	// 	chart.ctx.lineTo(chart.width, point.renderY);
+	// 	chart.ctx.stroke();
+
+	// 	// Maker values
+	// 	chart.ctx.fillText(round(point.y) + "", 0, point.renderY - 5);
+	// }
+
+	//
+	// chart.ctx.beginPath();
+	// chart.ctx.moveTo(0, chart.height);
+	// chart.ctx.lineTo(chart.width, chart.height);
+	// chart.ctx.stroke();
 }
