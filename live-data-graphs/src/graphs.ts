@@ -62,12 +62,12 @@ export function handleData(packet) {
 
 		const xLabel = document.createElement("p");
 		xLabel.innerHTML = "Time";
-		xLabel.className = "x-label";
+		xLabel.className = "axis-label x-axis";
 		container.appendChild(xLabel);
 
 		const yLabel = document.createElement("p");
 		yLabel.innerHTML = aliases[channel] || channel;
-		yLabel.className = "y-label";
+		yLabel.className = "axis-label y-axis";
 		container.appendChild(yLabel);
 
 		currentHeight += 24;
