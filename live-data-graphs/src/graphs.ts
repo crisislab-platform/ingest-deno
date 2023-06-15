@@ -63,16 +63,12 @@ export function handleData(packet) {
 		const xLabel = document.createElement("p");
 		xLabel.innerHTML = "Time";
 		xLabel.className = "x-label";
-		xLabel.style.top = `${currentHeight}vh`;
 		container.appendChild(xLabel);
-		xLabel.style.opacity = "1";
 
 		const yLabel = document.createElement("p");
 		yLabel.innerHTML = aliases[channel] || channel;
 		yLabel.className = "y-label";
-		yLabel.style.top = `${currentHeight - 12}vh`;
 		container.appendChild(yLabel);
-		yLabel.style.opacity = "1";
 
 		currentHeight += 24;
 	}
@@ -108,16 +104,31 @@ window.addEventListener("mousemove", (event) => {
 	mouseY = event.pageY;
 });
 
+function isPointInBox(
+	px: number,
+	py: number,
+	x: number,
+	y: number,
+	w: number,
+	h: number,
+): boolean {
+	return x <= px && px <= x + w && y <= py && py <= y + h;
+}
+
 export function highlightNearestPoint() {
 	let found = false;
 	for (const chart of Object.values(window.CRISiSLab.charts)) {
 		const rect = chart.canvas.getBoundingClientRect();
 		// Check if the mouse is over the chart
 		if (
-			rect.x <= mouseX &&
-			mouseX <= rect.x + rect.width &&
-			rect.y <= mouseY &&
-			mouseY <= rect.y + rect.height
+			isPointInBox(
+				mouseX,
+				mouseY,
+				rect.x,
+				rect.y,
+				rect.width,
+				rect.height,
+			)
 		) {
 			found = true;
 
