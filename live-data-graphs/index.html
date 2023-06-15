@@ -106,12 +106,22 @@
 				right: 8px;
 				z-index: 9999;
 			}
+
+			#hover-text {
+				display: block;
+				position: absolute;
+				background-color: white;
+				color: black;
+				padding: 2px;
+				border: 1px solid black;
+			}
 		</style>
 	</head>
 
 	<body>
 		<h1 id="status">Connecting...</h1>
 		<button id="reload" disabled>Reload</button>
+		<span id="hover-text" style="display: none"></span>
 		<script type="module" src="/src/main.ts"></script>
 	</body>
 </html>

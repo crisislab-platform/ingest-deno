@@ -1,5 +1,5 @@
 import { TimeLine } from "./chart";
-import { hideMessages, reloadButton } from "./ui";
+import { hideMessages, reloadButton, hoverText } from "./ui";
 
 // Graphs
 const current: Record<string, number> = {};
@@ -46,7 +46,8 @@ export function handleData(packet) {
 			data: window.CRISiSLab.data[channel],
 			maxPoints: maxDataLength,
 			pointWidth,
-			label: aliases[channel],
+			xLabel: aliases[channel],
+			yLabel: "Time",
 		});
 
 		container.style.opacity = "1";
@@ -54,7 +55,7 @@ export function handleData(packet) {
 		// Axis labels
 
 		const xLabel = document.createElement("p");
-		xLabel.innerHTML = "Time (seconds)";
+		xLabel.innerHTML = "Time";
 		xLabel.className = "x-label";
 		xLabel.style.top = `${currentHeight}vh`;
 		document.body.appendChild(xLabel);
@@ -100,6 +101,7 @@ window.addEventListener("mousemove", (event) => {
 });
 
 export function highlightNearestPoint() {
+	let found = false;
 	for (const chart of Object.values(window.CRISiSLab.charts)) {
 		const rect = chart.canvas.getBoundingClientRect();
 		// Check if the mouse is over the chart
@@ -109,6 +111,8 @@ export function highlightNearestPoint() {
 			rect.y <= mouseY &&
 			mouseY <= rect.y + rect.height
 		) {
+			found = true;
+
 			const chartX = mouseX - rect.x;
 			const chartY = mouseY - rect.y;
 
@@ -170,8 +174,24 @@ export function highlightNearestPoint() {
 			chart.ctx.lineTo(actualPointX + r, actualPointY);
 			chart.ctx.stroke();
 
+			// Text
+			hoverText.innerText = `${chart.yLabel}: ${nearestPoint.y}
+${chart.xLabel}: ${nearestPoint.x}`;
+			hoverText.style.top = rect.y + "px";
+			hoverText.style.display = "block";
+
+			if (chartX > chart.width / 2) {
+				hoverText.style.left = rect.x + "px";
+				hoverText.style.right = "";
+			} else {
+				hoverText.style.right = "0px";
+				hoverText.style.left = "";
+			}
 			// Don't bother with the other charts - the mouse will only be over one at once
 			break;
 		}
+	}
+	if (!found) {
+		hoverText.style.display = "none";
 	}
 }

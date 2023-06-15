@@ -8,7 +8,8 @@ export interface TimeLineOptions {
 	data: TimeLineDataPoint[];
 	maxPoints: number;
 	pointWidth: number;
-	label: string;
+	yLabel: string;
+	xLabel: string;
 	lineWidth?: number;
 }
 
@@ -20,7 +21,8 @@ export class TimeLine {
 	ctx: CanvasRenderingContext2D;
 	maxPoints: number;
 	pointWidth: number;
-	label: string;
+	yLabel: string;
+	xLabel: string;
 	lineWidth = 0.7;
 	dpr = window.devicePixelRatio || 1;
 
@@ -29,7 +31,9 @@ export class TimeLine {
 		this.data = options.data;
 		this.maxPoints = options.maxPoints;
 		this.pointWidth = options.pointWidth;
-		this.label = options.label;
+		this.xLabel = options.xLabel;
+		this.yLabel = options.yLabel;
+
 		if (options.lineWidth) this.lineWidth = options.lineWidth;
 
 		// Setup canvas

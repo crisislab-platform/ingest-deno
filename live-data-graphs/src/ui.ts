@@ -4,6 +4,9 @@ export const statusText = document.getElementById(
 export const reloadButton = document.getElementById(
 	"reload",
 ) as HTMLButtonElement;
+export const hoverText = document.getElementById(
+	"hover-text",
+) as HTMLDivElement;
 
 reloadButton.addEventListener("click", () => {
 	location.reload();
