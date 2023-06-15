@@ -68,5 +68,5 @@ export function formatTime(time: number, long = false): string {
 	const d = new Date(time);
 	const timeString = `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
 	if (!long) return timeString;
-	return `${timeString} ${d.getFullYear()}-${d.getMonth()}-${d.getDay()}`;
+	return `${d.getFullYear()}-${d.getMonth()}-${d.getDay()} ${timeString}`;
 }
