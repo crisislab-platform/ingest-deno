@@ -180,7 +180,9 @@ export function highlightNearestPoint() {
 			chart.ctx.stroke();
 
 			// Text
-			hoverText.innerText = `${chart.yLabel}: ${point.y}
+			hoverText.innerText = `${chart.yLabel}: ${
+				Math.round((point.y + Number.EPSILON) * 10000) / 10000
+			}
 ${chart.xLabel}: ${formatTime(point.x, true)}`;
 			hoverText.style.top = rect.y + "px";
 			hoverText.style.display = "block";
