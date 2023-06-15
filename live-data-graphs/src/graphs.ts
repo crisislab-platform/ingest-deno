@@ -1,5 +1,11 @@
 import { TimeLine } from "./chart";
-import { hideMessages, reloadButton, hoverText, chartsContainer } from "./ui";
+import {
+	hideMessages,
+	reloadButton,
+	hoverText,
+	chartsContainer,
+	formatTime,
+} from "./ui";
 
 // Graphs
 const current: Record<string, number> = {};
@@ -73,7 +79,7 @@ export function handleData(packet) {
 
 	for (const i of measurements) {
 		window.CRISiSLab.data[channel].push({
-			x: timestamp - start + current[channel],
+			x: timestamp + current[channel],
 			y: channel.startsWith("EN") ? i / 3.845e5 : i,
 		});
 		current[channel] += pointWidth;
@@ -164,7 +170,7 @@ export function highlightNearestPoint() {
 
 			// Text
 			hoverText.innerText = `${chart.yLabel}: ${point.y}
-Time (seconds): ${point.x / 1000}`;
+${chart.xLabel}: ${formatTime(point.x, true)}`;
 			hoverText.style.top = rect.y + "px";
 			hoverText.style.display = "block";
 

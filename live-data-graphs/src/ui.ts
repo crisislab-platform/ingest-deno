@@ -63,3 +63,10 @@ export function showNoSensorFound() {
 	statusText.innerText =
 		"No sensor found. Go to /consume/4 to see some sensor data.";
 }
+
+export function formatTime(time: number, long = false): string {
+	const d = new Date(time);
+	const timeString = `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+	if (!long) return timeString;
+	return `${timeString} ${d.getFullYear()}-${d.getMonth()}-${d.getDay()}`;
+}
