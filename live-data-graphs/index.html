@@ -16,7 +16,8 @@
 			}
 
 			html,
-			body {
+			body,
+			#charts-container {
 				background-color: white;
 			}
 
@@ -62,8 +63,7 @@
 			}
 
 			.x-label {
-				position: fixed;
-				z-index: 999;
+				position: absolute;
 				top: 22vh;
 				right: 20px;
 				font-family: sans-serif;
@@ -72,8 +72,7 @@
 			}
 
 			.y-label {
-				position: fixed;
-				z-index: 999;
+				position: absolute;
 				top: 22vh;
 				left: -55px;
 				font-family: sans-serif;
@@ -115,13 +114,22 @@
 				padding: 2px;
 				border: 1px solid black;
 			}
+
+			#pause {
+				position: absolute;
+				bottom: 2px;
+				left: 50%;
+				transform: translateX(-50%);
+			}
 		</style>
 	</head>
 
 	<body>
-		<h1 id="status">Connecting...</h1>
-		<button id="reload" disabled>Reload</button>
+		<div id="charts-container"></div>
 		<span id="hover-text" style="display: none"></span>
+		<h1 id="status">Connecting...</h1>
+		<button id="pause">Pause</button>
+		<button id="reload" disabled>Reload</button>
 		<script type="module" src="/src/main.ts"></script>
 	</body>
 </html>

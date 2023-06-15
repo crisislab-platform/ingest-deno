@@ -1,5 +1,5 @@
-import { TimeLine, computeRenderValue } from "./chart";
-import { hideMessages, reloadButton, hoverText } from "./ui";
+import { TimeLine } from "./chart";
+import { hideMessages, reloadButton, hoverText, chartsContainer } from "./ui";
 
 // Graphs
 const current: Record<string, number> = {};
@@ -40,14 +40,14 @@ export function handleData(packet) {
 		const container = document.createElement("div");
 		container.className = "chart";
 		container.id = channel;
-		document.body.appendChild(container);
+		chartsContainer.appendChild(container);
 		window.CRISiSLab.charts[channel] = new TimeLine({
 			container,
 			data: window.CRISiSLab.data[channel],
 			maxPoints: maxDataLength,
 			pointWidth,
-			xLabel: aliases[channel],
-			yLabel: "Time",
+			xLabel: "Time",
+			yLabel: aliases[channel],
 		});
 
 		container.style.opacity = "1";
@@ -58,14 +58,14 @@ export function handleData(packet) {
 		xLabel.innerHTML = "Time";
 		xLabel.className = "x-label";
 		xLabel.style.top = `${currentHeight}vh`;
-		document.body.appendChild(xLabel);
+		container.appendChild(xLabel);
 		xLabel.style.opacity = "1";
 
 		const yLabel = document.createElement("p");
 		yLabel.innerHTML = aliases[channel] || channel;
 		yLabel.className = "y-label";
 		yLabel.style.top = `${currentHeight - 12}vh`;
-		document.body.appendChild(yLabel);
+		container.appendChild(yLabel);
 		yLabel.style.opacity = "1";
 
 		currentHeight += 24;
@@ -164,7 +164,7 @@ export function highlightNearestPoint() {
 
 			// Text
 			hoverText.innerText = `${chart.yLabel}: ${point.y}
-${chart.xLabel}: ${point.x}`;
+Time (seconds): ${point.x / 1000}`;
 			hoverText.style.top = rect.y + "px";
 			hoverText.style.display = "block";
 

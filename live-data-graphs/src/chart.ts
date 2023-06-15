@@ -70,7 +70,10 @@ export class TimeLine {
 		// Save 'this'
 		const that = this;
 		// Need to make sure that 'this' inside the handler refers to the class
-		window.addEventListener("resize", () => that.updateCanvas());
+		window.addEventListener("resize", () => {
+			that.updateCanvas();
+			that.recompute();
+		});
 
 		// First update
 		this.recompute();

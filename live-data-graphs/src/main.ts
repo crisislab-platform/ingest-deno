@@ -1,8 +1,8 @@
 import { unpack } from "msgpackr";
-import "./graph";
+import "./graphs";
 import { showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
-import { handleData, highlightNearestPoint } from "./graph";
+import { handleData, highlightNearestPoint } from "./graphs";
 import { TimeLine } from "./chart";
 
 declare global {
