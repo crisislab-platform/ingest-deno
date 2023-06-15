@@ -3,6 +3,13 @@ export interface TimeLineDataPoint {
 	x: number;
 }
 
+export interface ComputedTimeLineDataPoint extends TimeLineDataPoint {
+	y: number;
+	x: number;
+	renderX: number;
+	renderY: number;
+}
+
 export interface TimeLineOptions {
 	container: HTMLElement;
 	data: TimeLineDataPoint[];
@@ -13,10 +20,21 @@ export interface TimeLineOptions {
 	lineWidth?: number;
 }
 
+export function computeRenderValue(
+	value: number,
+	offset: number,
+	multiplier: number,
+): number {
+	return (value - offset) * multiplier;
+}
+
+const dpr = window.devicePixelRatio || 1;
+
 // NOTE: Assumes data is sorted by X value, with smallest value first in the list
 export class TimeLine {
 	container: HTMLElement;
 	data: TimeLineDataPoint[];
+	computedData: ComputedTimeLineDataPoint[];
 	canvas: HTMLCanvasElement;
 	ctx: CanvasRenderingContext2D;
 	maxPoints: number;
@@ -24,7 +42,7 @@ export class TimeLine {
 	yLabel: string;
 	xLabel: string;
 	lineWidth = 0.7;
-	dpr = window.devicePixelRatio || 1;
+	paused = false;
 
 	constructor(options: TimeLineOptions) {
 		this.container = options.container;
@@ -53,6 +71,18 @@ export class TimeLine {
 		const that = this;
 		// Need to make sure that 'this' inside the handler refers to the class
 		window.addEventListener("resize", () => that.updateCanvas());
+
+		// First update
+		this.recompute();
+	}
+
+	pause() {
+		this.paused = true;
+	}
+
+	unpause() {
+		this.paused = false;
+		this.recompute();
 	}
 
 	updateCanvas() {
@@ -61,19 +91,19 @@ export class TimeLine {
 
 		// Update width and height
 		const rect = this.canvas.getBoundingClientRect();
-		this.canvas.width = rect.width * this.dpr;
-		this.canvas.height = rect.height * this.dpr;
+		this.canvas.width = rect.width * dpr;
+		this.canvas.height = rect.height * dpr;
 
 		// Scale context
-		this.ctx.scale(this.dpr, this.dpr);
+		this.ctx.scale(dpr, dpr);
 	}
 
 	get width() {
-		return this.canvas.width / this.dpr;
+		return this.canvas.width / dpr;
 	}
 
 	get height() {
-		return this.canvas.height / this.dpr;
+		return this.canvas.height / dpr;
 	}
 
 	static distanceBetweenTwoPoints(ax, ay, bx, by): number {
@@ -81,21 +111,17 @@ export class TimeLine {
 		return Math.sqrt(Math.pow(ax - bx, 2) + Math.pow(ay - by, 2));
 	}
 
-	getNearestPoint(x: number, y: number): TimeLineDataPoint | null {
+	getNearestPoint(x: number, y: number): ComputedTimeLineDataPoint | null {
 		// Sanity check
 		if (this.data.length < 1) return null;
 
-		// Get offsets
-		const { xOffset, xMultiplier, yOffset, yMultiplier } =
-			this.getOffsetsAndMultipliers();
-
 		// Find closest point
-		let closestDataPoint: TimeLineDataPoint | null = null;
+		let closestDataPoint: ComputedTimeLineDataPoint | null = null;
 		let closestDistance = Number.MAX_VALUE;
-		for (const point of this.data) {
+		for (const point of this.computedData) {
 			const distance = TimeLine.distanceBetweenTwoPoints(
-				TimeLine.getActualPointXOrY(point.x, xOffset, xMultiplier),
-				TimeLine.getActualPointXOrY(point.y, yOffset, yMultiplier),
+				point.renderX,
+				point.renderY,
 				x,
 				y,
 			);
@@ -109,15 +135,7 @@ export class TimeLine {
 		return closestDataPoint;
 	}
 
-	static getActualPointXOrY(
-		value: number,
-		offset: number,
-		multiplier: number,
-	): number {
-		return (value - offset) * multiplier;
-	}
-
-	getOffsetsAndMultipliers(): {
+	getRenderOffsetsAndMultipliers(): {
 		xOffset: number;
 		xMultiplier: number;
 		yOffset: number;
@@ -151,14 +169,38 @@ export class TimeLine {
 		return { xOffset, xMultiplier, yOffset, yMultiplier };
 	}
 
-	draw() {
-		// Don't try and render if less than 2 points
+	/**
+	 * Call this to recompute all the data points after the data array has changed.
+	 */
+	recompute() {
+		// Don't change if it's paused
+		if (this.paused) return;
+
+		// Don't try and compute if less than 2 points
 		if (this.data.length < 2) return;
 
 		// Draw the lines
 		const { xOffset, xMultiplier, yOffset, yMultiplier } =
-			this.getOffsetsAndMultipliers();
+			this.getRenderOffsetsAndMultipliers();
 
+		// Clear old data
+		this.computedData = [];
+
+		// Compute values for each point
+		for (const point of this.data) {
+			const computedPoint: ComputedTimeLineDataPoint = {
+				...point,
+				renderX: computeRenderValue(point.x, xOffset, xMultiplier),
+				renderY: computeRenderValue(point.y, yOffset, yMultiplier),
+			};
+			this.computedData.push(computedPoint);
+		}
+	}
+
+	/**
+	 * Call this to draw the graph. The most recently computed data is used.
+	 */
+	draw() {
 		// Draw in black
 		this.ctx.strokeStyle = "black";
 		this.ctx.lineWidth = this.lineWidth;
@@ -171,17 +213,14 @@ export class TimeLine {
 
 		// First data point
 		this.ctx.moveTo(
-			TimeLine.getActualPointXOrY(this.data[0].x, xOffset, xMultiplier),
-			TimeLine.getActualPointXOrY(this.data[0].y, yOffset, yMultiplier),
+			this.computedData[0].renderX,
+			this.computedData[0].renderY,
 		);
 
 		// Loop over all points, other than the first one
-		for (const point of this.data.slice(1)) {
+		for (const point of this.computedData.slice(1)) {
 			// Line to moves the 'cursor' to the point we just drew a line to
-			this.ctx.lineTo(
-				TimeLine.getActualPointXOrY(point.x, xOffset, xMultiplier),
-				TimeLine.getActualPointXOrY(point.y, yOffset, yMultiplier),
-			);
+			this.ctx.lineTo(point.renderX, point.renderY);
 		}
 
 		// Draw the path

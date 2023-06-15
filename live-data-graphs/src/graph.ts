@@ -1,4 +1,4 @@
-import { TimeLine } from "./chart";
+import { TimeLine, computeRenderValue } from "./chart";
 import { hideMessages, reloadButton, hoverText } from "./ui";
 
 // Graphs
@@ -83,6 +83,8 @@ export function handleData(packet) {
 		}
 	}
 
+	window.CRISiSLab.charts[channel].recompute();
+
 	current[channel] = 0;
 
 	hideMessages();
@@ -138,22 +140,8 @@ export function highlightNearestPoint() {
 			chart.ctx.setLineDash([]);
 
 			// Get the nearest point
-			const nearestPoint = chart.getNearestPoint(chartX, chartY);
-			if (!nearestPoint) break;
-
-			const { xOffset, xMultiplier, yOffset, yMultiplier } =
-				chart.getOffsetsAndMultipliers();
-
-			const actualPointX = TimeLine.getActualPointXOrY(
-				nearestPoint.x,
-				xOffset,
-				xMultiplier,
-			);
-			const actualPointY = TimeLine.getActualPointXOrY(
-				nearestPoint.y,
-				yOffset,
-				yMultiplier,
-			);
+			const point = chart.getNearestPoint(chartX, chartY);
+			if (!point) break;
 
 			// Ticker line
 			chart.ctx.lineWidth = 1.2;
@@ -161,22 +149,22 @@ export function highlightNearestPoint() {
 			// Draw a marker on it
 			const r = 10;
 			chart.ctx.beginPath();
-			chart.ctx.arc(actualPointX, actualPointY, r, 0, 2 * Math.PI);
+			chart.ctx.arc(point.renderX, point.renderY, r, 0, 2 * Math.PI);
 			chart.ctx.stroke();
 
 			// Crosshair
 			chart.ctx.beginPath();
-			chart.ctx.moveTo(actualPointX, actualPointY - r);
-			chart.ctx.lineTo(actualPointX, actualPointY + r);
+			chart.ctx.moveTo(point.renderX, point.renderY - r);
+			chart.ctx.lineTo(point.renderX, point.renderY + r);
 			chart.ctx.stroke();
 			chart.ctx.beginPath();
-			chart.ctx.moveTo(actualPointX - r, actualPointY);
-			chart.ctx.lineTo(actualPointX + r, actualPointY);
+			chart.ctx.moveTo(point.renderX - r, point.renderY);
+			chart.ctx.lineTo(point.renderX + r, point.renderY);
 			chart.ctx.stroke();
 
 			// Text
-			hoverText.innerText = `${chart.yLabel}: ${nearestPoint.y}
-${chart.xLabel}: ${nearestPoint.x}`;
+			hoverText.innerText = `${chart.yLabel}: ${point.y}
+${chart.xLabel}: ${point.x}`;
 			hoverText.style.top = rect.y + "px";
 			hoverText.style.display = "block";
 
