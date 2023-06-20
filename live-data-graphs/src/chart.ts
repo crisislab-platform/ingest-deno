@@ -114,20 +114,6 @@ export class TimeLine {
 		return this.canvas.height / dpr;
 	}
 
-	getYCaps(): { yMax: number; yMin: number } {
-		let biggestYValue = Number.MIN_VALUE;
-		let smallestYValue = Number.MAX_VALUE;
-		for (const point of this.savedData) {
-			if (point.y > biggestYValue) biggestYValue = point.y;
-			if (point.y < smallestYValue) smallestYValue = point.y;
-		}
-
-		return {
-			yMax: biggestYValue,
-			yMin: smallestYValue,
-		};
-	}
-
 	getRenderOffsetsAndMultipliers(): {
 		xOffset: number;
 		xMultiplier: number;
@@ -143,7 +129,14 @@ export class TimeLine {
 		const xOffset = this.savedData[0].x;
 
 		// Y is harder - need to find the difference between the minimum and maximum points
-		const { yMin, yMax } = this.getYCaps();
+		let biggestYValue = Number.MIN_VALUE;
+		let smallestYValue = Number.MAX_VALUE;
+		for (const point of this.savedData) {
+			if (point.y > biggestYValue) biggestYValue = point.y;
+			if (point.y < smallestYValue) smallestYValue = point.y;
+		}
+		const yMax = biggestYValue,
+			yMin = smallestYValue;
 
 		// Get the maximum gap
 		const maxYGap = Math.abs(yMax - yMin);
