@@ -244,7 +244,13 @@ export function getNearestPoint(
 	return closestDataPoint;
 }
 
-export function drawAxis(chart: TimeLine, xMarks = 5, yMarks = 3) {
+export function drawXAxis(chart: TimeLine, xMarks = 5) {
+	// Set font properties
+	chart.ctx.font = "12px Arial";
+	chart.ctx.fillStyle = "black";
+	chart.ctx.textAlign = "start";
+	chart.ctx.textBaseline = "alphabetic";
+
 	const xPointGap = Math.floor(chart.maxPoints / xMarks);
 
 	for (let i = 0; i < xMarks; i++) {
@@ -265,27 +271,45 @@ export function drawAxis(chart: TimeLine, xMarks = 5, yMarks = 3) {
 			chart.height - 5,
 		);
 	}
+}
+export function drawYAxis(chart: TimeLine, yMarks = 5) {
+	const { yOffset, yMultiplier } = chart.getRenderOffsetsAndMultipliers();
 
-	// const ySorted = [...chart.computedData].sort((a, b) => a.y - b.y);
-	// for (const point of [
-	// 	ySorted[0],
-	// 	ySorted[Math.floor(ySorted.length / 2)],
-	// 	ySorted[ySorted.length - 1],
-	// ]) {
-	// 	// Horizontal line line
-	// 	chart.ctx.lineWidth = 0.5;
-	// 	chart.ctx.beginPath();
-	// 	chart.ctx.moveTo(0, point.renderY);
-	// 	chart.ctx.lineTo(chart.width, point.renderY);
-	// 	chart.ctx.stroke();
+	// Set font properties
+	chart.ctx.font = "12px Arial";
+	chart.ctx.fillStyle = "black";
+	chart.ctx.textAlign = "end";
+	chart.ctx.textBaseline = "middle";
 
-	// 	// Maker values
-	// 	chart.ctx.fillText(round(point.y) + "", 0, point.renderY - 5);
-	// }
+	for (let i = 0; i < yMarks; i++) {
+		const yValue = chart.height - (i * chart.height) / (yMarks - 1);
+		const yDataValue = yValue / yMultiplier + yOffset;
 
-	//
-	// chart.ctx.beginPath();
-	// chart.ctx.moveTo(0, chart.height);
-	// chart.ctx.lineTo(chart.width, chart.height);
-	// chart.ctx.stroke();
+		// Horizontal line
+		chart.ctx.lineWidth = 0.5;
+		chart.ctx.beginPath();
+		chart.ctx.moveTo(0, yValue);
+		chart.ctx.lineTo(chart.width, yValue);
+		chart.ctx.stroke();
+
+		// Label text
+
+		const label = round(yDataValue) + "";
+		const textX = chart.width - 10;
+		let textY = yValue;
+
+		// Adjust textY for top and bottom labels
+		if (i === 0) {
+			textY -= 16; // Move down
+			chart.ctx.textBaseline = "top";
+		} else if (i === yMarks - 1) {
+			textY += 16; // Move up
+			chart.ctx.textBaseline = "bottom";
+		} else {
+			chart.ctx.textBaseline = "middle";
+		}
+		// Draw label text
+		chart.ctx.fillStyle = "black";
+		chart.ctx.fillText(label, textX, textY);
+	}
 }

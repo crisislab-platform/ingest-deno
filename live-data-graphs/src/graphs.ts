@@ -82,6 +82,8 @@ export function handleData(packet: Datagram) {
 	for (const i of measurements) {
 		window.CRISiSLab.data[channel].push({
 			x: timestamp + current[channel],
+			// FIXME: This code seems to fix the small graph issue
+			// y: Math.abs(channel.startsWith("EN") ? i / 3.845e5 : i),
 			y: channel.startsWith("EN") ? i / 3.845e5 : i,
 		});
 		current[channel] += pointWidth;
