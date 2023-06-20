@@ -24,14 +24,6 @@ export interface TimeLineOptions {
 	lineWidth?: number;
 }
 
-export function computeRenderValue(
-	value: number,
-	offset: number,
-	multiplier: number,
-): number {
-	return (value - offset) * multiplier;
-}
-
 const dpr = window.devicePixelRatio || 1;
 
 // NOTE: Assumes data is sorted by X value, with smallest value first in the list
@@ -175,8 +167,8 @@ export class TimeLine {
 		for (const point of this.savedData) {
 			const computedPoint: ComputedTimeLineDataPoint = {
 				...point,
-				renderX: computeRenderValue(point.x, xOffset, xMultiplier),
-				renderY: computeRenderValue(point.y, yOffset, yMultiplier),
+				renderX: (point.x - xOffset) * xMultiplier,
+				renderY: this.height - (point.y - yOffset) * yMultiplier,
 			};
 			this.computedData.push(computedPoint);
 		}
@@ -276,14 +268,15 @@ export function drawYAxis(chart: TimeLine, yMarks = 5) {
 	const { yOffset, yMultiplier } = chart.getRenderOffsetsAndMultipliers();
 
 	// Set font properties
-	chart.ctx.font = "12px Arial";
+	const fontSize = 12;
+	chart.ctx.font = `${fontSize}px Arial`;
 	chart.ctx.fillStyle = "black";
 	chart.ctx.textAlign = "end";
 	chart.ctx.textBaseline = "middle";
 
 	for (let i = 0; i < yMarks; i++) {
-		const yValue = chart.height - (i * chart.height) / (yMarks - 1);
-		const yDataValue = yValue / yMultiplier + yOffset;
+		const yValue = (i * chart.height) / (yMarks - 1);
+		const yDataValue = (chart.height - yValue) / yMultiplier + yOffset;
 
 		// Horizontal line
 		chart.ctx.lineWidth = 0.5;
@@ -295,19 +288,16 @@ export function drawYAxis(chart: TimeLine, yMarks = 5) {
 		// Label text
 
 		const label = round(yDataValue) + "";
-		const textX = chart.width - 10;
-		let textY = yValue;
+		const textX = chart.width - 8;
+		let textY = yValue + fontSize / 2; // Move down so it doesn't overlap the line
+		chart.ctx.textBaseline = "top";
 
 		// Adjust textY for top and bottom labels
-		if (i === 0) {
-			textY -= 16; // Move down
-			chart.ctx.textBaseline = "top";
-		} else if (i === yMarks - 1) {
-			textY += 16; // Move up
+		if (i === yMarks - 1) {
+			textY -= fontSize / 2; // Move up
 			chart.ctx.textBaseline = "bottom";
-		} else {
-			chart.ctx.textBaseline = "middle";
 		}
+
 		// Draw label text
 		chart.ctx.fillStyle = "black";
 		chart.ctx.fillText(label, textX, textY);
