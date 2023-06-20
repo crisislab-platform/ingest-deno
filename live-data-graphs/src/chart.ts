@@ -36,10 +36,14 @@ const dpr = window.devicePixelRatio || 1;
 
 // NOTE: Assumes data is sorted by X value, with smallest value first in the list
 export class TimeLine {
-	container: HTMLElement;
+	// Raw data points passed by user
 	data: TimeLineDataPoint[];
+	// Saved when recompute is called. Only used internally before computedData is done computing
 	savedData: TimeLineDataPoint[] = [];
+	// Computed when recompute is called. Use this.
 	computedData: ComputedTimeLineDataPoint[] = [];
+
+	container: HTMLElement;
 	canvas: HTMLCanvasElement;
 	ctx: CanvasRenderingContext2D;
 	maxPoints: number;
@@ -135,17 +139,15 @@ export class TimeLine {
 			if (point.y > biggestYValue) biggestYValue = point.y;
 			if (point.y < smallestYValue) smallestYValue = point.y;
 		}
-		const yMax = biggestYValue,
-			yMin = smallestYValue;
 
 		// Get the maximum gap
-		const maxYGap = Math.abs(yMax - yMin);
+		const maxYGap = Math.abs(biggestYValue - smallestYValue);
 
 		// Now divide the available pixels by tha
 		const yMultiplier = this.height / maxYGap;
 
 		// Also calculate what we need to add to all the Y values so that they're visible
-		const yOffset = yMin;
+		const yOffset = smallestYValue;
 
 		return { xOffset, xMultiplier, yOffset, yMultiplier };
 	}
