@@ -1,6 +1,3 @@
-import type { TimeLine } from "./chart";
-import { handleData } from "./graphs";
-
 export const statusText = document.getElementById(
 	"status",
 ) as HTMLHeadingElement;

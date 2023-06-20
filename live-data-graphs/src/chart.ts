@@ -114,35 +114,6 @@ export class TimeLine {
 		return this.canvas.height / dpr;
 	}
 
-	static distanceBetweenTwoPoints(ax, ay, bx, by): number {
-		// Right-angled triangles are magic. Thanks Ancient greeks!
-		return Math.sqrt(Math.pow(ax - bx, 2) + Math.pow(ay - by, 2));
-	}
-
-	getNearestPoint(x: number, y: number): ComputedTimeLineDataPoint | null {
-		// Sanity check
-		if (this.computedData.length < 1) return null;
-
-		// Find closest point
-		let closestDataPoint: ComputedTimeLineDataPoint | null = null;
-		let closestDistance = Number.MAX_VALUE;
-		for (const point of this.computedData) {
-			const distance = TimeLine.distanceBetweenTwoPoints(
-				point.renderX,
-				point.renderY,
-				x,
-				y,
-			);
-
-			if (distance < closestDistance) {
-				closestDistance = distance;
-				closestDataPoint = point;
-			}
-		}
-
-		return closestDataPoint;
-	}
-
 	getYCaps(): { yMax: number; yMin: number; maxYGap: number } {
 		let biggestYValue = Number.MIN_VALUE;
 		let smallestYValue = Number.MAX_VALUE;
@@ -174,7 +145,7 @@ export class TimeLine {
 		const xOffset = this.savedData[0].x;
 
 		// Y is harder - need to find the difference between the minimum and maximum points
-		const { yMax, yMin, maxYGap } = this.getYCaps();
+		const { yMin, maxYGap } = this.getYCaps();
 
 		// Get the maximum gap
 
@@ -247,6 +218,36 @@ export class TimeLine {
 		// Draw the path
 		this.ctx.stroke();
 	}
+}
+
+export function distanceBetweenTwoPoints(a: Point, b: Point): number {
+	// Right-angled triangles are magic. Thanks Ancient greeks!
+	return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+}
+
+export function getNearestPoint(
+	chart: TimeLine,
+	point: Point,
+): ComputedTimeLineDataPoint | null {
+	// Sanity check
+	if (chart.computedData.length < 1) return null;
+
+	// Find closest point
+	let closestDataPoint: ComputedTimeLineDataPoint | null = null;
+	let closestDistance = Number.MAX_VALUE;
+	for (const chartPoint of chart.computedData) {
+		const distance = distanceBetweenTwoPoints(
+			{ x: chartPoint.renderX, y: chartPoint.renderY },
+			point,
+		);
+
+		if (distance < closestDistance) {
+			closestDistance = distance;
+			closestDataPoint = chartPoint;
+		}
+	}
+
+	return closestDataPoint;
 }
 
 export function drawAxis(chart: TimeLine, xMarks = 5, yMarks = 3) {

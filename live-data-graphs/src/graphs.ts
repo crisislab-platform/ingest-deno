@@ -1,4 +1,4 @@
-import { TimeLine } from "./chart";
+import { TimeLine, getNearestPoint } from "./chart";
 import {
 	hideMessages,
 	reloadButton,
@@ -7,6 +7,8 @@ import {
 	formatTime,
 	round,
 } from "./ui";
+
+export type Datagram = [string, number, ...number[]];
 
 // Graphs
 const current: Record<string, number> = {};
@@ -27,7 +29,7 @@ const pointWidth = 10;
 
 let initCount = 0;
 
-export function handleData(packet) {
+export function handleData(packet: Datagram) {
 	const [channel, timestampSeconds, ...measurements] = packet;
 
 	if (initCount < 5 && channel !== "EHZ") {
@@ -48,28 +50,31 @@ export function handleData(packet) {
 		container.className = "chart";
 		container.id = channel;
 		chartsContainer.appendChild(container);
+
+		const yLabel = aliases[channel as keyof typeof aliases] || channel;
+
 		window.CRISiSLab.charts[channel] = new TimeLine({
 			container,
 			data: window.CRISiSLab.data[channel],
 			maxPoints: maxDataLength,
 			pointWidth,
 			xLabel: "Time",
-			yLabel: aliases[channel],
+			yLabel,
 		});
 
 		container.style.opacity = "1";
 
 		// Axis labels
 
-		const xLabel = document.createElement("p");
-		xLabel.innerHTML = "Time";
-		xLabel.className = "axis-label x-axis";
-		container.appendChild(xLabel);
+		const xLabelEl = document.createElement("p");
+		xLabelEl.innerText = "Time";
+		xLabelEl.className = "axis-label x-axis";
+		container.appendChild(xLabelEl);
 
-		const yLabel = document.createElement("p");
-		yLabel.innerHTML = aliases[channel] || channel;
-		yLabel.className = "axis-label y-axis";
-		container.appendChild(yLabel);
+		const yLabelEl = document.createElement("p");
+		yLabelEl.innerText = yLabel;
+		yLabelEl.className = "axis-label y-axis";
+		container.appendChild(yLabelEl);
 
 		currentHeight += 24;
 	}
@@ -158,7 +163,7 @@ export function highlightNearestPoint() {
 			chart.ctx.setLineDash([]);
 
 			// Get the nearest point
-			const point = chart.getNearestPoint(chartX, chartY);
+			const point = getNearestPoint(chart, { x: chartX, y: chartY });
 			if (!point) break;
 
 			// Ticker line

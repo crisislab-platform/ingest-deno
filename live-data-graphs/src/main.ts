@@ -1,6 +1,6 @@
 import { unpack } from "msgpackr";
 import "./graphs";
-import { showNoSensorFound } from "./ui";
+import { pauseButton, showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
 import { handleData, highlightNearestPoint } from "./graphs";
 import { TimeLine, drawAxis } from "./chart";
@@ -43,6 +43,9 @@ else {
 	const sensorID = location.pathname.slice(1).split("/")[1];
 	if (!sensorID) showNoSensorFound();
 	else {
+		// Show pause button
+		pauseButton.toggleAttribute("disabled", false);
+
 		window.CRISiSLab.sensorID = sensorID;
 
 		// Page title
