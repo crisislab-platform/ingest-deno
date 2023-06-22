@@ -31,6 +31,8 @@ db.close();
 const dbBuffer: { sensor: Sensor; parsedData: any[] }[] = [];
 
 setInterval(() => {
+	if (!Deno.env.get("SHOULD_STORE")) return;
+
 	const db = openDB();
 	for (const { sensor, parsedData } of dbBuffer) {
 		for (const packet of parsedData) {
