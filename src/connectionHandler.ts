@@ -161,6 +161,7 @@ export async function downloadSensorList(): Promise<string | undefined> {
 					)
 				);
 			}
+			clientsMap.delete(sensor?.id);
 			continue;
 		}
 		ipToSensorMap.set(sensor.ip, sensor);
