@@ -61,13 +61,8 @@ async function reqHandler(request: Request) {
 		return await serveFile(request, "live-data-graphs/dist/index.html");
 	}
 
-	if (
-		Deno.env.get("SERVE_ALL")
-			? true
-			: sections[0] === "assets" && sections[1]?.endsWith(".js")
-	)
-		// FIXME: sketchy, possible path traversal
-		return await serveFile(request, `live-data-graphs/dist${url.pathname}`);
+	if (sections[0] === "assets" && sections[1]?.endsWith(".js"))
+		return await serveFile(request, `live-data-graphs/dist${url.pathname}`); // sketchy, possible path traversal
 
 	if (url.pathname === "/")
 		return await serveFile(request, "live-data-graphs/dist/index.html");
