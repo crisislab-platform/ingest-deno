@@ -10,7 +10,7 @@ import { fetchAPI } from "./utils.ts";
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
 
 function openDB(): DB {
-	return new DB("sensor-data.db");
+	return new DB("sensor-data2.db");
 }
 
 const db = openDB();
