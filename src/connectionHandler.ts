@@ -28,6 +28,22 @@ db.execute(/*sql*/ `
 `);
 db.close();
 
+const dbBuffer: { sensor: Sensor; parsedData: any[] }[] = [];
+
+setInterval(() => {
+	const db = openDB();
+	for (const { sensor, parsedData } of dbBuffer) {
+		for (const packet of parsedData) {
+			const query = /*sql*/ `INSERT INTO sensor_data (sensor_website_id, sensor_station_id, sensor_type, sensor_ip, data_channel, data_timestamp, data_values)
+			VALUES (${sensor.id}, '${sensor.secondary_id}', '${sensor.type}',
+			'${sensor.ip}', '${packet[0]}', ${packet[1]}, '${packet.slice(2).join(", ")}')
+			`;
+			db.execute(query);
+		}
+	}
+	db.close();
+}, 5 * 1000);
+
 const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
@@ -194,15 +210,7 @@ export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
 		);
 
 		if (sensor.id == 3) {
-			const db = openDB();
-			for (const packet of parsedData) {
-				const query = /*sql*/ `INSERT INTO sensor_data (sensor_website_id, sensor_station_id, sensor_type, sensor_ip, data_channel, data_timestamp, data_values)
-			VALUES (${sensor.id}, '${sensor.secondary_id}', '${sensor.type}',
-			'${sensor.ip}', '${packet[0]}', ${packet[1]}, '${packet.slice(2).join(", ")}')
-			`;
-				db.execute(query);
-			}
-			db.close();
+			dbBuffer.push({ sensor, parsedData });
 		}
 	} catch (err) {
 		console.warn("Failure when parsing/forwarding datagram: ", err);
