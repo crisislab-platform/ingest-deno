@@ -28,7 +28,7 @@ db.execute(/*sql*/ `
 `);
 db.close();
 
-const dbBuffer: { sensor: Sensor; parsedData: any[] }[] = [];
+let dbBuffer: { sensor: Sensor; parsedData: any[] }[] = [];
 
 setInterval(() => {
 	if (!Deno.env.get("SHOULD_STORE")) return;
@@ -44,6 +44,8 @@ setInterval(() => {
 		}
 	}
 	db.close();
+
+	dbBuffer = [];
 }, 5 * 1000);
 
 const clientsMap = new Map<number, Array<WebSocket>>();
