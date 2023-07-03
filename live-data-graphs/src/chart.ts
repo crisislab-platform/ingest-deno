@@ -250,7 +250,7 @@ export function getNearestPoint(
 const labelFontSize = 12;
 const labelFont = `${labelFontSize}px Arial`;
 
-export function drawXAxis(chart: TimeLine, xMarks = 5) {
+export function drawXAxis(chart: TimeLine, xMarks = 5, bottomPadding = 5) {
 	// Set font properties
 	chart.ctx.font = labelFont;
 	chart.ctx.fillStyle = chart.foregroundColour;
@@ -265,7 +265,7 @@ export function drawXAxis(chart: TimeLine, xMarks = 5) {
 
 		const label = formatTime(point.x);
 		const textX = point.renderX + 5;
-		const textY = chart.height - 5;
+		const textY = chart.height - bottomPadding;
 
 		// Vertical line
 		chart.ctx.lineWidth = 0.5;
@@ -289,13 +289,13 @@ export function drawXAxis(chart: TimeLine, xMarks = 5) {
 		chart.ctx.fillText(label, textX, textY);
 	}
 }
-export function drawYAxis(chart: TimeLine, yMarks = 5) {
+export function drawYAxis(chart: TimeLine, yMarks = 5, leftPadding = 4) {
 	const { yOffset, yMultiplier } = chart.getRenderOffsetsAndMultipliers();
 
 	// Set font properties
 	chart.ctx.font = labelFont;
 	chart.ctx.fillStyle = chart.foregroundColour;
-	chart.ctx.textAlign = "end";
+	chart.ctx.textAlign = "start";
 	chart.ctx.textBaseline = "middle";
 
 	for (let i = 0; i < yMarks; i++) {
@@ -312,7 +312,7 @@ export function drawYAxis(chart: TimeLine, yMarks = 5) {
 		// Label text
 
 		const label = round(yDataValue) + "";
-		const textX = chart.width - 8;
+		const textX = leftPadding;
 		let textY = yValue + labelFontSize / 2; // Move down so it doesn't overlap the line
 		chart.ctx.textBaseline = "top";
 
@@ -324,12 +324,7 @@ export function drawYAxis(chart: TimeLine, yMarks = 5) {
 		// White background for text
 		const size = chart.ctx.measureText(label);
 		chart.ctx.fillStyle = chart.backgroundColour;
-		chart.ctx.fillRect(
-			textX - size.width,
-			textY,
-			size.width,
-			labelFontSize,
-		);
+		chart.ctx.fillRect(textX, textY, size.width, labelFontSize);
 
 		// Draw label text
 		chart.ctx.fillStyle = chart.foregroundColour;
