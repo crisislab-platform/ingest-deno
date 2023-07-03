@@ -44,6 +44,11 @@ export class TimeLine {
 	xLabel: string;
 	lineWidth = 0.8;
 	paused = false;
+	leftPadding = 60;
+	bottomPadding = 30;
+
+	foregroundColour = "black";
+	backgroundColour = "white";
 
 	constructor(options: TimeLineOptions) {
 		this.container = options.container;
@@ -73,7 +78,7 @@ export class TimeLine {
 		// Need to make sure that 'this' inside the handler refers to the class
 		window.addEventListener("resize", () => {
 			that.updateCanvas();
-			that.recompute();
+			that.compute();
 		});
 
 		// First update
@@ -102,8 +107,16 @@ export class TimeLine {
 		this.ctx.scale(dpr, dpr);
 	}
 
+	get widthWithPadding() {
+		return (this.canvas.width - this.leftPadding) / dpr;
+	}
+
 	get width() {
 		return this.canvas.width / dpr;
+	}
+
+	get heightWithPadding() {
+		return (this.canvas.height - this.bottomPadding) / dpr;
 	}
 
 	get height() {
@@ -119,7 +132,8 @@ export class TimeLine {
 		// Calculate X and Y multipliers
 
 		// X is easy - just use the number of points
-		const xMultiplier = this.width / (this.maxPoints * this.pointWidth);
+		const xMultiplier =
+			this.widthWithPadding / (this.maxPoints * this.pointWidth);
 
 		// Also X offset
 		const xOffset = this.savedData[0].x;
@@ -137,7 +151,7 @@ export class TimeLine {
 		const maxYGap = biggestYValue - smallestYValue;
 
 		// Now divide the available pixels by that
-		const yMultiplier = this.height / maxYGap;
+		const yMultiplier = this.heightWithPadding / maxYGap;
 
 		// Also calculate what we need to add to all the Y values so that they're visible
 		const yOffset = smallestYValue;
@@ -162,6 +176,10 @@ export class TimeLine {
 
 		this.savedData = [...this.data];
 
+		this.compute();
+	}
+
+	private compute() {
 		// Draw the lines
 		const { xOffset, xMultiplier, yOffset, yMultiplier } =
 			this.getRenderOffsetsAndMultipliers();
@@ -173,8 +191,9 @@ export class TimeLine {
 		for (const point of this.savedData) {
 			const computedPoint: ComputedTimeLineDataPoint = {
 				...point,
-				renderX: (point.x - xOffset) * xMultiplier,
-				renderY: this.height - (point.y - yOffset) * yMultiplier,
+				renderX: this.leftPadding + (point.x - xOffset) * xMultiplier,
+				renderY:
+					this.heightWithPadding - (point.y - yOffset) * yMultiplier,
 			};
 			this.computedData.push(computedPoint);
 		}
@@ -185,12 +204,21 @@ export class TimeLine {
 	 */
 	draw() {
 		// Draw in black
-		this.ctx.strokeStyle = "black";
+		this.ctx.strokeStyle = this.foregroundColour;
 		this.ctx.lineWidth = this.lineWidth;
 		this.ctx.setLineDash([]);
 
 		// Clear canvas
-		this.ctx.clearRect(0, 0, this.width, this.height);
+		this.ctx.fillStyle = this.backgroundColour;
+		this.ctx.fillRect(0, 0, this.width, this.height);
+
+		// Draw lines on sides
+		this.ctx.strokeRect(
+			this.leftPadding,
+			0,
+			this.widthWithPadding,
+			this.heightWithPadding,
+		);
 
 		// Begin the path
 		this.ctx.beginPath();
@@ -242,12 +270,18 @@ export function getNearestPoint(
 	return closestDataPoint;
 }
 
+// Consistency
+const labelFontSize = 12;
+const axisPadding = 4;
+const tickLength = 18;
+const labelFont = `${labelFontSize}px Arial`;
+
 export function drawXAxis(chart: TimeLine, xMarks = 5) {
 	// Set font properties
-	chart.ctx.font = "12px Arial";
-	chart.ctx.fillStyle = "black";
+	chart.ctx.font = labelFont;
+	chart.ctx.fillStyle = chart.foregroundColour;
 	chart.ctx.textAlign = "start";
-	chart.ctx.textBaseline = "alphabetic";
+	chart.ctx.textBaseline = "top";
 
 	const xPointGap = Math.floor(chart.maxPoints / xMarks);
 
@@ -255,57 +289,48 @@ export function drawXAxis(chart: TimeLine, xMarks = 5) {
 		const point = chart.computedData[i * xPointGap];
 		if (!point) continue;
 
-		// Vertical line
-		chart.ctx.lineWidth = 0.5;
+		const label = formatTime(point.x);
+		const textX = point.renderX + 5;
+		const textY = chart.heightWithPadding + axisPadding;
+
+		// Marker
 		chart.ctx.beginPath();
-		chart.ctx.moveTo(point.renderX, 0);
-		chart.ctx.lineTo(point.renderX, chart.height);
+		chart.ctx.moveTo(point.renderX, chart.heightWithPadding);
+		chart.ctx.lineTo(point.renderX, chart.heightWithPadding + tickLength);
 		chart.ctx.stroke();
 
-		// Maker values
-		chart.ctx.fillText(
-			formatTime(point.x),
-			point.renderX + 5,
-			chart.height - 5,
-		);
+		// Label
+		chart.ctx.fillText(label, textX, textY);
 	}
 }
+
 export function drawYAxis(chart: TimeLine, yMarks = 5) {
 	const { yOffset, yMultiplier } = chart.getRenderOffsetsAndMultipliers();
 
 	// Set font properties
-	const fontSize = 12;
-	chart.ctx.font = `${fontSize}px Arial`;
-	chart.ctx.fillStyle = "black";
-	chart.ctx.textAlign = "end";
-	chart.ctx.textBaseline = "middle";
+	chart.ctx.font = labelFont;
+	chart.ctx.fillStyle = chart.foregroundColour;
+	chart.ctx.textAlign = "right";
+	chart.ctx.textBaseline = "top";
+	chart.ctx.fillStyle = chart.foregroundColour;
 
 	for (let i = 0; i < yMarks; i++) {
-		const yValue = (i * chart.height) / (yMarks - 1);
-		const yDataValue = (chart.height - yValue) / yMultiplier + yOffset;
+		const yValue = (i * chart.heightWithPadding) / (yMarks - 1);
+		const yDataValue =
+			(chart.heightWithPadding - yValue) / yMultiplier + yOffset;
 
-		// Horizontal line
-		chart.ctx.lineWidth = 0.5;
+		const textX = chart.leftPadding - axisPadding;
+		const textY = yValue + axisPadding; // Move down so it doesn't overlap the line
+		const label = round(yDataValue) + "";
+		const textSize = chart.ctx.measureText(label);
+
+		//Marker
 		chart.ctx.beginPath();
-		chart.ctx.moveTo(0, yValue);
-		chart.ctx.lineTo(chart.width, yValue);
+		chart.ctx.moveTo(chart.leftPadding - tickLength, yValue);
+		chart.ctx.lineTo(chart.leftPadding, yValue);
 		chart.ctx.stroke();
 
-		// Label text
-
-		const label = round(yDataValue) + "";
-		const textX = chart.width - 8;
-		let textY = yValue + fontSize / 2; // Move down so it doesn't overlap the line
-		chart.ctx.textBaseline = "top";
-
-		// Adjust textY for top and bottom labels
-		if (i === yMarks - 1) {
-			textY -= fontSize / 2; // Move up
-			chart.ctx.textBaseline = "bottom";
-		}
-
-		// Draw label text
-		chart.ctx.fillStyle = "black";
+		// Label
 		chart.ctx.fillText(label, textX, textY);
 	}
 }

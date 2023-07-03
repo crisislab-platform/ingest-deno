@@ -53,7 +53,7 @@ export function handleData(packet: Datagram) {
 
 		const yLabel = aliases[channel as keyof typeof aliases] || channel;
 
-		window.CRISiSLab.charts[channel] = new TimeLine({
+		const chart = new TimeLine({
 			container,
 			data: window.CRISiSLab.data[channel],
 			maxPoints: maxDataLength,
@@ -61,8 +61,34 @@ export function handleData(packet: Datagram) {
 			xLabel: "Time",
 			yLabel,
 		});
+		window.CRISiSLab.charts[channel] = chart;
 
 		container.style.opacity = "1";
+
+		if ("clipboard" in navigator) {
+			container.addEventListener("dblclick", (event) => {
+				// On double click, copy data to clipboard
+				const rect = chart.canvas.getBoundingClientRect();
+
+				const point = getNearestPoint(chart, {
+					x: event.pageX - rect.x,
+					y: event.pageY - rect.y,
+				});
+				if (!point) return;
+				try {
+					// Write in a spreadsheet-pasteable format
+					navigator.clipboard.writeText(`${chart.yLabel}	${point.y}
+${chart.xLabel}	${point.x}`);
+					console.info("Wrote point data to clipboard");
+				} catch (err) {
+					console.warn("Error writing to clipboard: ", err);
+				}
+			});
+		} else {
+			console.warn(
+				"Clipboard API not found - double click to copy won't work",
+			);
+		}
 
 		// Axis labels
 
@@ -154,16 +180,20 @@ export function highlightNearestPoint() {
 			chart.ctx.setLineDash([10, 10]);
 
 			// Horizontal line
-			chart.ctx.beginPath();
-			chart.ctx.moveTo(0, chartY);
-			chart.ctx.lineTo(chart.width, chartY);
-			chart.ctx.stroke();
+			if (chartY < chart.heightWithPadding) {
+				chart.ctx.beginPath();
+				chart.ctx.moveTo(chart.leftPadding, chartY);
+				chart.ctx.lineTo(chart.widthWithPadding, chartY);
+				chart.ctx.stroke();
+			}
 
 			// Vertical line
-			chart.ctx.beginPath();
-			chart.ctx.moveTo(chartX, 0);
-			chart.ctx.lineTo(chartX, chart.height);
-			chart.ctx.stroke();
+			if (chartX > chart.leftPadding) {
+				chart.ctx.beginPath();
+				chart.ctx.moveTo(chartX, 0);
+				chart.ctx.lineTo(chartX, chart.heightWithPadding);
+				chart.ctx.stroke();
+			}
 
 			// Regular line
 			chart.ctx.setLineDash([]);
@@ -197,8 +227,9 @@ ${chart.xLabel}: ${formatTime(point.x, true)}`;
 			hoverText.style.top = rect.y + "px";
 			hoverText.style.display = "block";
 
-			if (chartX > chart.width / 2) {
-				hoverText.style.left = rect.x + "px";
+			if (chartX > chart.widthWithPadding / 2) {
+				// The -1 is to avoid a double border
+				hoverText.style.left = rect.x + chart.leftPadding - 1 + "px";
 				hoverText.style.right = "";
 			} else {
 				hoverText.style.right = "0px";
