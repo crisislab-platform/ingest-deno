@@ -16,30 +16,43 @@ export const chartsContainer = document.getElementById(
 
 export let paused = false;
 
-function handlePause() {
+function resume() {
+	paused = false;
+
+	pauseButton.innerText = "Pause";
+
+	for (const chart of Object.values(window.CRISiSLab.charts)) chart.unpause();
+}
+function pause() {
+	paused = true;
+
+	pauseButton.innerText = "Resume";
+
+	// Unfocus the button so that space doesn't activate it
+	pauseButton.blur();
+
+	for (const chart of Object.values(window.CRISiSLab.charts)) chart.pause();
+}
+function togglePause() {
 	if (paused) {
-		paused = false;
-
-		pauseButton.innerText = "Pause";
-
-		for (const chart of Object.values(window.CRISiSLab.charts))
-			chart.unpause();
+		resume();
 	} else {
-		paused = true;
-
-		pauseButton.innerText = "Resume";
-
-		// Unfocus the button so that space doesn't activate it
-		pauseButton.blur();
-
-		for (const chart of Object.values(window.CRISiSLab.charts))
-			chart.pause();
+		pause();
 	}
 }
 
-pauseButton.addEventListener("click", handlePause);
-window.addEventListener("keypress", (event) => {
-	if (event.key === " ") handlePause();
+pauseButton.addEventListener("click", togglePause);
+if ("mediaSession" in navigator) {
+	navigator.mediaSession.setActionHandler("play", resume);
+	navigator.mediaSession.setActionHandler("pause", pause);
+}
+window.addEventListener("keydown", (event) => {
+	if (event.key === " ") togglePause();
+	if (event.key === "k") togglePause();
+	if (event.key === "MediaPlayPause") togglePause();
+	if (event.key === "MediaPlay") resume();
+	if (event.key === "MediaPause") pause();
+	if (event.key === "MediaStop") pause();
 });
 
 reloadButton.addEventListener("click", () => {
