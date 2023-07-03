@@ -1,9 +1,10 @@
+import { Datagram } from "./graphs";
 import { showMessage, reloadButton } from "./ui";
 import { unpack } from "msgpackr";
 
 const connectionRetryLimit = 5;
 
-export type HandleDataFunction = (data: any) => void;
+export type HandleDataFunction = (data: Datagram) => void;
 
 export function connectSocket(handleData: HandleDataFunction) {
 	// Websocket to use
