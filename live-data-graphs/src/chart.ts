@@ -44,7 +44,7 @@ export class TimeLine {
 	xLabel: string;
 	lineWidth = 0.8;
 	paused = false;
-	leftPadding = 50;
+	leftPadding = 60;
 	bottomPadding = 30;
 
 	foregroundColour = "black";
@@ -273,6 +273,7 @@ export function getNearestPoint(
 // Consistency
 const labelFontSize = 12;
 const axisPadding = 4;
+const tickLength = 18;
 const labelFont = `${labelFontSize}px Arial`;
 
 export function drawXAxis(chart: TimeLine, xMarks = 5) {
@@ -295,35 +296,41 @@ export function drawXAxis(chart: TimeLine, xMarks = 5) {
 		// Marker
 		chart.ctx.beginPath();
 		chart.ctx.moveTo(point.renderX, chart.heightWithPadding);
-		chart.ctx.lineTo(point.renderX, chart.height);
+		chart.ctx.lineTo(point.renderX, chart.heightWithPadding + tickLength);
 		chart.ctx.stroke();
+
 		// Label
 		chart.ctx.fillText(label, textX, textY);
 	}
 }
 
-export function drawYAxis(chart: TimeLine, yMarks = 5, leftPadding = 4) {
+export function drawYAxis(chart: TimeLine, yMarks = 5) {
 	const { yOffset, yMultiplier } = chart.getRenderOffsetsAndMultipliers();
 
 	// Set font properties
 	chart.ctx.font = labelFont;
 	chart.ctx.fillStyle = chart.foregroundColour;
 	chart.ctx.textAlign = "right";
-	chart.ctx.textBaseline = "alphabetic";
+	chart.ctx.textBaseline = "top";
+	chart.ctx.fillStyle = chart.foregroundColour;
 
 	for (let i = 0; i < yMarks; i++) {
 		const yValue = (i * chart.heightWithPadding) / (yMarks - 1);
 		const yDataValue =
 			(chart.heightWithPadding - yValue) / yMultiplier + yOffset;
 
-		// Label text
+		const textX = chart.leftPadding - axisPadding;
+		const textY = yValue + axisPadding; // Move down so it doesn't overlap the line
 		const label = round(yDataValue) + "";
-		const textX = chart.leftPadding - leftPadding;
-		let textY = yValue; // Move down so it doesn't overlap the line
-		chart.ctx.textBaseline = "top";
+		const textSize = chart.ctx.measureText(label);
 
-		// Draw label text
-		chart.ctx.fillStyle = chart.foregroundColour;
+		//Marker
+		chart.ctx.beginPath();
+		chart.ctx.moveTo(chart.leftPadding - tickLength, yValue);
+		chart.ctx.lineTo(chart.leftPadding, yValue);
+		chart.ctx.stroke();
+
+		// Label
 		chart.ctx.fillText(label, textX, textY);
 	}
 }
