@@ -72,8 +72,9 @@ export function handleData(packet: Datagram) {
 				if (!point) return;
 				try {
 					// Write in a spreadsheet-pasteable format
-					navigator.clipboard.writeText(`${chart.yLabel}	${point.y}
-${chart.xLabel}	${point.x}`);
+					navigator.clipboard
+						.writeText(`${chart.xLabel}	${chart.yLabel}
+${point.x}	${point.y}`);
 					console.info("Wrote point data to clipboard");
 				} catch (err) {
 					console.warn("Error writing to clipboard: ", err);
