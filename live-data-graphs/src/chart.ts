@@ -42,7 +42,7 @@ export class TimeLine {
 	pointWidth: number;
 	yLabel: string;
 	xLabel: string;
-	lineWidth = 0.7;
+	lineWidth = 0.8;
 	paused = false;
 
 	constructor(options: TimeLineOptions) {
