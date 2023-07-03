@@ -53,7 +53,7 @@ export function handleData(packet: Datagram) {
 
 		const yLabel = aliases[channel as keyof typeof aliases] || channel;
 
-		window.CRISiSLab.charts[channel] = new TimeLine({
+		const chart = new TimeLine({
 			container,
 			data: window.CRISiSLab.data[channel],
 			maxPoints: maxDataLength,
@@ -61,8 +61,29 @@ export function handleData(packet: Datagram) {
 			xLabel: "Time",
 			yLabel,
 		});
+		window.CRISiSLab.charts[channel] = chart;
 
 		container.style.opacity = "1";
+
+		if ("clipboard" in navigator) {
+			container.addEventListener("dblclick", (event) => {
+				// On double click, copy data to clipboard
+				const point = getNearestPoint(chart, event);
+				if (!point) return;
+				try {
+					// Write in a spreadsheet-pasteable format
+					navigator.clipboard.writeText(`${chart.yLabel}	${point.y}
+${chart.xLabel}	${point.x}`);
+					console.info("Wrote point data to clipboard");
+				} catch (err) {
+					console.warn("Error writing to clipboard: ", err);
+				}
+			});
+		} else {
+			console.warn(
+				"Clipboard API not found - double click to copy won't work",
+			);
+		}
 
 		// Axis labels
 
