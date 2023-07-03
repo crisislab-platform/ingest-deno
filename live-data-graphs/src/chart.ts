@@ -107,19 +107,19 @@ export class TimeLine {
 		this.ctx.scale(dpr, dpr);
 	}
 
-	get width() {
+	get widthWithPadding() {
 		return (this.canvas.width - this.leftPadding) / dpr;
 	}
 
-	get trueWidth() {
+	get width() {
 		return this.canvas.width / dpr;
 	}
 
-	get height() {
+	get heightWithPadding() {
 		return (this.canvas.height - this.bottomPadding) / dpr;
 	}
 
-	get trueHeight() {
+	get height() {
 		return this.canvas.height / dpr;
 	}
 
@@ -132,7 +132,8 @@ export class TimeLine {
 		// Calculate X and Y multipliers
 
 		// X is easy - just use the number of points
-		const xMultiplier = this.width / (this.maxPoints * this.pointWidth);
+		const xMultiplier =
+			this.widthWithPadding / (this.maxPoints * this.pointWidth);
 
 		// Also X offset
 		const xOffset = this.savedData[0].x;
@@ -150,7 +151,7 @@ export class TimeLine {
 		const maxYGap = biggestYValue - smallestYValue;
 
 		// Now divide the available pixels by that
-		const yMultiplier = this.height / maxYGap;
+		const yMultiplier = this.heightWithPadding / maxYGap;
 
 		// Also calculate what we need to add to all the Y values so that they're visible
 		const yOffset = smallestYValue;
@@ -191,7 +192,8 @@ export class TimeLine {
 			const computedPoint: ComputedTimeLineDataPoint = {
 				...point,
 				renderX: this.leftPadding + (point.x - xOffset) * xMultiplier,
-				renderY: this.height - (point.y - yOffset) * yMultiplier,
+				renderY:
+					this.heightWithPadding - (point.y - yOffset) * yMultiplier,
 			};
 			this.computedData.push(computedPoint);
 		}
@@ -208,10 +210,15 @@ export class TimeLine {
 
 		// Clear canvas
 		this.ctx.fillStyle = this.backgroundColour;
-		this.ctx.fillRect(0, 0, this.trueWidth, this.trueHeight);
+		this.ctx.fillRect(0, 0, this.width, this.height);
 
 		// Draw lines on sides
-		this.ctx.strokeRect(this.leftPadding, 0, this.width, this.height);
+		this.ctx.strokeRect(
+			this.leftPadding,
+			0,
+			this.widthWithPadding,
+			this.heightWithPadding,
+		);
 
 		// Begin the path
 		this.ctx.beginPath();
@@ -283,12 +290,12 @@ export function drawXAxis(chart: TimeLine, xMarks = 5) {
 
 		const label = formatTime(point.x);
 		const textX = point.renderX + 5;
-		const textY = chart.height + axisPadding;
+		const textY = chart.heightWithPadding + axisPadding;
 
 		// Marker
 		chart.ctx.beginPath();
-		chart.ctx.moveTo(point.renderX, chart.height);
-		chart.ctx.lineTo(point.renderX, chart.trueHeight);
+		chart.ctx.moveTo(point.renderX, chart.heightWithPadding);
+		chart.ctx.lineTo(point.renderX, chart.height);
 		chart.ctx.stroke();
 		// Label
 		chart.ctx.fillText(label, textX, textY);
@@ -305,8 +312,9 @@ export function drawYAxis(chart: TimeLine, yMarks = 5, leftPadding = 4) {
 	chart.ctx.textBaseline = "alphabetic";
 
 	for (let i = 0; i < yMarks; i++) {
-		const yValue = (i * chart.height) / (yMarks - 1);
-		const yDataValue = (chart.height - yValue) / yMultiplier + yOffset;
+		const yValue = (i * chart.heightWithPadding) / (yMarks - 1);
+		const yDataValue =
+			(chart.heightWithPadding - yValue) / yMultiplier + yOffset;
 
 		// Label text
 		const label = round(yDataValue) + "";

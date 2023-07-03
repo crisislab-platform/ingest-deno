@@ -180,16 +180,20 @@ export function highlightNearestPoint() {
 			chart.ctx.setLineDash([10, 10]);
 
 			// Horizontal line
-			chart.ctx.beginPath();
-			chart.ctx.moveTo(0, chartY);
-			chart.ctx.lineTo(chart.width, chartY);
-			chart.ctx.stroke();
+			if (chartY < chart.heightWithPadding) {
+				chart.ctx.beginPath();
+				chart.ctx.moveTo(chart.leftPadding, chartY);
+				chart.ctx.lineTo(chart.widthWithPadding, chartY);
+				chart.ctx.stroke();
+			}
 
 			// Vertical line
-			chart.ctx.beginPath();
-			chart.ctx.moveTo(chartX, 0);
-			chart.ctx.lineTo(chartX, chart.height);
-			chart.ctx.stroke();
+			if (chartX > chart.leftPadding) {
+				chart.ctx.beginPath();
+				chart.ctx.moveTo(chartX, 0);
+				chart.ctx.lineTo(chartX, chart.heightWithPadding);
+				chart.ctx.stroke();
+			}
 
 			// Regular line
 			chart.ctx.setLineDash([]);
@@ -223,7 +227,7 @@ ${chart.xLabel}: ${formatTime(point.x, true)}`;
 			hoverText.style.top = rect.y + "px";
 			hoverText.style.display = "block";
 
-			if (chartX > chart.width / 2) {
+			if (chartX > chart.widthWithPadding / 2) {
 				// The -1 is to avoid a double border
 				hoverText.style.left = rect.x + chart.leftPadding - 1 + "px";
 				hoverText.style.right = "";
