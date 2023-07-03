@@ -80,11 +80,15 @@ export function handleData(packet: Datagram) {
 	}
 
 	for (const i of measurements) {
+		let value = i;
+		// If the channel is an accelerometer
+		if (channel.startsWith("EN")) {
+			// Magic number to convert toi m/s^2
+			value = value / 3.845e5;
+		}
 		window.CRISiSLab.data[channel].push({
 			x: timestamp + current[channel],
-			// FIXME: This code seems to fix the small graph issue
-			// y: Math.abs(channel.startsWith("EN") ? i / 3.845e5 : i),
-			y: channel.startsWith("EN") ? i / 3.845e5 : i,
+			y: value,
 		});
 		current[channel] += pointWidth;
 
