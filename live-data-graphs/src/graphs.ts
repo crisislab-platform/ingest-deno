@@ -198,7 +198,8 @@ ${chart.xLabel}: ${formatTime(point.x, true)}`;
 			hoverText.style.display = "block";
 
 			if (chartX > chart.width / 2) {
-				hoverText.style.left = rect.x + "px";
+				// The -1 is to avoid a double border
+				hoverText.style.left = rect.x + chart.leftPadding - 1 + "px";
 				hoverText.style.right = "";
 			} else {
 				hoverText.style.right = "0px";

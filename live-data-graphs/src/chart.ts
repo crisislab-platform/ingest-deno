@@ -44,6 +44,8 @@ export class TimeLine {
 	xLabel: string;
 	lineWidth = 0.8;
 	paused = false;
+	leftPadding = 60;
+	bottomPadding = 30;
 
 	foregroundColour = "black";
 	backgroundColour = "white";
@@ -76,7 +78,7 @@ export class TimeLine {
 		// Need to make sure that 'this' inside the handler refers to the class
 		window.addEventListener("resize", () => {
 			that.updateCanvas();
-			that.recompute();
+			that.compute();
 		});
 
 		// First update
@@ -106,10 +108,18 @@ export class TimeLine {
 	}
 
 	get width() {
+		return (this.canvas.width - this.leftPadding) / dpr;
+	}
+
+	get trueWidth() {
 		return this.canvas.width / dpr;
 	}
 
 	get height() {
+		return (this.canvas.height - this.bottomPadding) / dpr;
+	}
+
+	get trueHeight() {
 		return this.canvas.height / dpr;
 	}
 
@@ -165,6 +175,10 @@ export class TimeLine {
 
 		this.savedData = [...this.data];
 
+		this.compute();
+	}
+
+	private compute() {
 		// Draw the lines
 		const { xOffset, xMultiplier, yOffset, yMultiplier } =
 			this.getRenderOffsetsAndMultipliers();
@@ -176,7 +190,7 @@ export class TimeLine {
 		for (const point of this.savedData) {
 			const computedPoint: ComputedTimeLineDataPoint = {
 				...point,
-				renderX: (point.x - xOffset) * xMultiplier,
+				renderX: this.leftPadding + (point.x - xOffset) * xMultiplier,
 				renderY: this.height - (point.y - yOffset) * yMultiplier,
 			};
 			this.computedData.push(computedPoint);
@@ -194,7 +208,10 @@ export class TimeLine {
 
 		// Clear canvas
 		this.ctx.fillStyle = this.backgroundColour;
-		this.ctx.fillRect(0, 0, this.width, this.height);
+		this.ctx.fillRect(0, 0, this.trueWidth, this.trueHeight);
+
+		// Draw lines on sides
+		this.ctx.strokeRect(this.leftPadding, 0, this.width, this.height);
 
 		// Begin the path
 		this.ctx.beginPath();
@@ -265,66 +282,35 @@ export function drawXAxis(chart: TimeLine, xMarks = 5, bottomPadding = 5) {
 
 		const label = formatTime(point.x);
 		const textX = point.renderX + 5;
-		const textY = chart.height - bottomPadding;
+		const textY = chart.trueHeight - bottomPadding;
 
-		// Vertical line
-		chart.ctx.lineWidth = 0.5;
+		// Marker
 		chart.ctx.beginPath();
-		chart.ctx.moveTo(point.renderX, 0);
-		chart.ctx.lineTo(point.renderX, chart.height);
-		chart.ctx.stroke();
 
-		// Maker values
-		// White background
-		const size = chart.ctx.measureText(label);
-		chart.ctx.fillStyle = chart.backgroundColour;
-		chart.ctx.fillRect(
-			textX,
-			textY - labelFontSize + 2,
-			size.width,
-			labelFontSize,
-		);
+		chart.ctx.stroke();
 		// Label
-		chart.ctx.fillStyle = chart.foregroundColour;
 		chart.ctx.fillText(label, textX, textY);
 	}
 }
+
 export function drawYAxis(chart: TimeLine, yMarks = 5, leftPadding = 4) {
 	const { yOffset, yMultiplier } = chart.getRenderOffsetsAndMultipliers();
 
 	// Set font properties
 	chart.ctx.font = labelFont;
 	chart.ctx.fillStyle = chart.foregroundColour;
-	chart.ctx.textAlign = "start";
-	chart.ctx.textBaseline = "middle";
+	chart.ctx.textAlign = "right";
+	chart.ctx.textBaseline = "alphabetic";
 
 	for (let i = 0; i < yMarks; i++) {
 		const yValue = (i * chart.height) / (yMarks - 1);
 		const yDataValue = (chart.height - yValue) / yMultiplier + yOffset;
 
-		// Horizontal line
-		chart.ctx.lineWidth = 0.5;
-		chart.ctx.beginPath();
-		chart.ctx.moveTo(0, yValue);
-		chart.ctx.lineTo(chart.width, yValue);
-		chart.ctx.stroke();
-
 		// Label text
-
 		const label = round(yDataValue) + "";
-		const textX = leftPadding;
-		let textY = yValue + labelFontSize / 2; // Move down so it doesn't overlap the line
+		const textX = chart.leftPadding - leftPadding;
+		let textY = yValue; // Move down so it doesn't overlap the line
 		chart.ctx.textBaseline = "top";
-
-		// Adjust textY for top and bottom labels
-		if (i === yMarks - 1) {
-			textY -= labelFontSize * 2; // Move up
-		}
-
-		// White background for text
-		const size = chart.ctx.measureText(label);
-		chart.ctx.fillStyle = chart.backgroundColour;
-		chart.ctx.fillRect(textX, textY, size.width, labelFontSize);
 
 		// Draw label text
 		chart.ctx.fillStyle = chart.foregroundColour;
