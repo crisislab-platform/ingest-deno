@@ -24,8 +24,8 @@ const aliases = {
 };
 let start;
 let currentHeight = 23;
-const maxDataLength = 1500;
-const pointWidth = 10;
+const maxDataLength = 1300;
+const pointGap = 10;
 
 let initCount = 0;
 
@@ -57,7 +57,7 @@ export function handleData(packet: Datagram) {
 			container,
 			data: window.CRISiSLab.data[channel],
 			maxPoints: maxDataLength,
-			pointWidth,
+			pointWidth: pointGap,
 			xLabel: "Time",
 			yLabel,
 		});
@@ -116,7 +116,7 @@ ${chart.xLabel}	${point.x}`);
 			x: timestamp + current[channel],
 			y: value,
 		});
-		current[channel] += pointWidth;
+		current[channel] += pointGap;
 
 		if (window.CRISiSLab.data[channel].length > maxDataLength) {
 			window.CRISiSLab.data[channel].shift();
