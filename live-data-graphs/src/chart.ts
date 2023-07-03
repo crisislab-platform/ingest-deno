@@ -44,7 +44,7 @@ export class TimeLine {
 	xLabel: string;
 	lineWidth = 0.8;
 	paused = false;
-	leftPadding = 60;
+	leftPadding = 50;
 	bottomPadding = 30;
 
 	foregroundColour = "black";
@@ -265,14 +265,15 @@ export function getNearestPoint(
 
 // Consistency
 const labelFontSize = 12;
+const axisPadding = 4;
 const labelFont = `${labelFontSize}px Arial`;
 
-export function drawXAxis(chart: TimeLine, xMarks = 5, bottomPadding = 5) {
+export function drawXAxis(chart: TimeLine, xMarks = 5) {
 	// Set font properties
 	chart.ctx.font = labelFont;
 	chart.ctx.fillStyle = chart.foregroundColour;
 	chart.ctx.textAlign = "start";
-	chart.ctx.textBaseline = "alphabetic";
+	chart.ctx.textBaseline = "top";
 
 	const xPointGap = Math.floor(chart.maxPoints / xMarks);
 
@@ -282,12 +283,12 @@ export function drawXAxis(chart: TimeLine, xMarks = 5, bottomPadding = 5) {
 
 		const label = formatTime(point.x);
 		const textX = point.renderX + 5;
-		const textY = chart.trueHeight - bottomPadding;
+		const textY = chart.height + axisPadding;
 
 		// Marker
 		chart.ctx.beginPath();
 		chart.ctx.moveTo(point.renderX, chart.height);
-		chart.ctx.lineTo(point.renderX, chart.height + bottomPadding);
+		chart.ctx.lineTo(point.renderX, chart.trueHeight);
 		chart.ctx.stroke();
 		// Label
 		chart.ctx.fillText(label, textX, textY);
