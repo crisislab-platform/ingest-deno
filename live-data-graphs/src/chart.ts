@@ -125,23 +125,29 @@ export class TimeLine {
 		const xOffset = this.savedData[0].x;
 
 		// Y is harder - need to find the difference between the minimum and maximum points
-		let biggestYValue = Number.MIN_VALUE;
-		let smallestYValue = Number.MAX_VALUE;
+		// Note to future self: Always use -Infinity, not Number.MIN_VALUE
+		let biggestYValue = -Infinity;
+		let smallestYValue = Infinity;
 		for (const point of this.savedData) {
 			if (point.y > biggestYValue) biggestYValue = point.y;
 			if (point.y < smallestYValue) smallestYValue = point.y;
 		}
 
 		// Get the maximum gap
-		const maxYGap = Math.abs(biggestYValue - smallestYValue);
+		const maxYGap = biggestYValue - smallestYValue;
 
-		// Now divide the available pixels by tha
+		// Now divide the available pixels by that
 		const yMultiplier = this.height / maxYGap;
 
 		// Also calculate what we need to add to all the Y values so that they're visible
 		const yOffset = smallestYValue;
 
-		return { xOffset, xMultiplier, yOffset, yMultiplier };
+		return {
+			xOffset,
+			xMultiplier,
+			yOffset,
+			yMultiplier,
+		};
 	}
 
 	/**
