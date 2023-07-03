@@ -68,7 +68,12 @@ export function handleData(packet: Datagram) {
 		if ("clipboard" in navigator) {
 			container.addEventListener("dblclick", (event) => {
 				// On double click, copy data to clipboard
-				const point = getNearestPoint(chart, event);
+				const rect = chart.canvas.getBoundingClientRect();
+
+				const point = getNearestPoint(chart, {
+					x: event.pageX - rect.x,
+					y: event.pageY - rect.y,
+				});
 				if (!point) return;
 				try {
 					// Write in a spreadsheet-pasteable format
