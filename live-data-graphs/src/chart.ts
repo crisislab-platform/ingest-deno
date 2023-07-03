@@ -45,6 +45,9 @@ export class TimeLine {
 	lineWidth = 0.8;
 	paused = false;
 
+	foregroundColour = "black";
+	backgroundColour = "white";
+
 	constructor(options: TimeLineOptions) {
 		this.container = options.container;
 		this.data = options.data;
@@ -185,12 +188,13 @@ export class TimeLine {
 	 */
 	draw() {
 		// Draw in black
-		this.ctx.strokeStyle = "black";
+		this.ctx.strokeStyle = this.foregroundColour;
 		this.ctx.lineWidth = this.lineWidth;
 		this.ctx.setLineDash([]);
 
 		// Clear canvas
-		this.ctx.clearRect(0, 0, this.width, this.height);
+		this.ctx.fillStyle = this.backgroundColour;
+		this.ctx.fillRect(0, 0, this.width, this.height);
 
 		// Begin the path
 		this.ctx.beginPath();
@@ -242,10 +246,14 @@ export function getNearestPoint(
 	return closestDataPoint;
 }
 
+// Consistency
+const labelFontSize = 12;
+const labelFont = `${labelFontSize}px Arial`;
+
 export function drawXAxis(chart: TimeLine, xMarks = 5) {
 	// Set font properties
-	chart.ctx.font = "12px Arial";
-	chart.ctx.fillStyle = "black";
+	chart.ctx.font = labelFont;
+	chart.ctx.fillStyle = chart.foregroundColour;
 	chart.ctx.textAlign = "start";
 	chart.ctx.textBaseline = "alphabetic";
 
@@ -255,6 +263,10 @@ export function drawXAxis(chart: TimeLine, xMarks = 5) {
 		const point = chart.computedData[i * xPointGap];
 		if (!point) continue;
 
+		const label = formatTime(point.x);
+		const textX = point.renderX + 5;
+		const textY = chart.height - 5;
+
 		// Vertical line
 		chart.ctx.lineWidth = 0.5;
 		chart.ctx.beginPath();
@@ -263,20 +275,26 @@ export function drawXAxis(chart: TimeLine, xMarks = 5) {
 		chart.ctx.stroke();
 
 		// Maker values
-		chart.ctx.fillText(
-			formatTime(point.x),
-			point.renderX + 5,
-			chart.height - 5,
+		// White background
+		const size = chart.ctx.measureText(label);
+		chart.ctx.fillStyle = chart.backgroundColour;
+		chart.ctx.fillRect(
+			textX,
+			textY - labelFontSize + 2,
+			size.width,
+			labelFontSize,
 		);
+		// Label
+		chart.ctx.fillStyle = chart.foregroundColour;
+		chart.ctx.fillText(label, textX, textY);
 	}
 }
 export function drawYAxis(chart: TimeLine, yMarks = 5) {
 	const { yOffset, yMultiplier } = chart.getRenderOffsetsAndMultipliers();
 
 	// Set font properties
-	const fontSize = 12;
-	chart.ctx.font = `${fontSize}px Arial`;
-	chart.ctx.fillStyle = "black";
+	chart.ctx.font = labelFont;
+	chart.ctx.fillStyle = chart.foregroundColour;
 	chart.ctx.textAlign = "end";
 	chart.ctx.textBaseline = "middle";
 
@@ -295,17 +313,26 @@ export function drawYAxis(chart: TimeLine, yMarks = 5) {
 
 		const label = round(yDataValue) + "";
 		const textX = chart.width - 8;
-		let textY = yValue + fontSize / 2; // Move down so it doesn't overlap the line
+		let textY = yValue + labelFontSize / 2; // Move down so it doesn't overlap the line
 		chart.ctx.textBaseline = "top";
 
 		// Adjust textY for top and bottom labels
 		if (i === yMarks - 1) {
-			textY -= fontSize / 2; // Move up
-			chart.ctx.textBaseline = "bottom";
+			textY -= labelFontSize * 2; // Move up
 		}
 
+		// White background for text
+		const size = chart.ctx.measureText(label);
+		chart.ctx.fillStyle = chart.backgroundColour;
+		chart.ctx.fillRect(
+			textX - size.width,
+			textY,
+			size.width,
+			labelFontSize,
+		);
+
 		// Draw label text
-		chart.ctx.fillStyle = "black";
+		chart.ctx.fillStyle = chart.foregroundColour;
 		chart.ctx.fillText(label, textX, textY);
 	}
 }
