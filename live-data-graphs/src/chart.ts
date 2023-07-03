@@ -286,7 +286,8 @@ export function drawXAxis(chart: TimeLine, xMarks = 5, bottomPadding = 5) {
 
 		// Marker
 		chart.ctx.beginPath();
-
+		chart.ctx.moveTo(point.renderX, chart.height);
+		chart.ctx.lineTo(point.renderX, chart.height + bottomPadding);
 		chart.ctx.stroke();
 		// Label
 		chart.ctx.fillText(label, textX, textY);
