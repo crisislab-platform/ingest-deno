@@ -172,7 +172,7 @@ export class TimeLine {
 		// Don't try and compute if less than 2 points
 		if (this.data.length < 2) return;
 
-		this.savedData = [...this.data];
+		this.savedData = structuredClone(this.data);
 
 		this.compute();
 	}
