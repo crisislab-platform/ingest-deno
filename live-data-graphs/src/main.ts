@@ -3,7 +3,7 @@ import "./graphs";
 import { formatTime, pauseButton, round, showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
 import { handleData, highlightNearestPoint } from "./graphs";
-import { TimeLine, drawXAxis, drawYAxis } from "./chart";
+import { TimeLine } from "./chart";
 
 declare global {
 	interface Window {
@@ -64,8 +64,6 @@ function draw() {
 	requestAnimationFrame(draw);
 	for (const chart of Object.values(window.CRISiSLab.charts)) {
 		chart.draw();
-		drawYAxis(chart, (y) => round(y) + "");
-		drawXAxis(chart, formatTime);
 	}
 	highlightNearestPoint();
 }

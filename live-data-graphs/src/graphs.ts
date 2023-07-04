@@ -1,4 +1,4 @@
-import { TimeLine, getNearestPoint } from "./chart";
+import { TimeLine, getNearestPoint, xAxisPlugin, yAxisPlugin } from "./chart";
 import {
 	hideMessages,
 	reloadButton,
@@ -60,6 +60,10 @@ export function handleData(packet: Datagram) {
 			pointWidth: pointGap,
 			xLabel: "Time",
 			yLabel,
+			plugins: [
+				xAxisPlugin(formatTime),
+				yAxisPlugin((y) => round(y) + ""),
+			],
 		});
 		window.CRISiSLab.charts[channel] = chart;
 

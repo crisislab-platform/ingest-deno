@@ -21,7 +21,7 @@ function resume() {
 
 	pauseButton.innerText = "Pause";
 
-	for (const chart of Object.values(window.CRISiSLab.charts)) chart.unpause();
+	for (const chart of Object.values(window.CRISiSLab.charts)) chart.resume();
 }
 function pause() {
 	paused = true;

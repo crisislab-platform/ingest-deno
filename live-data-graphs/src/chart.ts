@@ -20,6 +20,18 @@ export interface TimeLineOptions {
 	yLabel: string;
 	xLabel: string;
 	lineWidth?: number;
+	plugins?: TimeLinePlugin[];
+}
+
+type TimeLinePluginHook = (chart: TimeLine) => void;
+export interface TimeLinePlugin {
+	"draw:before"?: TimeLinePluginHook;
+	"draw:after"?: TimeLinePluginHook;
+	"compute:before"?: TimeLinePluginHook;
+	"compute:after"?: TimeLinePluginHook;
+	construct?: TimeLinePluginHook;
+	pause?: TimeLinePluginHook;
+	resume?: TimeLinePluginHook;
 }
 
 const dpr = window.devicePixelRatio || 1;
@@ -47,6 +59,7 @@ export class TimeLine {
 
 	foregroundColour = "black";
 	backgroundColour = "white";
+	plugins: TimeLinePlugin[];
 
 	constructor(options: TimeLineOptions) {
 		this.container = options.container;
@@ -55,6 +68,7 @@ export class TimeLine {
 		this.pointWidth = options.pointWidth;
 		this.xLabel = options.xLabel;
 		this.yLabel = options.yLabel;
+		this.plugins = options.plugins || [];
 
 		if (options.lineWidth) this.lineWidth = options.lineWidth;
 
@@ -81,15 +95,38 @@ export class TimeLine {
 
 		// First update
 		this.recompute();
+
+		// Call plugins
+		this.handlePluginHooks("construct");
 	}
 
+	/**
+	 * Helper function for handling plugin hooks
+	 * @param hook The hook to call
+	 */
+	private handlePluginHooks(hook: keyof TimeLinePlugin) {
+		// Call all plugins with that hook defined
+		for (const plugin of this.plugins) {
+			plugin?.[hook]?.(this);
+		}
+	}
+
+	/**
+	 * Pauses the chart. New data won't be shown, even if recompute is called,
+	 * until the chart is unpaused by calling resume.
+	 */
 	pause() {
 		this.paused = true;
+		this.handlePluginHooks("pause");
 	}
 
-	unpause() {
+	/**
+	 * Unpauses the chart
+	 */
+	resume() {
 		this.paused = false;
 		this.recompute();
+		this.handlePluginHooks("resume");
 	}
 
 	updateCanvas() {
@@ -178,6 +215,7 @@ export class TimeLine {
 	}
 
 	private compute() {
+		this.handlePluginHooks("compute:before");
 		// Draw the lines
 		const { xOffset, xMultiplier, yOffset, yMultiplier } =
 			this.getRenderOffsetsAndMultipliers();
@@ -195,12 +233,14 @@ export class TimeLine {
 			};
 			this.computedData.push(computedPoint);
 		}
+		this.handlePluginHooks("compute:after");
 	}
 
 	/**
 	 * Call this to draw the graph. The most recently computed data is used.
 	 */
 	draw() {
+		this.handlePluginHooks("draw:before");
 		// Draw in black
 		this.ctx.strokeStyle = this.foregroundColour;
 		this.ctx.lineWidth = this.lineWidth;
@@ -235,6 +275,7 @@ export class TimeLine {
 
 		// Draw the path
 		this.ctx.stroke();
+		this.handlePluginHooks("draw:after");
 	}
 }
 
@@ -274,68 +315,73 @@ const axisPadding = 4;
 const tickLength = 18;
 const labelFont = `${labelFontSize}px Arial`;
 
-export function drawXAxis(
-	chart: TimeLine,
+export const xAxisPlugin = (
 	formatLabel: (x: number) => string = (x) => x + "",
 	xMarks = 5,
-) {
-	// Set font properties
-	chart.ctx.font = labelFont;
-	chart.ctx.fillStyle = chart.foregroundColour;
-	chart.ctx.textAlign = "start";
-	chart.ctx.textBaseline = "top";
+): TimeLinePlugin => ({
+	"draw:after": (chart) => {
+		// Set font properties
+		chart.ctx.font = labelFont;
+		chart.ctx.fillStyle = chart.foregroundColour;
+		chart.ctx.textAlign = "start";
+		chart.ctx.textBaseline = "top";
 
-	const xPointGap = Math.floor(chart.maxPoints / xMarks);
+		const xPointGap = Math.floor(chart.maxPoints / xMarks);
 
-	for (let i = 0; i < xMarks; i++) {
-		const point = chart.computedData[i * xPointGap];
-		if (!point) continue;
+		for (let i = 0; i < xMarks; i++) {
+			const point = chart.computedData[i * xPointGap];
+			if (!point) continue;
 
-		const label = formatLabel(point.x);
-		const textX = point.renderX + 5;
-		const textY = chart.heightWithPadding + axisPadding;
+			const label = formatLabel(point.x);
+			const textX = point.renderX + 5;
+			const textY = chart.heightWithPadding + axisPadding;
 
-		// Marker
-		chart.ctx.beginPath();
-		chart.ctx.moveTo(point.renderX, chart.heightWithPadding);
-		chart.ctx.lineTo(point.renderX, chart.heightWithPadding + tickLength);
-		chart.ctx.stroke();
+			// Marker
+			chart.ctx.beginPath();
+			chart.ctx.moveTo(point.renderX, chart.heightWithPadding);
+			chart.ctx.lineTo(
+				point.renderX,
+				chart.heightWithPadding + tickLength,
+			);
+			chart.ctx.stroke();
 
-		// Label
-		chart.ctx.fillText(label, textX, textY);
-	}
-}
+			// Label
+			chart.ctx.fillText(label, textX, textY);
+		}
+	},
+});
 
-export function drawYAxis(
-	chart: TimeLine,
+export const yAxisPlugin = (
 	formatLabel: (y: number) => string = (y) => y + "",
 	yMarks = 5,
-) {
-	const { yOffset, yMultiplier } = chart.getRenderOffsetsAndMultipliers();
+): TimeLinePlugin => ({
+	"draw:after": (chart) => {
+		const { yOffset, yMultiplier } = chart.getRenderOffsetsAndMultipliers();
 
-	// Set font properties
-	chart.ctx.font = labelFont;
-	chart.ctx.fillStyle = chart.foregroundColour;
-	chart.ctx.textAlign = "right";
-	chart.ctx.textBaseline = "top";
-	chart.ctx.fillStyle = chart.foregroundColour;
+		// Set font properties
+		chart.ctx.font = labelFont;
+		chart.ctx.fillStyle = chart.foregroundColour;
+		chart.ctx.textAlign = "right";
+		chart.ctx.textBaseline = "top";
+		chart.ctx.fillStyle = chart.foregroundColour;
 
-	for (let i = 0; i < yMarks; i++) {
-		const yValue = (i * chart.heightWithPadding) / (yMarks - 1);
-		const yDataValue =
-			(chart.heightWithPadding - yValue) / yMultiplier + yOffset;
+		for (let i = 0; i < yMarks; i++) {
+			const yValue = (i * chart.heightWithPadding) / (yMarks - 1);
+			const yDataValue =
+				(chart.heightWithPadding - yValue) / yMultiplier + yOffset;
 
-		const textX = chart.leftPadding - axisPadding;
-		const textY = yValue + axisPadding; // Move down so it doesn't overlap the line
-		const label = formatLabel(yDataValue);
+			const textX = chart.leftPadding - axisPadding;
+			const textY = yValue + axisPadding; // Move down so it doesn't overlap the line
+			const label = formatLabel(yDataValue);
 
-		//Marker
-		chart.ctx.beginPath();
-		chart.ctx.moveTo(chart.leftPadding - tickLength, yValue);
-		chart.ctx.lineTo(chart.leftPadding, yValue);
-		chart.ctx.stroke();
+			//Marker
+			chart.ctx.beginPath();
+			chart.ctx.moveTo(chart.leftPadding - tickLength, yValue);
+			chart.ctx.lineTo(chart.leftPadding, yValue);
+			chart.ctx.stroke();
 
-		// Label
-		chart.ctx.fillText(label, textX, textY);
-	}
-}
+			// Label
+			chart.ctx.fillText(label, textX, textY);
+		}
+	},
+});
