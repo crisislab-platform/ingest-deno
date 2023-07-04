@@ -1,5 +1,3 @@
-import { formatTime, round } from "./ui";
-
 export interface Point {
 	y: number;
 	x: number;
@@ -276,7 +274,11 @@ const axisPadding = 4;
 const tickLength = 18;
 const labelFont = `${labelFontSize}px Arial`;
 
-export function drawXAxis(chart: TimeLine, xMarks = 5) {
+export function drawXAxis(
+	chart: TimeLine,
+	formatLabel: (x: number) => string = (x) => x + "",
+	xMarks = 5,
+) {
 	// Set font properties
 	chart.ctx.font = labelFont;
 	chart.ctx.fillStyle = chart.foregroundColour;
@@ -289,7 +291,7 @@ export function drawXAxis(chart: TimeLine, xMarks = 5) {
 		const point = chart.computedData[i * xPointGap];
 		if (!point) continue;
 
-		const label = formatTime(point.x);
+		const label = formatLabel(point.x);
 		const textX = point.renderX + 5;
 		const textY = chart.heightWithPadding + axisPadding;
 
@@ -304,7 +306,11 @@ export function drawXAxis(chart: TimeLine, xMarks = 5) {
 	}
 }
 
-export function drawYAxis(chart: TimeLine, yMarks = 5) {
+export function drawYAxis(
+	chart: TimeLine,
+	formatLabel: (y: number) => string = (y) => y + "",
+	yMarks = 5,
+) {
 	const { yOffset, yMultiplier } = chart.getRenderOffsetsAndMultipliers();
 
 	// Set font properties
@@ -321,8 +327,7 @@ export function drawYAxis(chart: TimeLine, yMarks = 5) {
 
 		const textX = chart.leftPadding - axisPadding;
 		const textY = yValue + axisPadding; // Move down so it doesn't overlap the line
-		const label = round(yDataValue) + "";
-		const textSize = chart.ctx.measureText(label);
+		const label = formatLabel(yDataValue);
 
 		//Marker
 		chart.ctx.beginPath();

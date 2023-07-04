@@ -1,6 +1,6 @@
 import { unpack } from "msgpackr";
 import "./graphs";
-import { pauseButton, showNoSensorFound } from "./ui";
+import { formatTime, pauseButton, round, showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
 import { handleData, highlightNearestPoint } from "./graphs";
 import { TimeLine, drawXAxis, drawYAxis } from "./chart";
@@ -64,8 +64,8 @@ function draw() {
 	requestAnimationFrame(draw);
 	for (const chart of Object.values(window.CRISiSLab.charts)) {
 		chart.draw();
-		drawYAxis(chart);
-		drawXAxis(chart);
+		drawYAxis(chart, (y) => round(y) + "");
+		drawXAxis(chart, formatTime);
 	}
 	highlightNearestPoint();
 }
