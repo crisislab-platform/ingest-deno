@@ -5,7 +5,6 @@ loadSync({ export: true });
 // Imports
 import { DB } from "https://deno.land/x/sqlite@v3.7.2/mod.ts";
 import "./types.d.ts"; // goddamn typescript
-import { fetchAPI } from "./utils.ts";
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
 
@@ -29,6 +28,7 @@ db.execute(/*sql*/ `
 db.close();
 
 let dbBuffer: { sensor: Sensor; parsedData: any[] }[] = [];
+let apiToken: string | null = null;
 
 setInterval(() => {
 	if (!Deno.env.get("SHOULD_STORE")) return;
@@ -126,6 +126,37 @@ async function setState({
 	}
 }
 
+// Helper function to fetch from the API
+export function fetchAPI(path: string, options: RequestInit = {}) {
+	return fetch(Deno.env.get("API_ENDPOINT") + path, {
+		...options,
+		headers: {
+			...options.headers,
+			authorization: `Bearer ${apiToken}`,
+		},
+	});
+}
+
+async function getNewTokenWithRefreshToken(): Promise<boolean> {
+	console.info("Attempting to get new token with refresh token...");
+	const response = await fetchAPI("auth/refresh", {
+		method: "POST",
+		body: JSON.stringify({
+			email: Deno.env.get("API_EMAIL"),
+			refreshToken: Deno.env.get("API_REFRESH_TOKEN"),
+		}),
+	});
+	const data = await response.json();
+	const token = data.token;
+	if (token) {
+		apiToken = token;
+		return true;
+	} else {
+		console.warn("No token found when refreshing!");
+	}
+	return false;
+}
+
 // Download sensor list from internship-worker
 export async function downloadSensorList(): Promise<string | undefined> {
 	console.info("Fetching sensor list...");
@@ -143,6 +174,9 @@ export async function downloadSensorList(): Promise<string | undefined> {
 
 		if (!json?.privileged) {
 			console.error("Non-privileged response received from worker!");
+			const success = await getNewTokenWithRefreshToken();
+			// If it worked, try downloading again
+			if (success) return await downloadSensorList();
 			return "Invalid token! Unable to get privileged sensor data from worker.";
 		}
 
