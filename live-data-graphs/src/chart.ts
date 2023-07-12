@@ -171,7 +171,7 @@ export class TimeLine {
 			this.widthWithPadding / (this.maxPoints * this.pointWidth);
 
 		// Also X offset
-		const xOffset = this.savedData[0].x;
+		const xOffset = -this.savedData[0].x;
 
 		// Y is harder - need to find the difference between the minimum and maximum points
 		// Note to future self: Always use -Infinity, not Number.MIN_VALUE
@@ -189,7 +189,7 @@ export class TimeLine {
 		const yMultiplier = this.heightWithPadding / maxYGap;
 
 		// Also calculate what we need to add to all the Y values so that they're visible
-		const yOffset = smallestYValue;
+		const yOffset = -smallestYValue;
 
 		return {
 			xOffset,
@@ -227,9 +227,9 @@ export class TimeLine {
 		for (const point of this.savedData) {
 			const computedPoint: ComputedTimeLineDataPoint = {
 				...point,
-				renderX: this.leftPadding + (point.x - xOffset) * xMultiplier,
+				renderX: this.leftPadding + (point.x + xOffset) * xMultiplier,
 				renderY:
-					this.heightWithPadding - (point.y - yOffset) * yMultiplier,
+					this.heightWithPadding - (point.y + yOffset) * yMultiplier,
 			};
 			this.computedData.push(computedPoint);
 		}
@@ -368,7 +368,7 @@ export const yAxisPlugin = (
 		for (let i = 0; i < yMarks; i++) {
 			const yValue = (i * chart.heightWithPadding) / (yMarks - 1);
 			const yDataValue =
-				(chart.heightWithPadding - yValue) / yMultiplier + yOffset;
+				(chart.heightWithPadding - yValue) / yMultiplier - yOffset;
 
 			const textX = chart.leftPadding - axisPadding;
 			const textY = yValue + axisPadding; // Move down so it doesn't overlap the line
