@@ -13,10 +13,15 @@ import {
 	sensorHandler,
 	clientWebSocketHandler,
 	downloadSensorList,
+	getNewTokenWithRefreshToken,
 } from "./connectionHandler.ts";
 
+// Get an access token
+if (!(await getNewTokenWithRefreshToken()))
+	throw "Error getting token with refresh token on startup.";
+
 // Get the list of sensors.
-// Need to do this absolute first thing to avoid spamming stuff.
+// Need to do this first thing to avoid spamming stuff.
 let downloadError: string | undefined;
 downloadError = await downloadSensorList();
 

@@ -137,7 +137,7 @@ export function fetchAPI(path: string, options: RequestInit = {}) {
 	});
 }
 
-async function getNewTokenWithRefreshToken(): Promise<boolean> {
+export async function getNewTokenWithRefreshToken(): Promise<boolean> {
 	console.info("Attempting to get new token with refresh token...");
 	const response = await fetchAPI("auth/refresh", {
 		method: "POST",
