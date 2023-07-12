@@ -166,12 +166,14 @@ export class TimeLine {
 	} {
 		// Calculate X and Y multipliers
 
-		// X is easy - just use the number of points
+		// X multiplier is easy - just use the number of points and their width
 		const xMultiplier =
 			this.widthWithPadding / (this.maxPoints * this.pointWidth);
 
-		// Also X offset
-		const xOffset = -this.savedData[0].x;
+		// X offset is
+		const xOffset =
+			(this.maxPoints - this.savedData.length) * this.pointWidth -
+			this.savedData[0].x;
 
 		// Y is harder - need to find the difference between the minimum and maximum points
 		// Note to future self: Always use -Infinity, not Number.MIN_VALUE
