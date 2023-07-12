@@ -1,6 +1,12 @@
 import { unpack } from "msgpackr";
 import "./graphs";
-import { formatTime, pauseButton, round, showNoSensorFound } from "./ui";
+import {
+	formatTime,
+	hoverText,
+	pauseButton,
+	round,
+	showNoSensorFound,
+} from "./ui";
 import { connectSocket } from "./ws";
 import { handleData, highlightNearestPoint } from "./graphs";
 import { TimeLine } from "./chart";
@@ -12,6 +18,7 @@ declare global {
 			ws: WebSocket | null;
 			connected: boolean;
 			haveRenderedPacket: boolean;
+			hideHoverInspector: boolean;
 			wsURL: string | null;
 			sensorID: string | null;
 			connectionAttempts: number;
@@ -32,6 +39,9 @@ window.CRISiSLab = {
 	ws: null,
 	connectionAttempts: 0,
 	sensorMeta: null,
+	hideHoverInspector:
+		new URLSearchParams(location.search).get("hide-hover-inspector") ===
+		"yes",
 	// For debugging in console
 	unpack,
 	charts: {},
@@ -60,11 +70,15 @@ else {
 	connectSocket(handleData);
 }
 
+if (window.CRISiSLab.hideHoverInspector) {
+	hoverText.style.display = "none";
+}
+
 function draw() {
 	requestAnimationFrame(draw);
 	for (const chart of Object.values(window.CRISiSLab.charts)) {
 		chart.draw();
 	}
-	highlightNearestPoint();
+	if (!window.CRISiSLab.hideHoverInspector) highlightNearestPoint();
 }
 requestAnimationFrame(draw);
