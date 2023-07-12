@@ -143,7 +143,7 @@ export class TimeLine {
 	}
 
 	get widthWithPadding() {
-		return (this.canvas.width - this.leftPadding) / dpr;
+		return this.width - this.leftPadding;
 	}
 
 	get width() {
@@ -151,7 +151,7 @@ export class TimeLine {
 	}
 
 	get heightWithPadding() {
-		return (this.canvas.height - this.bottomPadding) / dpr;
+		return this.height - this.bottomPadding;
 	}
 
 	get height() {

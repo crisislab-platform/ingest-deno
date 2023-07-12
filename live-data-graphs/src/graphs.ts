@@ -234,10 +234,10 @@ ${chart.xLabel}: ${formatTime(point.x, true)}`;
 			if (chartX > chart.widthWithPadding / 2) {
 				// The -1 is to avoid a double border
 				hoverText.style.left = rect.x + chart.leftPadding - 1 + "px";
-				hoverText.style.right = "";
 			} else {
-				hoverText.style.right = "0px";
-				hoverText.style.left = "";
+				// Don't need -1 here since clientWidth excludes borders
+				hoverText.style.left =
+					rect.right - hoverText.clientWidth + "px";
 			}
 			// Don't bother with the other charts - the mouse will only be over one at once
 			break;
