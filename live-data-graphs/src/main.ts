@@ -9,7 +9,7 @@ import {
 } from "./ui";
 import { connectSocket } from "./ws";
 import { handleData, highlightNearestPoint } from "./graphs";
-import { TimeLine } from "./chart";
+import type { TimeLine } from "@crisislab/timeline";
 
 declare global {
 	interface Window {

@@ -1,4 +1,9 @@
-import { TimeLine, getNearestPoint, xAxisPlugin, yAxisPlugin } from "./chart";
+import {
+	TimeLine,
+	getNearestPoint,
+	xAxisPlugin,
+	yAxisPlugin,
+} from "@crisislab/timeline";
 import {
 	hideMessages,
 	reloadButton,
@@ -57,7 +62,7 @@ export function handleData(packet: Datagram) {
 			container,
 			data: window.CRISiSLab.data[channel],
 			maxPoints: maxDataLength,
-			pointWidth: pointGap,
+			pointGap,
 			xLabel: "Time",
 			yLabel,
 			plugins: [
@@ -184,10 +189,10 @@ export function highlightNearestPoint() {
 			chart.ctx.setLineDash([10, 10]);
 
 			// Horizontal line
-			if (chartY < chart.heightWithPadding) {
+			if (chartY < chart.heightWithoutPadding) {
 				chart.ctx.beginPath();
 				chart.ctx.moveTo(chart.leftPadding, chartY);
-				chart.ctx.lineTo(chart.widthWithPadding, chartY);
+				chart.ctx.lineTo(chart.widthWithoutPadding, chartY);
 				chart.ctx.stroke();
 			}
 
@@ -195,7 +200,7 @@ export function highlightNearestPoint() {
 			if (chartX > chart.leftPadding) {
 				chart.ctx.beginPath();
 				chart.ctx.moveTo(chartX, 0);
-				chart.ctx.lineTo(chartX, chart.heightWithPadding);
+				chart.ctx.lineTo(chartX, chart.heightWithoutPadding);
 				chart.ctx.stroke();
 			}
 
@@ -231,7 +236,7 @@ ${chart.xLabel}: ${formatTime(point.x, true)}`;
 			hoverText.style.top = rect.y + "px";
 			hoverText.style.display = "block";
 
-			if (chartX > chart.widthWithPadding / 2) {
+			if (chartX > chart.widthWithoutPadding / 2) {
 				// The -1 is to avoid a double border
 				hoverText.style.left = rect.x + chart.leftPadding - 1 + "px";
 			} else {
