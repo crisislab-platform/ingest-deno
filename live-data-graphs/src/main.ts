@@ -1,6 +1,6 @@
 import { unpack } from "msgpackr";
 import "./graphs";
-import { formatTime, pauseButton, round, showNoSensorFound } from "./ui";
+import { pauseButton, showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
 import { handleData } from "./graphs";
 import type { TimeLine } from "@crisislab/timeline";
