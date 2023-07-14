@@ -71,7 +71,7 @@ export function handleData(packet: Datagram) {
 				xAxisPlugin(formatTime),
 				yAxisPlugin((y) => round(y) + ""),
 				doubleClickCopyPlugin(),
-				axisLabelPlugin(),
+				axisLabelPlugin(false, true),
 				pointerCrosshairPlugin(),
 				highlightNearestPointPlugin(),
 				!window.CRISiSLab.hideHoverInspector &&
