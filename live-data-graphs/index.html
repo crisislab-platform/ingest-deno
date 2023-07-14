@@ -29,29 +29,6 @@
 				width: 100%;
 				float: right;
 				opacity: 0;
-				transition: opacity 0.2s ease-in-out;
-				position: relative;
-				padding: 5px;
-				padding-left: 25px;
-				padding-bottom: 25px;
-			}
-			.axis-label {
-				font-size: 12px;
-				transition: opacity 0.2s ease-in-out;
-				position: absolute;
-				user-select: none;
-			}
-			.axis-label.x-axis {
-				left: 50%;
-				transform: translateX(-50%);
-				bottom: 5px;
-			}
-
-			.axis-label.y-axis {
-				left: 5px;
-				top: 5px;
-				writing-mode: vertical-rl;
-				transform: rotate(180deg);
 			}
 
 			button {
@@ -97,15 +74,6 @@
 				width: auto;
 			}
 
-			#hover-text {
-				display: block;
-				position: absolute;
-				background-color: white;
-				color: black;
-				padding: 5px;
-				border: 1px solid black;
-			}
-
 			#controls {
 				position: fixed;
 				bottom: 2px;
@@ -113,12 +81,17 @@
 				display: flex;
 				gap: 10px;
 			}
+
+			/* Modifying library elements */
+			.crisislab-timeline-y-axis {
+				font-size: 10px !important;
+				height: max-content;
+			}
 		</style>
 	</head>
 
 	<body>
 		<div id="charts-container"></div>
-		<span id="hover-text" style="display: none"></span>
 		<h1 id="status">Connecting...</h1>
 		<div id="controls">
 			<button id="pause" disabled>Pause</button>

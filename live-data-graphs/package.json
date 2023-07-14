@@ -13,7 +13,7 @@
 		"vite": "^4.4.4"
 	},
 	"dependencies": {
-		"@crisislab/timeline": "^0.3.0",
+		"@crisislab/timeline": "^0.4.2",
 		"msgpackr": "^1.9.5"
 	}
 }

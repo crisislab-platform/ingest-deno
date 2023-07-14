@@ -7,9 +7,7 @@ export const reloadButton = document.getElementById(
 export const pauseButton = document.getElementById(
 	"pause",
 ) as HTMLButtonElement;
-export const hoverText = document.getElementById(
-	"hover-text",
-) as HTMLDivElement;
+
 export const chartsContainer = document.getElementById(
 	"charts-container",
 ) as HTMLElement;

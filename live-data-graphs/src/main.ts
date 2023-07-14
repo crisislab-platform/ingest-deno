@@ -1,14 +1,8 @@
 import { unpack } from "msgpackr";
 import "./graphs";
-import {
-	formatTime,
-	hoverText,
-	pauseButton,
-	round,
-	showNoSensorFound,
-} from "./ui";
+import { formatTime, pauseButton, round, showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
-import { handleData, highlightNearestPoint } from "./graphs";
+import { handleData } from "./graphs";
 import type { TimeLine } from "@crisislab/timeline";
 
 declare global {
@@ -70,15 +64,10 @@ else {
 	connectSocket(handleData);
 }
 
-if (window.CRISiSLab.hideHoverInspector) {
-	hoverText.style.display = "none";
-}
-
 function draw() {
 	requestAnimationFrame(draw);
 	for (const chart of Object.values(window.CRISiSLab.charts)) {
 		chart.draw();
 	}
-	if (!window.CRISiSLab.hideHoverInspector) highlightNearestPoint();
 }
-requestAnimationFrame(draw);
+draw();

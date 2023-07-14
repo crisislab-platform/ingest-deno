@@ -1,13 +1,16 @@
 import {
 	TimeLine,
-	getNearestPoint,
 	xAxisPlugin,
 	yAxisPlugin,
+	axisLabelPlugin,
+	doubleClickCopyPlugin,
+	pointerCrosshairPlugin,
+	nearestPointInfoPopupPlugin,
+	highlightNearestPointPlugin,
 } from "@crisislab/timeline";
 import {
 	hideMessages,
 	reloadButton,
-	hoverText,
 	chartsContainer,
 	formatTime,
 	round,
@@ -28,7 +31,6 @@ const aliases = {
 	ENZ: "Z axis acceleration (m/s²)",
 };
 let start;
-let currentHeight = 23;
 const maxDataLength = 1300;
 const pointGap = 10;
 
@@ -68,50 +70,25 @@ export function handleData(packet: Datagram) {
 			plugins: [
 				xAxisPlugin(formatTime),
 				yAxisPlugin((y) => round(y) + ""),
+				doubleClickCopyPlugin(),
+				axisLabelPlugin(),
+				pointerCrosshairPlugin(),
+				highlightNearestPointPlugin(),
+				!window.CRISiSLab.hideHoverInspector &&
+					nearestPointInfoPopupPlugin(
+						formatTime,
+						(y) => round(y) + "",
+					),
+				{
+					construct(chart) {
+						chart.leftPadding += 20;
+					},
+				},
 			],
 		});
 		window.CRISiSLab.charts[channel] = chart;
 
 		container.style.opacity = "1";
-
-		if ("clipboard" in navigator) {
-			container.addEventListener("dblclick", (event) => {
-				// On double click, copy data to clipboard
-				const rect = chart.canvas.getBoundingClientRect();
-
-				const point = getNearestPoint(chart, {
-					x: event.pageX - rect.x,
-					y: event.pageY - rect.y,
-				});
-				if (!point) return;
-				try {
-					// Write in a spreadsheet-pasteable format
-					navigator.clipboard.writeText(`${chart.yLabel}	${point.y}
-${chart.xLabel}	${point.x}`);
-					console.info("Wrote point data to clipboard");
-				} catch (err) {
-					console.warn("Error writing to clipboard: ", err);
-				}
-			});
-		} else {
-			console.warn(
-				"Clipboard API not found - double click to copy won't work",
-			);
-		}
-
-		// Axis labels
-
-		const xLabelEl = document.createElement("p");
-		xLabelEl.innerText = "Time";
-		xLabelEl.className = "axis-label x-axis";
-		container.appendChild(xLabelEl);
-
-		const yLabelEl = document.createElement("p");
-		yLabelEl.innerText = yLabel;
-		yLabelEl.className = "axis-label y-axis";
-		container.appendChild(yLabelEl);
-
-		currentHeight += 24;
 	}
 
 	for (const i of measurements) {
@@ -140,115 +117,5 @@ ${chart.xLabel}	${point.x}`);
 	if (!window.CRISiSLab.haveRenderedPacket) {
 		window.CRISiSLab.haveRenderedPacket = true;
 		reloadButton.toggleAttribute("disabled", true);
-	}
-}
-
-let mouseX = -1;
-let mouseY = -1;
-
-window.addEventListener("mousemove", (event) => {
-	mouseX = event.pageX;
-	mouseY = event.pageY;
-});
-
-function isPointInBox(
-	px: number,
-	py: number,
-	x: number,
-	y: number,
-	w: number,
-	h: number,
-): boolean {
-	return x <= px && px <= x + w && y <= py && py <= y + h;
-}
-
-export function highlightNearestPoint() {
-	let found = false;
-	for (const chart of Object.values(window.CRISiSLab.charts)) {
-		const rect = chart.canvas.getBoundingClientRect();
-		// Check if the mouse is over the chart
-		if (
-			isPointInBox(
-				mouseX,
-				mouseY,
-				rect.x,
-				rect.y,
-				rect.width,
-				rect.height,
-			)
-		) {
-			found = true;
-
-			const chartX = mouseX - rect.x;
-			const chartY = mouseY - rect.y;
-
-			// Thinner line
-			chart.ctx.lineWidth = 0.5;
-
-			// Dashed line
-			chart.ctx.setLineDash([10, 10]);
-
-			// Horizontal line
-			if (chartY < chart.heightWithoutPadding) {
-				chart.ctx.beginPath();
-				chart.ctx.moveTo(chart.leftPadding, chartY);
-				chart.ctx.lineTo(chart.widthWithoutPadding, chartY);
-				chart.ctx.stroke();
-			}
-
-			// Vertical line
-			if (chartX > chart.leftPadding) {
-				chart.ctx.beginPath();
-				chart.ctx.moveTo(chartX, 0);
-				chart.ctx.lineTo(chartX, chart.heightWithoutPadding);
-				chart.ctx.stroke();
-			}
-
-			// Regular line
-			chart.ctx.setLineDash([]);
-
-			// Get the nearest point
-			const point = getNearestPoint(chart, { x: chartX, y: chartY });
-			if (!point) break;
-
-			// Ticker line
-			chart.ctx.lineWidth = 1.2;
-
-			// Draw a marker on it
-			const r = 10;
-			chart.ctx.beginPath();
-			chart.ctx.arc(point.renderX, point.renderY, r, 0, 2 * Math.PI);
-			chart.ctx.stroke();
-
-			// Crosshair
-			chart.ctx.beginPath();
-			chart.ctx.moveTo(point.renderX, point.renderY - r);
-			chart.ctx.lineTo(point.renderX, point.renderY + r);
-			chart.ctx.stroke();
-			chart.ctx.beginPath();
-			chart.ctx.moveTo(point.renderX - r, point.renderY);
-			chart.ctx.lineTo(point.renderX + r, point.renderY);
-			chart.ctx.stroke();
-
-			// Text
-			hoverText.innerText = `${chart.yLabel}: ${round(point.y)}
-${chart.xLabel}: ${formatTime(point.x, true)}`;
-			hoverText.style.top = rect.y + "px";
-			hoverText.style.display = "block";
-
-			if (chartX > chart.widthWithoutPadding / 2) {
-				// The -1 is to avoid a double border
-				hoverText.style.left = rect.x + chart.leftPadding - 1 + "px";
-			} else {
-				// Don't need -1 here since clientWidth excludes borders
-				hoverText.style.left =
-					rect.right - hoverText.clientWidth + "px";
-			}
-			// Don't bother with the other charts - the mouse will only be over one at once
-			break;
-		}
-	}
-	if (!found) {
-		hoverText.style.display = "none";
 	}
 }
