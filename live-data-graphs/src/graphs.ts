@@ -72,8 +72,10 @@ export function handleData(packet: Datagram) {
 				yAxisPlugin((y) => round(y) + ""),
 				doubleClickCopyPlugin(),
 				axisLabelPlugin(false, true),
-				pointerCrosshairPlugin(),
-				highlightNearestPointPlugin(),
+				!window.CRISiSLab.hideHoverInspector &&
+					pointerCrosshairPlugin(),
+				!window.CRISiSLab.hideHoverInspector &&
+					highlightNearestPointPlugin(),
 				!window.CRISiSLab.hideHoverInspector &&
 					nearestPointInfoPopupPlugin(
 						formatTime,
