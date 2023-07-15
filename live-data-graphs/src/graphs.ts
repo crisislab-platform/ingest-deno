@@ -95,7 +95,7 @@ export function handleData(packet: Datagram) {
 		let value = i;
 		// If the channel is an accelerometer
 		if (channel.startsWith("EN")) {
-			// Magic number to convert toi m/s^2
+			// Magic number to convert to m/s^2
 			value = value / 3.845e5;
 		}
 		window.CRISiSLab.data[channel].push({
