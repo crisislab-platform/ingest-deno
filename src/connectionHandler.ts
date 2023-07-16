@@ -271,9 +271,9 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 			})
 		);
 
-		// if (sensor.id == 3) {
-		dbBuffer.push({ sensor, parsedData });
-		// }
+		if (sensor.id == 3) {
+			dbBuffer.push({ sensor, parsedData });
+		}
 	} catch (err) {
 		console.warn("Failure when parsing/forwarding datagram: ", err);
 	}
