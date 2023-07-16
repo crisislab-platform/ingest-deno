@@ -52,6 +52,7 @@ const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
+const duplicateIPSensors = new Map<number, number>();
 let hasDownloadedSensorsYet = false;
 console.info("Dev mode: ", devMode);
 
@@ -166,53 +167,75 @@ export async function downloadSensorList(): Promise<string | undefined> {
 	// }
 
 	let sensors;
-	if (devMode) {
-		sensors = { 3: JSON.parse(await Deno.readTextFile("dev-sensor.json")) };
-	} else {
-		const res = await fetchAPI("sensors");
-		const json = await res.json();
+	// if (devMode) {
+	// 	sensors = { 3: JSON.parse(await Deno.readTextFile("dev-sensor.json")) };
+	// } else {
+	// No try/catch here - we want it to throw & crash if this fetch fails
+	const res = await fetchAPI("sensors");
+	const json = await res.json();
 
-		if (!json?.privileged) {
-			console.error("Non-privileged response received from worker!");
-			const success = await getNewTokenWithRefreshToken();
-			// If it worked, try downloading again
-			if (success) return await downloadSensorList();
-			return "Invalid token! Unable to get privileged sensor data from worker.";
-		}
-
-		sensors = json.sensors;
+	if (!json?.privileged) {
+		console.error("Non-privileged response received from worker!");
+		const success = await getNewTokenWithRefreshToken();
+		// If it worked, try downloading again
+		if (success) return await downloadSensorList();
+		return "Invalid token! Unable to get privileged sensor data from worker.";
 	}
 
-	for (const sensor of Object.values(sensors) as Sensor[]) {
-		if (!sensor.ip) {
-			const clients = clientsMap.get(sensor?.id);
-			if (clients) {
-				// Close clients for sensors that don't exist
-				clients.forEach((c) =>
-					c.close(
-						4404,
-						`Couldn't find a sensor with that ID (${sensor.id}). Make sure it has an IP set in the dashboard.`
-					)
+	sensors = json.sensors as Record<string, Sensor>;
+	// }
+
+	for (const sensor of Object.values(sensors)) {
+		if (sensor.ip) {
+			const firstDuplicate = ipToSensorMap.get(sensor.ip);
+			if (firstDuplicate) {
+				duplicateIPSensors.set(sensor.id, firstDuplicate.id);
+				console.warn(
+					`Sensor #${sensor.id} has the same IP set as sensor #${firstDuplicate.id} (${sensor.ip}). Ignoring sensor #${sensor.id}.`
 				);
+				closeSensorConnections(sensor.id);
+			} else {
+				ipToSensorMap.set(sensor.ip, sensor);
 			}
-			clientsMap.delete(sensor?.id);
-			continue;
+		} else {
+			console.warn(
+				`Not including sensor #${sensor.id} because it doesn't have an IP set.`
+			);
+			closeSensorConnections(sensor.id);
 		}
-		ipToSensorMap.set(sensor.ip, sensor);
 	}
 
 	hasDownloadedSensorsYet = true;
 }
 
+function closeSensorConnections(sensorID: number) {
+	const clients = clientsMap.get(sensorID);
+	if (clients) {
+		const firstDupeID = duplicateIPSensors.get(sensorID);
+		clients.forEach((c) => {
+			if (firstDupeID) {
+				c.close(
+					4409,
+					`Sensor #${sensorID} has the same IP address set as sensor #${firstDupeID}. Make sure it has a unique IP set in the dashboard.`
+				);
+			} else
+				c.close(
+					4404,
+					`Couldn't find a sensor with that ID (${sensorID}). Make sure it has a unique IP set in the dashboard.`
+				);
+		});
+	}
+	clientsMap.delete(sensorID);
+}
+
 // Called when a sensor sends a UDP packet. Data is then forwarded to the connected websockets
-export function sensorHandler(addr: Deno.Addr, rawData: Uint8Array) {
+export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 	// First get the sensor id from the ip address
-	const ip = addr as Deno.NetAddr;
-	const sensor = ipToSensorMap.get(ip.hostname);
+	const sensor = ipToSensorMap.get(addr.hostname);
 	if (!sensor) {
-		// console.info(
-		// 	`Packet received from unknown sensor IP address: ${ip.hostname}`
-		// );
+		console.info(
+			`Packet received from unknown sensor IP address: ${addr.hostname}`
+		);
 		return;
 	}
 
@@ -293,10 +316,7 @@ export function clientWebSocketHandler(
 			if (hasDownloadedSensorsYet) {
 				// If we've already downloaded the list, close the websocket.
 				// Otherwise, keep it open in hope.
-				client.close(
-					4404,
-					`Couldn't find a sensor with that ID (${sensorID}). Make sure it has an IP set in the dashboard.`
-				);
+				closeSensorConnections(sensorID);
 			} else {
 				client.send(
 					pack({

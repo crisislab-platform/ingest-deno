@@ -102,5 +102,5 @@ console.info("UDP listening on", socket.addr);
 
 // Handle incoming UDP packets
 for await (const [data, addr] of socket) {
-	sensorHandler(addr, data);
+	sensorHandler(addr as Deno.NetAddr, data);
 }

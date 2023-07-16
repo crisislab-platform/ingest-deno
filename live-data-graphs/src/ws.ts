@@ -34,8 +34,8 @@ export function connectSocket(handleData: HandleDataFunction) {
 
 		reloadButton.toggleAttribute("disabled", false);
 
-		if (event.code === 4404) {
-			showMessage(event.reason ?? "Not found");
+		if (event.code > 4000) {
+			showMessage(event.reason ?? "Server closed connection");
 		} else {
 			if (window.CRISiSLab.connectionAttempts < connectionRetryLimit) {
 				showMessage("Reconnecting...");
