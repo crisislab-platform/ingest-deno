@@ -95,8 +95,8 @@ async function setState({
 	sensorID,
 	connected,
 }: {
-	sensorID: number;
-	connected: boolean;
+	sensorID: Sensor["id"];
+	connected: Sensor["online"];
 }) {
 	// Avoid spamming the API by not updating things if they haven't changed.
 	const sensor = getSensor(sensorID);
@@ -190,6 +190,7 @@ export async function downloadSensorList(): Promise<string | undefined> {
 			const firstDuplicate = ipToSensorMap.get(sensor.ip);
 			if (firstDuplicate) {
 				duplicateIPSensors.set(sensor.id, firstDuplicate.id);
+				setState({ sensorID: sensor.id, connected: undefined });
 				console.warn(
 					`Sensor #${sensor.id} has the same IP set as sensor #${firstDuplicate.id} (${sensor.ip}). Ignoring sensor #${sensor.id}.`
 				);

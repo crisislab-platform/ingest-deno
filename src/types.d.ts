@@ -6,7 +6,7 @@ interface Sensor {
 	id: number;
 	SI: number;
 	ip?: string;
-	online: boolean;
+	online?: boolean;
 	type: string;
 	location: Location;
 	geoFeatures: GeoFeatures;

@@ -69,9 +69,9 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 			}
 		} else if (parsed?.type === "sensor-meta") {
 			window.CRISiSLab.sensorMeta = parsed?.data;
-			if (window.CRISiSLab.sensorMeta?.online === false) {
+			if (window.CRISiSLab.sensorMeta?.online !== true) {
 				showMessage(
-					`Sensor ${window.CRISiSLab.sensorID} seems to be offline.`,
+					`Sensor #${window.CRISiSLab.sensorID} seems to be offline.`,
 				);
 			}
 		} else if (parsed?.type === "message") {
