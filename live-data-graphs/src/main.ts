@@ -55,9 +55,14 @@ else {
 		// Page title
 		document.title = `Sensor ${sensorID} realtime data`;
 
+		// While running the Vite dev server we want to connect to the production server
+		// While running the production build on a local server we want to connect (insecurely) to the local server
+		// Otherwise we connect (securely) to the server on the origin the page is being served from
 		window.CRISiSLab.wsURL = `${
-			location.host.startsWith("localhost")
+			import.meta.env.DEV
 				? "wss://crisislab-data.massey.ac.nz"
+				: location.host.startsWith("localhost")
+				? `ws://${location.host}`
 				: `wss://${location.host}`
 		}/consume/${sensorID}/live`;
 	}
