@@ -3,50 +3,18 @@ import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
 loadSync({ export: true });
 
 // Imports
-import { DB } from "https://deno.land/x/sqlite@v3.7.2/mod.ts";
 import "./types.d.ts"; // goddamn typescript
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
 
-function openDB(): DB {
-	return new DB("sensor-data.db");
-}
-
-const db = openDB();
-db.execute(/*sql*/ `
-  CREATE TABLE IF NOT EXISTS sensor_data (
-    record_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    sensor_website_id INTEGER NOT NULL,
-	sensor_station_id TEXT,
-	sensor_type TEXT,
-	sensor_ip TEXT NOT NULL,
-	data_channel TEXT NOT NULL,
-	data_timestamp REAL NOT NULL,
-	data_values TEXT NOT NULL
-  )
-`);
-db.close();
-
-let dbBuffer: { sensor: Sensor; parsedData: any[] }[] = [];
-let apiToken: string | null = null;
-
-setInterval(() => {
-	if (!Deno.env.get("SHOULD_STORE")) return;
-
-	const db = openDB();
-	for (const { sensor, parsedData } of dbBuffer) {
-		for (const packet of parsedData) {
-			const query = /*sql*/ `INSERT INTO sensor_data (sensor_website_id, sensor_station_id, sensor_type, sensor_ip, data_channel, data_timestamp, data_values)
-			VALUES (${sensor.id}, '${sensor.secondary_id}', '${sensor.type}',
-			'${sensor.ip}', '${packet[0]}', ${packet[1]}, '${packet.slice(2).join(", ")}')
-			`;
-			db.execute(query);
-		}
+const databaseWorker = new Worker(
+	new URL("./databaseWorker.ts", import.meta.url).href,
+	{
+		type: "module",
 	}
-	db.close();
+);
 
-	dbBuffer = [];
-}, 5 * 1000);
+let apiToken: string | null = null;
 
 const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
@@ -167,23 +135,23 @@ export async function downloadSensorList(): Promise<string | undefined> {
 	// }
 
 	let sensors;
-	// if (devMode) {
-	// 	sensors = { 3: JSON.parse(await Deno.readTextFile("dev-sensor.json")) };
-	// } else {
-	// No try/catch here - we want it to throw & crash if this fetch fails
-	const res = await fetchAPI("sensors");
-	const json = await res.json();
+	if (devMode) {
+		sensors = { 3: JSON.parse(await Deno.readTextFile("dev-sensor.json")) };
+	} else {
+		// No try/catch here - we want it to throw & crash if this fetch fails
+		const res = await fetchAPI("sensors");
+		const json = await res.json();
 
-	if (!json?.privileged) {
-		console.error("Non-privileged response received from worker!");
-		const success = await getNewTokenWithRefreshToken();
-		// If it worked, try downloading again
-		if (success) return await downloadSensorList();
-		return "Invalid token! Unable to get privileged sensor data from worker.";
+		if (!json?.privileged) {
+			console.error("Non-privileged response received from worker!");
+			const success = await getNewTokenWithRefreshToken();
+			// If it worked, try downloading again
+			if (success) return await downloadSensorList();
+			return "Invalid token! Unable to get privileged sensor data from worker.";
+		}
+
+		sensors = json.sensors as Record<string, Sensor>;
 	}
-
-	sensors = json.sensors as Record<string, Sensor>;
-	// }
 
 	for (const sensor of Object.values(sensors)) {
 		if (sensor.ip) {
@@ -272,7 +240,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 		);
 
 		if (sensor.id == 3) {
-			dbBuffer.push({ sensor, parsedData });
+			databaseWorker.postMessage({ sensor, parsedData });
 		}
 	} catch (err) {
 		console.warn("Failure when parsing/forwarding datagram: ", err);
