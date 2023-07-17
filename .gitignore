@@ -6,3 +6,4 @@
 *.key
 *.crt
 *.db
+*.db-journal
