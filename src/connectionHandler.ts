@@ -239,9 +239,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 			})
 		);
 
-		if (sensor.id == 3) {
-			databaseWorker.postMessage({ sensor, parsedData });
-		}
+		databaseWorker.postMessage({ sensor, parsedData });
 	} catch (err) {
 		console.warn("Failure when parsing/forwarding datagram: ", err);
 	}
