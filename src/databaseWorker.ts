@@ -26,7 +26,7 @@ db.close();
 
 setInterval(() => {
 	if (!Deno.env.get("SHOULD_STORE")) return;
-
+	console.info("Starting to save data to DB...");
 	const db = openDB();
 	for (const { sensor, parsedData } of dbBuffer) {
 		for (const packet of parsedData) {
@@ -36,6 +36,6 @@ setInterval(() => {
 		}
 	}
 	db.close();
-
 	dbBuffer = [];
+	console.info("Done saving data.");
 }, 5 * 1000);
