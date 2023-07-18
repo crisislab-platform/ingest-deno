@@ -15,11 +15,11 @@ function openDB(): DB {
 
 const db = openDB();
 db.execute(/*sql*/ `
-  CREATE TABLE IF NOT EXISTS sensor_data_v2 (
+  CREATE TABLE IF NOT EXISTS sensor_data_v3 (
     sensor_website_id INTEGER NOT NULL,
 	data_channel TEXT NOT NULL,
 	data_timestamp REAL NOT NULL,
-	data_values TEXT NOT NULL
+	data_values BLOB NOT NULL
   )
 `);
 db.close();
@@ -31,9 +31,8 @@ setInterval(() => {
 	for (const { sensor, parsedData } of dbBuffer) {
 		for (const packet of parsedData) {
 			const compressedData = pack(packet.slice(2).join(", "));
-			const query = /*sql*/ `INSERT INTO sensor_data_v2 (sensor_website_id, data_channel, data_timestamp, data_values)
-													VALUES (${sensor.id}, '${packet[0]}', ${packet[1]}, '${compressedData}')`;
-			db.execute(query);
+			const query = /*sql*/ `INSERT INTO sensor_data_v3 (sensor_website_id, data_channel, data_timestamp, data_values) VALUES (?, ?, ?)`;
+			db.query(query, [sensor.id, packet[0], packet[1], compressedData]);
 		}
 	}
 	db.close();
