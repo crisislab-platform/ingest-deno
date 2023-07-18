@@ -31,7 +31,7 @@ setInterval(() => {
 	for (const { sensor, parsedData } of dbBuffer) {
 		for (const packet of parsedData) {
 			const compressedData = pack(packet.slice(2).join(", "));
-			const query = /*sql*/ `INSERT INTO sensor_data_v3 (sensor_website_id, data_channel, data_timestamp, data_values) VALUES (?, ?, ?)`;
+			const query = /*sql*/ `INSERT INTO sensor_data_v3 (sensor_website_id, data_channel, data_timestamp, data_values) VALUES (?, ?, ?, ?)`;
 			db.query(query, [sensor.id, packet[0], packet[1], compressedData]);
 		}
 	}
