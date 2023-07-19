@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-
+// @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
 import { DB } from "https://deno.land/x/sqlite@v3.7.2/mod.ts";
 
