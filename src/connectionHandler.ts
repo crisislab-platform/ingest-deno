@@ -153,6 +153,9 @@ export async function downloadSensorList(): Promise<string | undefined> {
 		sensors = json.sensors as Record<string, Sensor>;
 	}
 
+	// Clear the Maps to prevent issues with the sensor being a duplicate of itself
+	ipToSensorMap.clear();
+	duplicateIPSensors.clear();
 	for (const sensor of Object.values(sensors)) {
 		if (sensor.ip) {
 			const firstDuplicate = ipToSensorMap.get(sensor.ip);
