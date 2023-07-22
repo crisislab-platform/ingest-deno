@@ -12,7 +12,7 @@ curl -fsSL https://deno.land/x/install/install.sh | sh
 
 > Deno 1.31.1 has been tested, no grantees for other versions
 
-Modify the .env file to have the correct API token and the desired ports.
+Modify the .env file to have an API refresh token & the email associated with it, and the desired ports.
 Then run:
 
 ```bash
