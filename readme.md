@@ -1,17 +1,6 @@
 # Ingest Server
 
-Throughout my time at Crisislab, I’ve been working on some form of moving data. First, the competition Socket.io proxy, then the Cloudflare Workers serverless API (this was great; it might be worth exploring again using Cloudflare PubSub), then fixing up the old Java-based middle tier to work with the serverless API, migrating the old serverless API to a cloud instance due to unexpected costs, then to a Massey VM, then because of problems with the firewall, back to the cloud. Due to our login expiring for the middle tier and IT taking a while to fix it, I spent a couple of hours reimplementing the middle tier in a hundred or so lines, with the web API built in now and chucked it on the cloud. But since it was on my personal account using up my free tier resources, I moved it yet again to a Massey VM and spent ages going back and forth with IT to get the firewall sorted. 🫠
-
-## Tools used
-
-- Deno
-- WebSockets
-- UDP
-- Typescript
-
-## Description
-
-The ingest server bridges UDP data streams with WebSockets that browser clients can consume. To receive data, browser clients can subscribe to a WebSocket endpoint with the format /consume/{sensor}. When then a UDP packet arrives, the server looks up the sender's IP addresses in the sensors list from the main API and then forwards the data to all clients subscribed to that sensor. The server also updates the sensor's last seen timestamp and status using the main API.
+This server handles all our data from sensors. It listens to udp packets from the sensor network. It also runs a web server that allows a web client (in `./live-data-graphs`) to connect via websocket to have all of the udp data from a sensor forwarded to it in a format that it can understand. It also saves all of the udp data to an sqlite database.
 
 ## Usage
 
