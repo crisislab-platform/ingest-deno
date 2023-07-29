@@ -64,26 +64,26 @@ export function handleData(packet: Datagram) {
 			container,
 			data: window.CRISiSLab.data[channel],
 			maxPoints: maxDataLength,
-			pointGap,
 			xLabel: "Time",
 			yLabel,
 			plugins: [
 				xAxisPlugin(formatTime),
 				yAxisPlugin((y) => round(y) + ""),
-				doubleClickCopyPlugin(),
+				doubleClickCopyPlugin("closest-x"),
 				axisLabelPlugin(false, true),
 				!window.CRISiSLab.hideHoverInspector &&
 					pointerCrosshairPlugin(),
 				!window.CRISiSLab.hideHoverInspector &&
-					highlightNearestPointPlugin(),
+					highlightNearestPointPlugin("closest-x"),
 				!window.CRISiSLab.hideHoverInspector &&
 					nearestPointInfoPopupPlugin(
 						formatTime,
 						(y) => round(y) + "",
+						"closest-x",
 					),
 				{
 					construct(chart) {
-						chart.leftPadding += 20;
+						chart.padding.left += 20;
 					},
 				},
 			],
