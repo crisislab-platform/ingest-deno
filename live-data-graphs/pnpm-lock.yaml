@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@crisislab/timeline':
-    specifier: ^0.8.0
-    version: 0.8.0
+    specifier: ^0.8.2
+    version: 0.8.2
   msgpackr:
     specifier: ^1.9.5
     version: 1.9.5
@@ -22,8 +22,8 @@ devDependencies:
 
 packages:
 
-  /@crisislab/timeline@0.8.0:
-    resolution: {integrity: sha512-hn+3JuGEVTuxRLG6HtnximPAT4ieoijNZxqXLpB8fttADQBYV0/E3m8wpuXFvjWss1PFFmTnmtaHXHuoxP4tuQ==}
+  /@crisislab/timeline@0.8.2:
+    resolution: {integrity: sha512-aNxCTR015PWyuPK1/xuFUqJuhH5Y8kSBfYHrBYMCpgMCKtw2P6c5AUQiZ/h9aRs3uiVBxLfcUqZg+J0Kt07f/g==}
     dev: false
 
   /@esbuild/android-arm64@0.18.12:
