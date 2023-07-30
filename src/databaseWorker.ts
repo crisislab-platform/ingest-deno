@@ -30,7 +30,7 @@ db.execute(/*sql*/ `
 db.close();
 
 setInterval(() => {
-	if (!Deno.env.get("SHOULD_STORE")) return;
+	if (!parseInt(Deno.env.get("SHOULD_STORE") || "0")) return;
 	console.info("Starting to save data to DB...");
 	const db = openDB();
 	for (const { sensor, parsedData } of dbBuffer) {
