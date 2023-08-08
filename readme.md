@@ -52,6 +52,12 @@ sudo service ingest-deno start
 sudo service ingest-deno stop
 ```
 
+When logged in as a superuser, you can log into the database with:
+
+```bash
+psql sensor_data -U postgres -h localhost
+```
+
 ## Troubleshooting
 
 ### Deno was not found
