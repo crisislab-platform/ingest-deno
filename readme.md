@@ -16,7 +16,7 @@ Modify the .env file to have an API refresh token & the email associated with it
 Then run:
 
 ```bash
-deno run --unstable --allow-net --allow-write=sensor-data.db,sensor-data.db-journal --allow-read --allow-env --watch src/server.ts
+deno run --unstable --allow-net --allow-write=sensor-data.db,sensor-data.db-journal --allow-read --allow-env --allow-run --allow-sys --watch src/server.ts
 ```
 
 You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:

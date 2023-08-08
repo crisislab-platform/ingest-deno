@@ -9,7 +9,6 @@ Sentry.init({
 
 	// Performance Monitoring
 	tracesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
-
 	debug: devMode,
 	environment: devMode ? "dev" : "prod",
 });

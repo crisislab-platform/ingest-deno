@@ -2,6 +2,8 @@
 import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
 loadSync({ export: true });
 
+import * as Sentry from "npm:@sentry/node";
+
 // Imports
 import "./types.d.ts"; // goddamn typescript
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
@@ -237,6 +239,8 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 					);
 					return true;
 				} catch (_err) {
+					Sentry.captureException(_err);
+
 					return false;
 				}
 			})
@@ -244,6 +248,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 
 		dataWritingWorker.postMessage({ sensor, parsedData });
 	} catch (err) {
+		Sentry.captureException(err);
 		console.warn("Failure when parsing/forwarding datagram: ", err);
 	}
 }
