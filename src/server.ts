@@ -1,6 +1,18 @@
 // Load .env file. This needs to happen before other files run
 import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
 loadSync({ export: true });
+const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
+
+import * as Sentry from "npm:@sentry/node";
+Sentry.init({
+	dsn: "https://4d03235cf86ab4491bf144c3f1185969@o4505671371784192.ingest.sentry.io/4505671374667776",
+
+	// Performance Monitoring
+	tracesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
+
+	debug: devMode,
+	environment: devMode ? "dev" : "prod",
+});
 
 // Imports
 import {
