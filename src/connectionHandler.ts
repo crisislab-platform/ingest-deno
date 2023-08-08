@@ -6,6 +6,7 @@ loadSync({ export: true });
 import "./types.d.ts"; // goddamn typescript
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
+const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 
 const dataWritingWorker = new Worker(
 	new URL("./dataWritingWorker.ts", import.meta.url).href,
@@ -19,7 +20,6 @@ let apiToken: string | null = null;
 const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
-const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 const duplicateIPSensors = new Map<number, number>();
 let hasDownloadedSensorsYet = false;
 console.info("Dev mode: ", devMode);
