@@ -1,21 +1,11 @@
 /// <reference lib="webworker" />
-import { Client as DBClient } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 
-const dbClient = new DBClient({
-	user: Deno.env.get("DATABASE_USERNAME"),
-	password: Deno.env.get("DATABASE_PASSWORD"),
-	database: "sensor_data",
-	hostname: "localhost",
-	port: 5432,
-});
-await dbClient.connect();
+import { getDB } from "./utils.ts";
+
+const dbClient = await getDB();
 
 console.log("Database connected: ", dbClient.connected);
 console.log("Should store to database: ", Deno.env.get("SHOULD_STORE"));
-
-self.addEventListener("unload", async () => {
-	await dbClient.end();
-});
 
 let dbBuffer: {
 	sensor: Sensor;

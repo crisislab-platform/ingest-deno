@@ -7,8 +7,8 @@ import "./types.d.ts"; // goddamn typescript
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
 
-const databaseWorker = new Worker(
-	new URL("./databaseWorker.ts", import.meta.url).href,
+const dataWritingWorker = new Worker(
+	new URL("./dataWritingWorker.ts", import.meta.url).href,
 	{
 		type: "module",
 	}
@@ -242,7 +242,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 			})
 		);
 
-		databaseWorker.postMessage({ sensor, parsedData });
+		dataWritingWorker.postMessage({ sensor, parsedData });
 	} catch (err) {
 		console.warn("Failure when parsing/forwarding datagram: ", err);
 	}
