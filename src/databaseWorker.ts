@@ -1,54 +1,54 @@
 /// <reference lib="webworker" />
-import { DB } from "https://deno.land/x/sqlite@v3.7.2/mod.ts";
+import { Client as DBClient } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 
-import { deflate } from "https://deno.land/x/compress@v0.4.4/mod.ts";
-import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
-import { toDeltas } from "../lib/compress.ts";
+const dbClient = new DBClient({
+	user: Deno.env.get("DATABASE_USERNAME"),
+	password: Deno.env.get("DATABASE_PASSWORD"),
+	database: "sensor_data",
+	hostname: "localhost",
+	port: 5432,
+});
+await dbClient.connect();
+
+console.log("Database connected: ", dbClient.connected);
+console.log("Should store to database: ", Deno.env.get("SHOULD_STORE"));
+
+self.addEventListener("unload", async () => {
+	await dbClient.end();
+});
 
 let dbBuffer: {
 	sensor: Sensor;
 	parsedData: [string, number, ...number[]][];
 }[] = [];
-
 self.addEventListener("message", (event: MessageEvent) => {
 	dbBuffer.push(event.data);
 });
 
-function openDB(): DB {
-	return new DB("sensor-data.db");
-}
-
-const db = openDB();
-db.execute(/*sql*/ `
-  CREATE TABLE IF NOT EXISTS sensor_data_v4 (
-    sensor_website_id INTEGER NOT NULL,
-	data_channel TEXT NOT NULL,
-	data_timestamp INTEGER NOT NULL,
-	data_values BLOB NOT NULL
-  )
+await dbClient.queryArray(/*sql*/ `
+CREATE TABLE IF NOT EXISTS sensor_data (
+	sensor_website_id int NOT NULL,
+	data_timestamp timestamptz NOT NULL,
+	data_channel char(3),
+	counts_values int[]
+);
 `);
-db.close();
 
-setInterval(() => {
+setInterval(async () => {
 	if (!parseInt(Deno.env.get("SHOULD_STORE") || "0")) return;
 	console.info("Starting to save data to DB...");
-	const db = openDB();
 	for (const { sensor, parsedData } of dbBuffer) {
 		for (const packet of parsedData) {
 			const channel = packet[0];
 			const timestamp = packet[1] * 1000;
 
-			const dataToCompress = packet.slice(2) as number[];
+			const rawDataValues = packet.slice(2) as number[];
 
-			const deltas = toDeltas(dataToCompress);
-
-			const compressedData = deflate(pack(deltas));
-
-			const query = /*sql*/ `INSERT INTO sensor_data_v4 (sensor_website_id, data_channel, data_timestamp, data_values) VALUES (?, ?, ?, ?)`;
-			db.query(query, [sensor.id, channel, timestamp, compressedData]);
+			await dbClient.queryArray/*sql*/ `
+			INSERT INTO sensor_data (sensor_website_id, data_timestamp, data_channel, counts_values) 
+							 VALUES (${sensor.id}, to_timestamp(${timestamp}), ${channel}, ${rawDataValues});`;
 		}
 	}
-	db.close();
 	dbBuffer = [];
 	console.info("Done saving data.");
 }, 5 * 1000);
