@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS sensor_data (
 	counts_values int[]
 );
 `);
+await dbClient.queryArray(
+	`SELECT create_hypertable('sensor_data','data_timestamp', if_not_exists => TRUE);`
+);
 
 setInterval(async () => {
 	if (!parseInt(Deno.env.get("SHOULD_STORE") || "0")) return;
