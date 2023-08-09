@@ -1,9 +1,22 @@
+import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
+import { getLogger } from "https://deno.land/std@0.197.0/log/mod.ts";
+import { serveFile } from "https://deno.land/std@0.197.0/http/file_server.ts";
+import * as Sentry from "npm:@sentry/node";
+import {
+	sensorHandler,
+	clientWebSocketHandler,
+	downloadSensorList,
+	getNewTokenWithRefreshToken,
+} from "./connectionHandler.ts";
+
 // Load .env file. This needs to happen before other files run
-import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
 loadSync({ export: true });
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 
-import * as Sentry from "npm:@sentry/node";
+function log() {
+	return getLogger("main-server");
+}
+
 Sentry.init({
 	dsn: "https://4d03235cf86ab4491bf144c3f1185969@o4505671371784192.ingest.sentry.io/4505671374667776",
 
@@ -14,18 +27,6 @@ Sentry.init({
 });
 
 // Imports
-import {
-	// serveTls,
-	serve,
-} from "https://deno.land/std@0.178.0/http/mod.ts";
-import { serveFile } from "https://deno.land/std@0.178.0/http/file_server.ts";
-
-import {
-	sensorHandler,
-	clientWebSocketHandler,
-	downloadSensorList,
-	getNewTokenWithRefreshToken,
-} from "./connectionHandler.ts";
 
 // Get an access token
 if (!(await getNewTokenWithRefreshToken()))
@@ -39,7 +40,7 @@ downloadError = await downloadSensorList();
 // Every 15 minutes, re-download the sensor list
 setInterval(
 	async () => {
-		console.info("About to download sensor list from interval");
+		log().info("About to download sensor list from interval");
 		downloadError = await downloadSensorList();
 	},
 	15 * 60 * 1000 // Every 15 minutes
@@ -58,7 +59,7 @@ async function reqHandler(request: Request) {
 		try {
 			sensorID = parseInt(sections[1]);
 		} catch (err) {
-			console.warn("Failed to get sensor ID from URL: ", err);
+			log().warning("Failed to get sensor ID from URL: ", err);
 			return new Response("Failed to get sensor ID from URL", { status: 400 });
 		}
 
@@ -98,9 +99,14 @@ async function reqHandler(request: Request) {
 // 	keyFile: Deno.env.get("TLS_KEY_FILE"),
 // });
 
-serve(reqHandler, {
-	port: Number(Deno.env.get("HTTP_PORT") || 8080),
-});
+const httpPort = Number(Deno.env.get("HTTP_PORT") || 8080);
+Deno.serve(
+	{
+		port: httpPort,
+	},
+	reqHandler
+);
+log().info("HTTP listening on", httpPort);
 
 // Start the UDP server
 const socket = await Deno.listenDatagram({
@@ -109,7 +115,7 @@ const socket = await Deno.listenDatagram({
 	hostname: "0.0.0.0",
 });
 
-console.info("UDP listening on", socket.addr);
+log().info("UDP listening on", socket.addr);
 
 // Handle incoming UDP packets
 for await (const [data, addr] of socket) {

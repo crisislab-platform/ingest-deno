@@ -1,13 +1,17 @@
-// Load .env file. This needs to happen before other files run
-import { loadSync } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
-loadSync({ export: true });
-
+import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
 import * as Sentry from "npm:@sentry/node";
-
-// Imports
-import "./types.d.ts"; // goddamn typescript
+import { getLogger } from "https://deno.land/std@0.197.0/log/mod.ts";
+import "./types.d.ts";
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
+
+// Load .env file. This needs to happen before other files run
+loadSync({ export: true });
+
+function log() {
+	return getLogger("connection-handler");
+}
+
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 
 const dataWritingWorker = new Worker(
@@ -24,7 +28,7 @@ const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
 const duplicateIPSensors = new Map<number, number>();
 let hasDownloadedSensorsYet = false;
-console.info("Dev mode: ", devMode);
+log().info("Dev mode: ", devMode);
 
 // if (devMode) {
 // 	ipToSensorMap.set(
@@ -75,9 +79,9 @@ async function setState({
 		sensor.online = connected;
 
 		if (connected === true) {
-			console.info(`Sensor connected: #${sensorID}`);
+			log().info(`Sensor connected: #${sensorID}`);
 		} else {
-			console.info(`Sensor disconnected: #${sensorID}`);
+			log().info(`Sensor disconnected: #${sensorID}`);
 		}
 
 		if (devMode) return;
@@ -92,7 +96,7 @@ async function setState({
 		});
 
 		if (res.status !== 200) {
-			console.warn("Error setting state:", await res.text());
+			log().warning("Error setting state:", await res.text());
 		}
 	}
 }
@@ -109,7 +113,7 @@ export function fetchAPI(path: string, options: RequestInit = {}) {
 }
 
 export async function getNewTokenWithRefreshToken(): Promise<boolean> {
-	console.info("Attempting to get new token with refresh token...");
+	log().info("Attempting to get new token with refresh token...");
 	const response = await fetchAPI("auth/refresh", {
 		method: "POST",
 		body: JSON.stringify({
@@ -123,14 +127,14 @@ export async function getNewTokenWithRefreshToken(): Promise<boolean> {
 		apiToken = token;
 		return true;
 	} else {
-		console.warn("No token found when refreshing!");
+		log().warning("No token found when refreshing!");
 	}
 	return false;
 }
 
 // Download sensor list from internship-worker
 export async function downloadSensorList(): Promise<string | undefined> {
-	console.info("Fetching sensor list...");
+	log().info("Fetching sensor list...");
 
 	// if (devMode) {
 	// 	return;
@@ -145,7 +149,7 @@ export async function downloadSensorList(): Promise<string | undefined> {
 		const json = await res.json();
 
 		if (!json?.privileged) {
-			console.error("Non-privileged response received from worker!");
+			log().error("Non-privileged response received from worker!");
 			const success = await getNewTokenWithRefreshToken();
 			// If it worked, try downloading again
 			if (success) return await downloadSensorList();
@@ -163,7 +167,7 @@ export async function downloadSensorList(): Promise<string | undefined> {
 			const firstDuplicate = ipToSensorMap.get(sensor.ip);
 			if (firstDuplicate) {
 				duplicateIPSensors.set(sensor.id, firstDuplicate.id);
-				console.warn(
+				log().warning(
 					`Sensor #${sensor.id} has the same IP set as sensor #${firstDuplicate.id} (${sensor.ip}). Ignoring sensor #${sensor.id}.`
 				);
 				closeSensorConnections(sensor.id);
@@ -171,7 +175,7 @@ export async function downloadSensorList(): Promise<string | undefined> {
 				ipToSensorMap.set(sensor.ip, sensor);
 			}
 		} else {
-			console.warn(
+			log().warning(
 				`Not including sensor #${sensor.id} because it doesn't have an IP set.`
 			);
 			closeSensorConnections(sensor.id);
@@ -206,7 +210,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 	// First get the sensor id from the ip address
 	const sensor = ipToSensorMap.get(addr.hostname);
 	if (!sensor) {
-		console.info(
+		log().info(
 			`Packet received from unknown sensor IP address: ${addr.hostname}`
 		);
 		return;
@@ -249,7 +253,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 		dataWritingWorker.postMessage({ sensor, parsedData });
 	} catch (err) {
 		Sentry.captureException(err);
-		console.warn("Failure when parsing/forwarding datagram: ", err);
+		log().warning("Failure when parsing/forwarding datagram: ", err);
 	}
 }
 
@@ -286,7 +290,7 @@ export function clientWebSocketHandler(
 				})
 			);
 		} else {
-			console.warn(`Couldn't find a sensor with that ID (${sensorID}).`);
+			log().warning(`Couldn't find a sensor with that ID (${sensorID}).`);
 			if (hasDownloadedSensorsYet) {
 				// If we've already downloaded the list, close the websocket.
 				// Otherwise, keep it open in hope.

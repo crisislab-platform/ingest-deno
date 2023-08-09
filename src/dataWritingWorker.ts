@@ -1,11 +1,15 @@
 /// <reference lib="webworker" />
-
+import { getLogger } from "https://deno.land/std@0.197.0/log/mod.ts";
 import { getDB } from "./utils.ts";
+
+function log() {
+	return getLogger("database-worker");
+}
 
 const dbClient = await getDB();
 
-console.log("Database connected: ", dbClient.connected);
-console.log("Should store to database: ", Deno.env.get("SHOULD_STORE"));
+log().info("Database connected: ", dbClient.connected);
+log().info("Should store to database: ", Deno.env.get("SHOULD_STORE"));
 
 let dbBuffer: {
 	sensor: Sensor;
@@ -36,7 +40,7 @@ await dbClient.queryArray(
 
 setInterval(async () => {
 	if (!parseInt(Deno.env.get("SHOULD_STORE") || "0")) return;
-	console.info("Starting to save data to DB...");
+	log().info("Starting to save data to DB...");
 	for (const { sensor, parsedData } of dbBuffer) {
 		for (const packet of parsedData) {
 			const channel = packet[0];
@@ -50,5 +54,5 @@ setInterval(async () => {
 		}
 	}
 	dbBuffer = [];
-	console.info("Done saving data.");
+	log().info("Done saving data.");
 }, 5 * 1000);
