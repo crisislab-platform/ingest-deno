@@ -15,6 +15,7 @@ self.addEventListener("message", (event: MessageEvent) => {
 	dbBuffer.push(event.data);
 });
 
+// Table setup
 await dbClient.queryArray(/*sql*/ `
 CREATE TABLE IF NOT EXISTS sensor_data (
 	sensor_website_id int NOT NULL,
@@ -25,6 +26,12 @@ CREATE TABLE IF NOT EXISTS sensor_data (
 `);
 await dbClient.queryArray(
 	`SELECT create_hypertable('sensor_data','data_timestamp', if_not_exists => TRUE);`
+);
+await dbClient.queryArray(
+	/*sql*/ `ALTER TABLE sensor_data SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_website_id');`
+);
+await dbClient.queryArray(
+	/*sql*/ `SELECT add_compression_policy('sensor_data', INTERVAL '2 days', if_not_exists => TRUE);`
 );
 
 setInterval(async () => {
