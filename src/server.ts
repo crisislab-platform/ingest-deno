@@ -1,5 +1,5 @@
 import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
-import { getLogger } from "https://deno.land/std@0.197.0/log/mod.ts";
+import { serve } from "https://deno.land/std@0.178.0/http/mod.ts";
 import { serveFile } from "https://deno.land/std@0.197.0/http/file_server.ts";
 import * as Sentry from "npm:@sentry/node";
 import {
@@ -12,10 +12,6 @@ import {
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
-
-function log() {
-	return getLogger("main-server");
-}
 
 Sentry.init({
 	dsn: "https://4d03235cf86ab4491bf144c3f1185969@o4505671371784192.ingest.sentry.io/4505671374667776",
@@ -40,7 +36,7 @@ downloadError = await downloadSensorList();
 // Every 15 minutes, re-download the sensor list
 setInterval(
 	async () => {
-		log().info("About to download sensor list from interval");
+		console.info("About to download sensor list from interval");
 		downloadError = await downloadSensorList();
 	},
 	15 * 60 * 1000 // Every 15 minutes
@@ -59,7 +55,7 @@ async function reqHandler(request: Request) {
 		try {
 			sensorID = parseInt(sections[1]);
 		} catch (err) {
-			log().warning("Failed to get sensor ID from URL: ", err);
+			console.warn("Failed to get sensor ID from URL: ", err);
 			return new Response("Failed to get sensor ID from URL", { status: 400 });
 		}
 
@@ -100,13 +96,11 @@ async function reqHandler(request: Request) {
 // });
 
 const httpPort = Number(Deno.env.get("HTTP_PORT") || 8080);
-Deno.serve(
-	{
-		port: httpPort,
-	},
-	reqHandler
-);
-log().info("HTTP listening on", httpPort);
+// TODO: Switch to Deno.serve. Issue is, that is block and this is not. We need something non-blocking
+serve(reqHandler, {
+	port: httpPort,
+});
+console.info("HTTP listening on", httpPort);
 
 // Start the UDP server
 const socket = await Deno.listenDatagram({
@@ -114,8 +108,7 @@ const socket = await Deno.listenDatagram({
 	transport: "udp",
 	hostname: "0.0.0.0",
 });
-
-log().info("UDP listening on", socket.addr);
+console.info("UDP listening on", socket.addr);
 
 // Handle incoming UDP packets
 for await (const [data, addr] of socket) {
