@@ -3,6 +3,7 @@ import * as Sentry from "npm:@sentry/node";
 import "./types.d.ts";
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
+import { fetchAPI, getNewTokenWithRefreshToken } from "./utils.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -15,8 +16,6 @@ const dataWritingWorker = new Worker(
 		type: "module",
 	}
 );
-
-let apiToken: string | null = null;
 
 const clientsMap = new Map<number, Array<WebSocket>>();
 const lastMessageTimestampMap = new Map<number, number>();
@@ -96,44 +95,9 @@ async function setState({
 	}
 }
 
-// Helper function to fetch from the API
-export function fetchAPI(path: string, options: RequestInit = {}) {
-	return fetch(Deno.env.get("API_ENDPOINT") + path, {
-		...options,
-		headers: {
-			...options.headers,
-			authorization: `Bearer ${apiToken}`,
-		},
-	});
-}
-
-export async function getNewTokenWithRefreshToken(): Promise<boolean> {
-	console.info("Attempting to get new token with refresh token...");
-	const response = await fetchAPI("auth/refresh", {
-		method: "POST",
-		body: JSON.stringify({
-			email: Deno.env.get("API_EMAIL"),
-			refreshToken: Deno.env.get("API_REFRESH_TOKEN"),
-		}),
-	});
-	const data = await response.json();
-	const token = data.token;
-	if (token) {
-		apiToken = token;
-		return true;
-	} else {
-		console.warn("No token found when refreshing!");
-	}
-	return false;
-}
-
 // Download sensor list from internship-worker
 export async function downloadSensorList(): Promise<string | undefined> {
 	console.info("Fetching sensor list...");
-
-	// if (devMode) {
-	// 	return;
-	// }
 
 	let sensors;
 	if (devMode) {

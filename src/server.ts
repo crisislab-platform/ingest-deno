@@ -6,8 +6,8 @@ import {
 	sensorHandler,
 	clientWebSocketHandler,
 	downloadSensorList,
-	getNewTokenWithRefreshToken,
 } from "./connectionHandler.ts";
+import { getNewTokenWithRefreshToken } from "./utils.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
