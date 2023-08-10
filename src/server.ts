@@ -8,6 +8,7 @@ import {
 	downloadSensorList,
 } from "./connectionHandler.ts";
 import { getNewTokenWithRefreshToken } from "./utils.ts";
+import { handleDataAPI } from "./dataAPI.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -84,6 +85,9 @@ async function reqHandler(request: Request) {
 
 	if (url.pathname === "/")
 		return await serveFile(request, "live-data-graphs/dist/index.html");
+
+	const dataRes = await handleDataAPI(request);
+	if (dataRes) return dataRes;
 
 	return new Response("No matching route found - 404", { status: 404 });
 }
