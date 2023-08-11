@@ -1,18 +1,27 @@
 import { getSensor } from "./connectionHandler.ts";
 import { fetchAPI, getDB } from "./utils.ts";
 
+const corsHeaders = {
+	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Headers": "Authorization",
+};
+
 const sql = getDB();
 export async function handleDataAPI(req: Request): Promise<Response | null> {
 	const url = new URL(req.url);
 
 	// Check that this is the right URL
+	if (req.method === "OPTIONS")
+		return new Response(null, {
+			headers: corsHeaders,
+		});
 	if (req.method !== "GET") return null;
 	if (!/^\/api\/v1\/data-bulk-export\/?$/.test(url.pathname)) return null;
 
 	// Check Auth
-	const tokenMatch = req.headers.get("Authorisation")?.match(/Bearer (.+)/);
+	const tokenMatch = req.headers.get("Authorization")?.match(/Bearer (.+)/);
 	if (!tokenMatch || tokenMatch.length < 2)
-		return new Response("Unauthorised", { status: 401 });
+		return new Response("Unauthorised", { status: 401, headers: corsHeaders });
 
 	const token = tokenMatch[1];
 
@@ -20,28 +29,41 @@ export async function handleDataAPI(req: Request): Promise<Response | null> {
 
 	// Very cursed
 	try {
-		// Pretend to be the user making the request to the API to figure out if they have the right roles.
+		// Pretend to be the user making the request to the API
+		// to figure out if they have the correct role.
 		userDetails = await (
-			await fetchAPI("me", { headers: { authorisation: `Bearer ${token}` } })
+			await fetchAPI("auth/me", {
+				headers: { authorization: `Bearer ${token}` },
+			})
 		).json();
 	} catch (err) {
 		console.warn(err);
-		return new Response("Invalid user token", { status: 500 });
+		return new Response("Invalid user token", {
+			status: 500,
+			headers: corsHeaders,
+		});
 	}
-
-	if (!userDetails.roles.keys().includes("sensor-data:bulk-export"))
-		return new Response("Missing permissions", { status: 401 });
+	console.log(userDetails);
+	if (!userDetails.roles.includes("sensor-data:bulk-export"))
+		return new Response("Missing permissions", {
+			status: 401,
+			headers: corsHeaders,
+		});
 
 	const sensorID = url.searchParams.get("sensor_id");
 
 	if (!sensorID)
-		return new Response("Specify a sensor to export from", { status: 400 });
+		return new Response("Specify a sensor to export from", {
+			status: 400,
+			headers: corsHeaders,
+		});
 
 	const sensor = getSensor(sensorID);
 
 	if (!sensor)
 		return new Response("Couldn't find a sensor with that ID", {
 			status: 404,
+			headers: corsHeaders,
 		});
 
 	const body = new ReadableStream({
@@ -72,6 +94,7 @@ export async function handleDataAPI(req: Request): Promise<Response | null> {
 		headers: {
 			"content-type": "text/csv",
 			"x-content-type-options": "nosniff",
+			...corsHeaders,
 		},
 	});
 }

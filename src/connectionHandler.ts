@@ -60,6 +60,7 @@ export function getSensor(_sensorID: number | string): Sensor | undefined {
 			return undefined;
 		}
 	}
+
 	for (const sensor of ipToSensorMap.values()) {
 		if (sensor.id === sensorID) {
 			return sensor;

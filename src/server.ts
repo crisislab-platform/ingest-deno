@@ -47,6 +47,9 @@ setInterval(
 async function reqHandler(request: Request) {
 	if (downloadError) return new Response(downloadError);
 
+	const dataRes = await handleDataAPI(request);
+	if (dataRes) return dataRes;
+
 	const url = new URL(request.url);
 
 	const sections = url.pathname.slice(1).split("/");
@@ -85,9 +88,6 @@ async function reqHandler(request: Request) {
 
 	if (url.pathname === "/")
 		return await serveFile(request, "live-data-graphs/dist/index.html");
-
-	const dataRes = await handleDataAPI(request);
-	if (dataRes) return dataRes;
 
 	return new Response("No matching route found - 404", { status: 404 });
 }
