@@ -50,12 +50,23 @@ setInterval(
 	60 * 1000 // Every minute
 );
 
-function getSensor(sensorID: number): Sensor | undefined {
+export function getSensor(_sensorID: number | string): Sensor | undefined {
+	let sensorID = _sensorID;
+	if (typeof _sensorID === "string") {
+		try {
+			sensorID = Number.parseInt(_sensorID);
+		} catch (err) {
+			console.warn("Failed to parse sensor ID: ", err);
+			return undefined;
+		}
+	}
+
 	for (const sensor of ipToSensorMap.values()) {
 		if (sensor.id === sensorID) {
 			return sensor;
 		}
 	}
+	return undefined;
 }
 
 // Update the sensor state in both the the online set and the API
