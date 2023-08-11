@@ -6,8 +6,9 @@ import {
 	sensorHandler,
 	clientWebSocketHandler,
 	downloadSensorList,
-	getNewTokenWithRefreshToken,
 } from "./connectionHandler.ts";
+import { getNewTokenWithRefreshToken } from "./utils.ts";
+import { handleDataAPI } from "./dataAPI.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -45,6 +46,9 @@ setInterval(
 // HTTP request handler
 async function reqHandler(request: Request) {
 	if (downloadError) return new Response(downloadError);
+
+	const dataRes = await handleDataAPI(request);
+	if (dataRes) return dataRes;
 
 	const url = new URL(request.url);
 
