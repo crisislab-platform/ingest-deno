@@ -99,7 +99,7 @@ export async function handleDataAPI(req: Request): Promise<Response | null> {
 					"Sensor Website ID	Data Timestamp	Data Channel	Data Counts\n"
 				)
 			);
-			sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, counts_values FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`.stream(
+			sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, counts_values FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`.forEach(
 				(row: Record<string, string>) => {
 					const message =
 						[

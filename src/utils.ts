@@ -1,4 +1,4 @@
-import { postgres } from "https://deno.land/x/postgresql@v2.0.0-beta.5/mod.js";
+import postgres from "https://deno.land/x/postgresjs@v3.3.5/mod.js";
 export function getDB() {
 	// Connect with credentials from env
 	const sql = postgres({
