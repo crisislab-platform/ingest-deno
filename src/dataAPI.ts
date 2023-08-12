@@ -99,8 +99,8 @@ export async function handleDataAPI(req: Request): Promise<Response | null> {
 					"Sensor Website ID	Data Timestamp	Data Channel	Data Counts\n"
 				)
 			);
-			sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, counts_values FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`.forEach(
-				(row: Record<string, string>) => {
+			sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, counts_values FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
+				.forEach((row: Record<string, string>) => {
 					const message =
 						[
 							sensor.id,
@@ -109,9 +109,14 @@ export async function handleDataAPI(req: Request): Promise<Response | null> {
 							row["counts_values"],
 						].join("	") + "\n";
 					controller.enqueue(new TextEncoder().encode(message));
-				},
-				1000
-			);
+				})
+				.then(() => {
+					controller.close();
+				})
+				.catch((err) => {
+					console.warn("Error streaming response: ", err);
+					controller.error(err);
+				});
 		},
 	});
 
@@ -126,7 +131,7 @@ export async function handleDataAPI(req: Request): Promise<Response | null> {
 
 	return new Response(body, {
 		headers: {
-			"content-type": "text/csv",
+			"content-type": "text/tsv",
 			"x-number-of-records": count + "",
 			...corsHeaders,
 		},
