@@ -8,12 +8,12 @@
 		"build-watch": "vite build --watch",
 		"preview": "vite preview"
 	},
-	"devDependencies": {
-		"typescript": "^5.1.6",
-		"vite": "^4.4.7"
-	},
 	"dependencies": {
 		"@crisislab/timeline": "^0.8.2",
-		"msgpackr": "^1.9.5"
+		"msgpackr": "^1.9.7"
+	},
+	"devDependencies": {
+		"typescript": "^5.1.6",
+		"vite": "^4.4.9"
 	}
 }
