@@ -6,9 +6,8 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-WorkingDirectory=/home/ingest/ingest-deno
-User=ingest
-ExecStart=/home/ingest/.deno/bin/deno run --unstable --allow-net --allow-write=sensor-data.db,sensor-data.db-journal --allow-read --allow-env --allow-run --allow-sys --watch src/server.ts >> /home/ingest/ingest-deno/logs 2>&1
+WorkingDirectory=/ingest-deno
+ExecStart=/ingest-deno/deno-bin/deno run --unstable --allow-net --allow-write=sensor-data.db,sensor-data.db-journal --allow-read --allow-env --allow-run --allow-sys --watch /ingest-deno/src/server.ts >> /ingest-deno/logs 2>&1
 
 [Install]
 WantedBy=multi-user.target

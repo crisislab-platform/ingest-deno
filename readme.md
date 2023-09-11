@@ -46,10 +46,10 @@ It's been given sudo privileges for just `service ingest-deno *` commands as wel
 For instance:
 
 ```bash
-sudo service ingest-deno status
-sudo service ingest-deno restart
-sudo service ingest-deno start
-sudo service ingest-deno stop
+systemctl stop ingest-deno
+systemctl start ingest-deno
+systemctl restart ingest-deno
+systemctl status ingest-deno
 ```
 
 When logged in as a superuser, you can log into the database with:
