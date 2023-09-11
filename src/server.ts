@@ -116,5 +116,7 @@ console.info("UDP listening on", socket.addr);
 
 // Handle incoming UDP packets
 for await (const [data, addr] of socket) {
+	// @ts-expect-error
+	console.info("Packet from " + addr?.hostname);
 	sensorHandler(addr as Deno.NetAddr, data);
 }
