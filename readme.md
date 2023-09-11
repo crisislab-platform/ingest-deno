@@ -40,9 +40,6 @@ You may need to install Node.js and npm first.
 
 ### Running on Massey VM
 
-The `ingest` user has been setup for running the ingest server. Ask Ben or Zade for the password.
-It's been given sudo privileges for just `service ingest-deno *` commands as well.
-
 For instance:
 
 ```bash
