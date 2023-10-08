@@ -84,7 +84,7 @@ export async function handleDataAPI(req: Request): Promise<Response | null> {
 			headers: corsHeaders,
 		});
 
-	const channels = _channels.split(",");
+	const channels = _channels.split(",").map((c) => c.toUpperCase());
 
 	if (!_from)
 		return new Response("Specify the start of the time range", {
@@ -120,12 +120,9 @@ export async function handleDataAPI(req: Request): Promise<Response | null> {
 
 	switch (format) {
 		case "tsv1": {
-			const query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, counts_values FROM sensor_data_2 WHERE sensor_website_id=${
-				sensor.id
-			} AND data_channel in (${channels.join(
-				","
-			)}) AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
-
+			const channelsQuerySegment = sql(channels);
+			console.log(channelsQuerySegment);
+			const query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, counts_values FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 			const body = new ReadableStream({
 				start(controller) {
 					controller.enqueue(
@@ -135,6 +132,8 @@ export async function handleDataAPI(req: Request): Promise<Response | null> {
 					);
 					query
 						.forEach((row: Record<string, string>) => {
+							console.log(row);
+
 							const message =
 								[
 									sensor.id,
@@ -157,9 +156,22 @@ export async function handleDataAPI(req: Request): Promise<Response | null> {
 			// This is for the progress bar
 			const count = parseInt(
 				(
-					await sql`SELECT count(sensor_website_id) FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND  data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
+					await sql`SELECT count(sensor_website_id) FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
 				)[0]["count"]
 			);
+
+			if (count === 0) {
+				return new Response(
+					`No records found for sensor #${sensor.id} at that time in those channels`,
+					{
+						status: 404,
+						headers: {
+							"x-number-of-records": "0",
+							...corsHeaders,
+						},
+					}
+				);
+			}
 
 			return new Response(body, {
 				headers: {
