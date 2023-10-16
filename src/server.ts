@@ -1,5 +1,4 @@
 import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
-import { serve } from "https://deno.land/std@0.178.0/http/mod.ts";
 import { serveFile } from "https://deno.land/std@0.197.0/http/file_server.ts";
 import * as Sentry from "npm:@sentry/node";
 import {
@@ -100,10 +99,8 @@ async function reqHandler(request: Request) {
 // });
 
 const httpPort = Number(Deno.env.get("HTTP_PORT") || 8080);
-// TODO: Switch to Deno.serve. Issue is, that is block and this is not. We need something non-blocking
-serve(reqHandler, {
-	port: httpPort,
-});
+// The .unref() is important so that we can also run a datagram listener
+Deno.serve({ port: httpPort }, reqHandler).unref();
 console.info("HTTP listening on", httpPort);
 
 // Start the UDP server
