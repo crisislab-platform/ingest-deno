@@ -1,5 +1,8 @@
 import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
-import { serveFile } from "https://deno.land/std@0.197.0/http/file_server.ts";
+import {
+	serveDir,
+	serveFile,
+} from "https://deno.land/std@0.204.0/http/file_server.ts";
 import * as Sentry from "npm:@sentry/node";
 import {
 	sensorHandler,
@@ -7,7 +10,8 @@ import {
 	downloadSensorList,
 } from "./connectionHandler.ts";
 import { getNewTokenWithRefreshToken } from "./utils.ts";
-import { handleDataAPI } from "./dataAPI.ts";
+import { IRequest, Router } from "npm:itty-router@4.0.23";
+import { apiRouter } from "./api.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -43,64 +47,47 @@ setInterval(
 );
 
 // HTTP request handler
-async function reqHandler(request: Request) {
-	if (downloadError) return new Response(downloadError);
-
-	const dataRes = await handleDataAPI(request);
-	if (dataRes) return dataRes;
-
-	const url = new URL(request.url);
-
-	const sections = url.pathname.slice(1).split("/");
-
-	if (sections[0] === "consume" && sections[1]) {
-		let sensorID: number;
-		try {
-			sensorID = parseInt(sections[1]);
-		} catch (err) {
-			console.warn("Failed to get sensor ID from URL: ", err);
-			return new Response("Failed to get sensor ID from URL", { status: 400 });
-		}
-
+function getSensorIDMiddleware(req: IRequest) {
+	let sensorID: number;
+	try {
+		sensorID = parseInt(req?.params?.id?.[1]);
 		if (isNaN(sensorID))
 			return new Response("Invalid sensor ID", { status: 400 });
+	} catch (err) {
+		console.warn("Failed to get sensor ID from URL: ", err);
+		return new Response("Failed to get sensor ID from URL", { status: 400 });
+	}
+	req.sensorID = sensorID;
+}
+function downloadErrorMiddleware() {
+	if (downloadError) return new Response(downloadError);
+}
+const router = Router<IRequest & { sensorID?: number }>();
+router
+	.get("/api/v1/*", apiRouter.handle)
+	.get(
+		"/consume/:id/live",
+		downloadErrorMiddleware,
+		getSensorIDMiddleware,
+		(req) => {
+			if (downloadError) return new Response(downloadError);
 
-		// Websockets
-		if (sections[2] === "live") {
-			if (request.headers.get("Upgrade") !== "websocket") {
+			if (req.headers.get("Upgrade") !== "websocket") {
 				return new Response("Needs websocket Upgrade header", { status: 400 });
 			}
-
-			return clientWebSocketHandler(request, sensorID);
+			return clientWebSocketHandler(req, req.sensorID!);
 		}
-
-		return await serveFile(request, "live-data-graphs/dist/index.html");
-	}
-
-	if (
-		Deno.env.get("SERVE_ALL")
-			? true
-			: sections[0] === "assets" && sections[1]?.endsWith(".js")
 	)
-		// FIXME: sketchy, possible path traversal
-		return await serveFile(request, `live-data-graphs/dist${url.pathname}`);
-
-	if (url.pathname === "/")
-		return await serveFile(request, "live-data-graphs/dist/index.html");
-
-	return new Response("No matching route found - 404", { status: 404 });
-}
-
-// Start the HTTP server
-// serveTls(reqHandler, {
-// 	port: Number(Deno.env.get("HTTP_PORT") || 8080),
-// 	certFile: Deno.env.get("TLS_CERT_FILE"),
-// 	keyFile: Deno.env.get("TLS_KEY_FILE"),
-// });
+	.all("/assets/*", (req) =>
+		serveDir(req, { fsRoot: "live-data-graphs/dist/assets", urlRoot: "assets" })
+	)
+	.all("*", downloadErrorMiddleware, (req) =>
+		serveFile(req, "live-data-graphs/dist/index.html")
+	);
 
 const httpPort = Number(Deno.env.get("HTTP_PORT") || 8080);
 // The .unref() is important so that we can also run a datagram listener
-Deno.serve({ port: httpPort }, reqHandler).unref();
+Deno.serve({ port: httpPort }, (req) => router.handle(req)).unref();
 console.info("HTTP listening on", httpPort);
 
 // Start the UDP server
@@ -113,7 +100,5 @@ console.info("UDP listening on", socket.addr);
 
 // Handle incoming UDP packets
 for await (const [data, addr] of socket) {
-	//// @ts-expect-error
-	// console.info("Packet from " + addr?.hostname);
 	sensorHandler(addr as Deno.NetAddr, data);
 }
