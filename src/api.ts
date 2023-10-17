@@ -255,6 +255,5 @@ apiRouter
 export const handleAPI = async (req: IRequest) => {
 	const res: Response = await apiRouter.handle(req);
 	setCORSHeaders(req, res);
-	console.log(res.headers);
 	return res;
 };

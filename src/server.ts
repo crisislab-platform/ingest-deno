@@ -64,7 +64,7 @@ function downloadErrorMiddleware() {
 }
 const router = Router<IRequest & { sensorID?: number }>();
 router
-	.get("/api/v1/*", handleAPI)
+	.all("/api/v1/*", handleAPI)
 	.get(
 		"/consume/:id/live",
 		downloadErrorMiddleware,
@@ -81,13 +81,20 @@ router
 	.all("/assets/*", (req) =>
 		serveDir(req, { fsRoot: "live-data-graphs/dist/assets", urlRoot: "assets" })
 	)
-	.all("*", downloadErrorMiddleware, (req) =>
+	.get("/", downloadErrorMiddleware, (req) =>
+		serveFile(req, "live-data-graphs/dist/index.html")
+	)
+	.get("/consume/*", downloadErrorMiddleware, (req) =>
 		serveFile(req, "live-data-graphs/dist/index.html")
 	);
 
 const httpPort = Number(Deno.env.get("HTTP_PORT") || 8080);
 // The .unref() is important so that we can also run a datagram listener
-Deno.serve({ port: httpPort }, (req) => router.handle(req)).unref();
+Deno.serve({ port: httpPort }, async (req) => {
+	const res = await router.handle(req);
+
+	return res;
+}).unref();
 console.info("HTTP listening on", httpPort);
 
 // Start the UDP server
