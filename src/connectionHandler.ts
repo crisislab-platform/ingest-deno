@@ -4,7 +4,6 @@ import "./types.d.ts";
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
 import { fetchAPI, getNewTokenWithRefreshToken } from "./utils.ts";
-import { Socket } from "https://deno.land/std@0.132.0/node/net.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
