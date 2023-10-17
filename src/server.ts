@@ -11,7 +11,7 @@ import {
 } from "./connectionHandler.ts";
 import { getNewTokenWithRefreshToken } from "./utils.ts";
 import { IRequest, Router } from "npm:itty-router@4.0.23";
-import { apiRouter } from "./api.ts";
+import { handleAPI } from "./api.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -64,7 +64,7 @@ function downloadErrorMiddleware() {
 }
 const router = Router<IRequest & { sensorID?: number }>();
 router
-	.get("/api/v1/*", apiRouter.handle)
+	.get("/api/v1/*", handleAPI)
 	.get(
 		"/consume/:id/live",
 		downloadErrorMiddleware,

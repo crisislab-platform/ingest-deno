@@ -1,4 +1,4 @@
-import { IRequest, Router } from "npm:itty-router@4.0.23/Router";
+import { IRequest, Router, createCors } from "npm:itty-router@4.0.23";
 import { getSensor } from "./connectionHandler.ts";
 import { fetchAPI, getDB } from "./utils.ts";
 import {
@@ -6,13 +6,16 @@ import {
 	startTimeFromDate,
 } from "npm:miniseed@0.2.1";
 
-const sql = getDB();
+const { preflight, corsify } = createCors({
+	origins: ["*"],
+	methods: ["GET"],
+	headers: {
+		"Access-Control-Allow-Headers": "Authorization",
+		"Access-Control-Expose-Headers": "X-Number-Of-Records",
+	},
+});
 
-const corsHeaders = {
-	"Access-Control-Allow-Origin": "*",
-	"Access-Control-Allow-Headers": "Authorization",
-	"access-control-expose-headers": "X-Number-Of-Records",
-};
+const sql = getDB();
 
 function deArrayQueryParamsMiddleware(req: IRequest) {
 	for (const [k, v] of Object.entries(req.query)) {
@@ -27,7 +30,6 @@ function authMiddleware(roles?: string[]) {
 		if (!tokenMatch || tokenMatch.length < 2)
 			return new Response("Unauthorised", {
 				status: 401,
-				headers: corsHeaders,
 			});
 
 		const token = tokenMatch[1];
@@ -46,7 +48,6 @@ function authMiddleware(roles?: string[]) {
 		} catch {
 			return new Response("Invalid user token", {
 				status: 500,
-				headers: corsHeaders,
 			});
 		}
 
@@ -55,22 +56,17 @@ function authMiddleware(roles?: string[]) {
 				if (!userDetails.roles.includes(role))
 					return new Response("Missing permissions", {
 						status: 401,
-						headers: corsHeaders,
 					});
 	};
 }
 
-export const apiRouter = Router({ base: "/api/v1" });
+const apiRouter = Router({ base: "/api/v1" });
 apiRouter
-	.options("*", () => {
-		return new Response("", {
-			headers: corsHeaders,
-		});
-	})
+	.all("*", preflight)
 	.get("/database-size", authMiddleware(["sensor-data:db-size"]), async () => {
 		const size = (await sql`SELECT pg_database_size('sensor_data');`)[0]
 			.pg_database_size;
-		return new Response(size, { headers: corsHeaders });
+		return new Response(size);
 	})
 	.get(
 		"/data-bulk-export",
@@ -87,25 +83,21 @@ apiRouter
 			if (!sensorID)
 				return new Response("Specify a sensor to export from", {
 					status: 400,
-					headers: corsHeaders,
 				});
 
 			if (!format)
 				return new Response("Specify a format to export in", {
 					status: 400,
-					headers: corsHeaders,
 				});
 
 			if (!["tsv1", "miniseed3"].includes(format))
 				return new Response("Please choose a valid format: tsv1 or miniseed3", {
 					status: 400,
-					headers: corsHeaders,
 				});
 
 			if (!_channels)
 				return new Response("Specify channels to export from", {
 					status: 400,
-					headers: corsHeaders,
 				});
 
 			const channels = _channels.split(",").map((c) => c.toUpperCase());
@@ -113,13 +105,11 @@ apiRouter
 			if (!_from)
 				return new Response("Specify the start of the time range", {
 					status: 400,
-					headers: corsHeaders,
 				});
 
 			if (!_to)
 				return new Response("Specify the end of the time range", {
 					status: 400,
-					headers: corsHeaders,
 				});
 
 			let to: number;
@@ -130,7 +120,6 @@ apiRouter
 			} catch {
 				return new Response("Please provide unix timestamps in seconds", {
 					status: 400,
-					headers: corsHeaders,
 				});
 			}
 
@@ -139,13 +128,11 @@ apiRouter
 			if (!sensor)
 				return new Response("Couldn't find a sensor with that ID", {
 					status: 404,
-					headers: corsHeaders,
 				});
 
 			switch (format) {
 				case "tsv1": {
 					const channelsQuerySegment = sql(channels);
-					console.log(channelsQuerySegment);
 					const query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, counts_values FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 					const body = new ReadableStream({
 						start(controller) {
@@ -156,8 +143,6 @@ apiRouter
 							);
 							query
 								.forEach((row: Record<string, string>) => {
-									console.log(row);
-
 									const message =
 										[
 											sensor.id,
@@ -191,7 +176,6 @@ apiRouter
 								status: 404,
 								headers: {
 									"x-number-of-records": "0",
-									...corsHeaders,
 								},
 							}
 						);
@@ -201,7 +185,6 @@ apiRouter
 						headers: {
 							"content-type": "text/tsv",
 							"x-number-of-records": count + "",
-							...corsHeaders,
 						},
 					});
 				}
@@ -217,7 +200,6 @@ apiRouter
 					if (rows.length === 0)
 						return new Response("No records found", {
 							status: 404,
-							headers: corsHeaders,
 						});
 
 					const startTime: Date = rows[0].data_timestamp;
@@ -245,7 +227,6 @@ apiRouter
 
 					return new Response(serialised, {
 						headers: {
-							...corsHeaders,
 							"content-type": "Application/vnd.fdsn.mseed",
 							"x-crisislab-data-start": startTime.toISOString(),
 						},
@@ -255,9 +236,15 @@ apiRouter
 				default: {
 					return new Response("Unsupported export format", {
 						status: 400,
-						headers: corsHeaders,
 					});
 				}
 			}
 		}
-	);
+	)
+	.get("*", () => new Response("API route not found", { status: 404 }));
+
+export const handleAPI = async (req: IRequest) => {
+	let res = await apiRouter.handle(req);
+	res = corsify(res);
+	return res;
+};
