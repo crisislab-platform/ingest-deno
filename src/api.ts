@@ -1,4 +1,4 @@
-import { IRequest, Router, createCors } from "npm:itty-router@4.0.23";
+import { IRequest, Router } from "npm:itty-router@4.0.23";
 import { getSensor } from "./connectionHandler.ts";
 import { fetchAPI, getDB } from "./utils.ts";
 import {
@@ -6,13 +6,16 @@ import {
 	startTimeFromDate,
 } from "npm:miniseed@0.2.1";
 
-const { preflight, corsify } = createCors({
-	methods: ["GET"],
-	headers: {
-		"Access-Control-Allow-Headers": "Authorization",
-		"Access-Control-Expose-Headers": "X-Number-Of-Records",
-	},
-});
+function setCORSHeaders(req: IRequest, res: Response) {
+	// itty-router's built-in cors is broken
+	res.headers.set("Access-Control-Allow-Methods", "GET");
+	res.headers.set("Access-Control-Allow-Headers", "Authorization");
+	res.headers.set("Access-Control-Expose-Headers", "X-Number-Of-Records");
+	res.headers.set(
+		"Access-Control-Allow-Origin",
+		req.headers.get("origin") || "*"
+	);
+}
 
 const sql = getDB();
 
@@ -61,7 +64,11 @@ function authMiddleware(roles?: string[]) {
 
 const apiRouter = Router({ base: "/api/v1" });
 apiRouter
-	.all("*", preflight)
+	.options("*", (req) => {
+		const res = new Response();
+		setCORSHeaders(req, res);
+		return res;
+	})
 	.get("/database-size", authMiddleware(["sensor-data:db-size"]), async () => {
 		const size = (await sql`SELECT pg_database_size('sensor_data');`)[0]
 			.pg_database_size;
@@ -243,9 +250,7 @@ apiRouter
 	.get("*", () => new Response("API route not found", { status: 404 }));
 
 export const handleAPI = async (req: IRequest) => {
-	let res: Response = await apiRouter.handle(req);
-	res = corsify(res);
-	// Itty-router's cors is broken
-	res.headers.set("Access-Control-Allow-Origin", new URL(req.url).origin);
+	const res: Response = await apiRouter.handle(req);
+	setCORSHeaders(req, res);
 	return res;
 };
