@@ -181,9 +181,11 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 	// First get the sensor id from the ip address
 	const sensor = ipToSensorMap.get(addr.hostname);
 	if (!sensor) {
-		console.info(
-			`Packet received from unknown sensor IP address: ${addr.hostname}`
-		);
+		// Don't spam logs too much
+		if (Math.random() < 0.001)
+			console.info(
+				`Packet received from unknown sensor IP address: ${addr.hostname}`
+			);
 		return;
 	}
 
