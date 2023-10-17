@@ -7,7 +7,6 @@ import {
 } from "npm:miniseed@0.2.1";
 
 const { preflight, corsify } = createCors({
-	origins: ["*"],
 	methods: ["GET"],
 	headers: {
 		"Access-Control-Allow-Headers": "Authorization",
@@ -244,7 +243,9 @@ apiRouter
 	.get("*", () => new Response("API route not found", { status: 404 }));
 
 export const handleAPI = async (req: IRequest) => {
-	let res = await apiRouter.handle(req);
+	let res: Response = await apiRouter.handle(req);
 	res = corsify(res);
+	// Itty-router's cors is broken
+	res.headers.set("Access-Control-Allow-Origin", new URL(req.url).origin);
 	return res;
 };
