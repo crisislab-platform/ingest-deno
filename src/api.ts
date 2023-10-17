@@ -67,15 +67,11 @@ apiRouter
 			headers: corsHeaders,
 		});
 	})
-	.get(
-		"/database-size",
-		// authMiddleware(["sensor-data:db-size"]),
-		async () => {
-			const size = (await sql`SELECT pg_database_size('sensor_data');`)[0]
-				.pg_database_size;
-			return new Response(size, { headers: corsHeaders });
-		}
-	)
+	.get("/database-size", authMiddleware(["sensor-data:db-size"]), async () => {
+		const size = (await sql`SELECT pg_database_size('sensor_data');`)[0]
+			.pg_database_size;
+		return new Response(size, { headers: corsHeaders });
+	})
 	.get(
 		"/data-bulk-export",
 		authMiddleware(["sensor-data:bulk-export"]),
