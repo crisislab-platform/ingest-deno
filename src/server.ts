@@ -50,7 +50,7 @@ setInterval(
 function getSensorIDMiddleware(req: IRequest) {
 	let sensorID: number;
 	try {
-		sensorID = parseInt(req?.params?.id?.[1]);
+		sensorID = parseInt(req?.params?.id?.[0]);
 		if (isNaN(sensorID))
 			return new Response("Invalid sensor ID", { status: 400 });
 	} catch (err) {
