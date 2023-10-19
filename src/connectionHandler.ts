@@ -249,6 +249,8 @@ export function clientWebSocketHandler(
 		const sensor = getSensor(sensorID);
 
 		if (sensor) {
+			console.info(`Connected websocket for sensor #${sensorID}`);
+
 			client.send(
 				pack({
 					type: "sensor-meta",
@@ -262,7 +264,9 @@ export function clientWebSocketHandler(
 				})
 			);
 		} else {
-			console.warn(`Couldn't find a sensor with that ID (${sensorID}).`);
+			console.info(
+				`Couldn't connect websocket for sensor #${sensorID} - does it exist?`
+			);
 			if (hasDownloadedSensorsYet) {
 				// If we've already downloaded the list, close the websocket.
 				// Otherwise, keep it open in hope.
