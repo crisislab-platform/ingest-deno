@@ -35,9 +35,11 @@ try {
 
 setInterval(async () => {
 	if (!parseInt(Deno.env.get("SHOULD_STORE") || "0")) return;
-	console.info("Starting to save data to DB...");
+	let packetCount = 0;
 	for (const { sensor, parsedData } of dbBuffer) {
 		for (const packet of parsedData) {
+			packetCount++;
+
 			const channel = packet[0];
 			const timestamp = packet[1];
 
@@ -51,5 +53,5 @@ setInterval(async () => {
 		}
 	}
 	dbBuffer = [];
-	console.info("Done saving data.");
+	console.info(`Wrote ${packetCount} packets to DB`);
 }, 5 * 1000);

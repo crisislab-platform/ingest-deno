@@ -12,6 +12,7 @@ import {
 import { getNewTokenWithRefreshToken } from "./utils.ts";
 import { IRequest, Router } from "npm:itty-router@4.0.23";
 import { handleAPI } from "./api.ts";
+import { hostname } from "https://deno.land/std@0.132.0/_deno_unstable.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -90,12 +91,21 @@ router
 
 const httpPort = Number(Deno.env.get("HTTP_PORT") || 8080);
 // The .unref() is important so that we can also run a datagram listener
-Deno.serve({ port: httpPort }, async (req) => {
-	const res = await router.handle(req);
+Deno.serve(
+	{
+		port: httpPort,
+		hostname: "0.0.0.0",
+		onListen: ({ hostname, port }) =>
+			console.info(`HTTP server started ${hostname}:${port}`),
+	},
+	async (req) => {
+		console.info(`HTTP ${req.method} ${req.url}`);
 
-	return res;
-}).unref();
-console.info("HTTP listening on", httpPort);
+		const res = await router.handle(req);
+
+		return res;
+	}
+).unref();
 
 // Start the UDP server
 const socket = await Deno.listenDatagram({
