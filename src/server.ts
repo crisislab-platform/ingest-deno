@@ -113,7 +113,8 @@ const socket = await Deno.listenDatagram({
 	transport: "udp",
 	hostname: "0.0.0.0",
 });
-console.info("UDP listening on", socket.addr);
+const socketAddr = socket.addr as Deno.NetAddr;
+console.info(`UDP listening on ${socketAddr.hostname}:${socketAddr.port}`);
 
 // Handle incoming UDP packets
 for await (const [data, addr] of socket) {

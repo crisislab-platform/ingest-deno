@@ -108,8 +108,6 @@ async function setState({
 
 // Download sensor list from internship-worker
 export async function downloadSensorList(): Promise<string | undefined> {
-	console.info("Fetching sensor list...");
-
 	let sensors;
 	if (devMode) {
 		sensors = { 3: JSON.parse(await Deno.readTextFile("dev-sensor.json")) };
@@ -137,9 +135,6 @@ export async function downloadSensorList(): Promise<string | undefined> {
 			const firstDuplicate = ipToSensorMap.get(sensor.ip);
 			if (firstDuplicate) {
 				duplicateIPSensors.set(sensor.id, firstDuplicate.id);
-				console.warn(
-					`Sensor #${sensor.id} has the same IP set as sensor #${firstDuplicate.id} (${sensor.ip}). Ignoring sensor #${sensor.id}.`
-				);
 				closeSensorConnections(sensor.id);
 			} else {
 				ipToSensorMap.set(sensor.ip, sensor);
@@ -151,6 +146,9 @@ export async function downloadSensorList(): Promise<string | undefined> {
 			closeSensorConnections(sensor.id);
 		}
 	}
+	console.info(
+		`Downloaded sensor list (${ipToSensorMap.size} sensors, ${duplicateIPSensors.size} duplicate)`
+	);
 
 	hasDownloadedSensorsYet = true;
 }
