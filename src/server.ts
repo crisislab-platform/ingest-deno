@@ -96,11 +96,13 @@ Deno.serve(
 		port: httpPort,
 		hostname: "0.0.0.0",
 		onListen: ({ hostname, port }) =>
-			console.info(`HTTP server started ${hostname}:${port}`),
+			console.info(`HTTP server started http://${hostname}:${port}`),
 	},
-	async (req) => {
+	async (req, connectionInfo) => {
 		try {
-			console.info(`HTTP ${req.method} ${req.url}`);
+			console.info(
+				`HTTP ${req.method} ${req.url} from ${connectionInfo.remoteAddr.hostname}`
+			);
 
 			const res = await router.handle(req);
 
