@@ -104,6 +104,8 @@ Deno.serve(
 
 			const res = await router.handle(req);
 
+			// Deno.serve is weak - if you don't return something the
+			// whole server crashes.
 			if (!res) return new Response("Not found", { status: 404 });
 
 			return res;
