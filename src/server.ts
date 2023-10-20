@@ -99,11 +99,18 @@ Deno.serve(
 			console.info(`HTTP server started ${hostname}:${port}`),
 	},
 	async (req) => {
-		console.info(`HTTP ${req.method} ${req.url}`);
+		try {
+			console.info(`HTTP ${req.method} ${req.url}`);
 
-		const res = await router.handle(req);
+			const res = await router.handle(req);
 
-		return res;
+			if (!res) return new Response("Not found", { status: 404 });
+
+			return res;
+		} catch (err) {
+			console.error(`Error handling HTTP: `, err);
+			return new Response("Internal error", { status: 500 });
+		}
 	}
 ).unref();
 
