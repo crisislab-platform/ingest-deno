@@ -187,6 +187,9 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 	}
 
 	try {
+		// TODO: At some point in the future, get all this rubbish off
+		// the main thread - we will suffer if we scale.
+
 		// Convert the data to a JSON array to make it easier for browser clients to parse
 		const message = new TextDecoder().decode(rawData);
 		const parsedData = JSON.parse(
@@ -205,12 +208,20 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 			sensor.id,
 			(clientsMap.get(sensor.id) || []).filter((client) => {
 				try {
-					client.send(
-						pack({
-							type: "datagram",
-							data: parsedData,
-						})
-					);
+					const sendPacket = () =>
+						client.send(
+							pack({
+								type: "datagram",
+								data: parsedData,
+							})
+						);
+					// Handle race condition where a datagram is received
+					// after a socket is started but before it fully opens
+					if (client.OPEN) sendPacket();
+					else if (client.CONNECTING)
+						client.addEventListener("open", sendPacket);
+					else return false;
+
 					return true;
 				} catch (_err) {
 					Sentry.captureException(_err);
