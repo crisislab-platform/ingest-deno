@@ -209,25 +209,24 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 			sensor.id,
 			(clientsMap.get(sensor.id) || []).filter((client) => {
 				try {
-					const sendPacket = () =>
+					// Handle race condition where a datagram is received
+					// after a socket is started but before it fully opens
+					if (client.OPEN)
 						client.send(
 							pack({
 								type: "datagram",
 								data: parsedData,
 							})
 						);
-					// Handle race condition where a datagram is received
-					// after a socket is started but before it fully opens
-					if (client.OPEN) sendPacket();
 					else if (client.CONNECTING) {
 						// Just drop this packet, but keep it in the list
 						return true;
 					} else return false;
 
 					return true;
-				} catch (_err) {
-					Sentry.captureException(_err);
-
+				} catch (err) {
+					Sentry.captureException(err);
+					console.error(err);
 					return false;
 				}
 			})
