@@ -203,6 +203,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 
 		setState({ sensorID: sensor.id, connected: true });
 
+		// TODO: Change this to just send to all, and run the filtering separately
 		// Send the message to all clients, and filter out the ones that have disconnected
 		clientsMap.set(
 			sensor.id,
@@ -218,9 +219,10 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 					// Handle race condition where a datagram is received
 					// after a socket is started but before it fully opens
 					if (client.OPEN) sendPacket();
-					else if (client.CONNECTING)
-						client.addEventListener("open", sendPacket);
-					else return false;
+					else if (client.CONNECTING) {
+						// Just drop this packet, but keep it in the list
+						return true;
+					} else return false;
 
 					return true;
 				} catch (_err) {
