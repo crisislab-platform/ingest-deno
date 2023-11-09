@@ -43,10 +43,10 @@ You may need to install Node.js and npm first.
 For instance:
 
 ```bash
-systemctl stop ingest-deno
-systemctl start ingest-deno
-systemctl restart ingest-deno
-systemctl status ingest-deno
+sudo systemctl stop ingest-deno
+sudo systemctl start ingest-deno
+sudo systemctl restart ingest-deno
+sudo systemctl status ingest-deno
 ```
 
 When logged in as a superuser, you can log into the database with:
