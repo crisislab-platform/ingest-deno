@@ -10,13 +10,13 @@ To run the server, first install Deno:
 curl -fsSL https://deno.land/x/install/install.sh | sh
 ```
 
-> Deno 1.37.1 has been tested, no grantees for other versions
+> Deno 1.38.0 has been tested, no grantees for other versions
 
 Modify the .env file to have an API refresh token & the email associated with it, and the desired ports.
 Then run:
 
 ```bash
-deno run --unstable --allow-net --allow-write=sensor-data.db,sensor-data.db-journal --allow-read --allow-env --allow-run --allow-sys --watch src/server.ts
+deno run --allow-net --allow-read --allow-env --allow-run --allow-sys src/server.ts
 ```
 
 You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:
