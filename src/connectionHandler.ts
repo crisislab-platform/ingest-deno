@@ -211,22 +211,22 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 				try {
 					// Handle race condition where a datagram is received
 					// after a socket is started but before it fully opens
-					if (client.OPEN)
+					if (client.readyState == WebSocket.OPEN)
 						client.send(
 							pack({
 								type: "datagram",
 								data: parsedData,
 							})
 						);
-					else if (client.CONNECTING) {
-						// Just drop this packet, but keep it in the list
+					else if (client.readyState == WebSocket.CONNECTING) {
+						// Just drop this packet, but keep client in the list
 						return true;
 					} else return false;
 
 					return true;
 				} catch (err) {
 					Sentry.captureException(err);
-					console.error(err);
+					console.error("Error sending packet: ", err);
 					return false;
 				}
 			})
