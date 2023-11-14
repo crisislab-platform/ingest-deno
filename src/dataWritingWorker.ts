@@ -1,16 +1,16 @@
 /// <reference lib="webworker" />
-import { getDB } from "./utils.ts";
+import { getDB, log } from "./utils.ts";
 const shouldStore = Boolean(parseInt(Deno.env.get("SHOULD_STORE") || "0"));
 
 if (!shouldStore) {
-	console.info("SHOULD_STORE is false, exiting data writing worker");
+	log.info("SHOULD_STORE is false, exiting data writing worker");
 	self.close();
 } else {
-	console.info("SHOULD_STORE is true, setting up database");
+	log.info("SHOULD_STORE is true, setting up database");
 
 	const sql = await getDB();
 
-	// console.info("Database connected: ", dbClient.connected);
+	// log.info("Database connected: ", dbClient.connected);
 
 	let dbBuffer: {
 		sensor: Sensor;
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS sensor_data_2 (
 		await sql`ALTER TABLE sensor_data_2 SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_website_id');`;
 		await sql`SELECT add_compression_policy('sensor_data_2', INTERVAL '2 days', if_not_exists => TRUE);`;
 	} catch (err) {
-		console.error(`Error setting up table: ${err}`);
+		log.error(`Error setting up table: ${err}`);
 	}
 
 	setInterval(async () => {
@@ -57,6 +57,6 @@ CREATE TABLE IF NOT EXISTS sensor_data_2 (
 			}
 		}
 		dbBuffer = [];
-		console.info(`Wrote ${packetCount} packets to DB`);
+		log.info(`Wrote ${packetCount} packets to DB`);
 	}, 5 * 1000);
 }

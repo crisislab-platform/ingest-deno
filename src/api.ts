@@ -1,6 +1,6 @@
 import { IRequest, Router } from "npm:itty-router@4.0.23";
 import { getSensor } from "./connectionHandler.ts";
-import { fetchAPI, getDB } from "./utils.ts";
+import { fetchAPI, getDB, log } from "./utils.ts";
 import {
 	serialiseToMiniSEEDUint8Array,
 	startTimeFromDate,
@@ -165,7 +165,7 @@ apiRouter
 									controller.close();
 								})
 								.catch((err) => {
-									console.warn("Error streaming response: ", err);
+									log.warn("Error streaming response: ", err);
 									controller.error(err);
 								});
 						},

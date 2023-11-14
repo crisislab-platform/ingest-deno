@@ -9,10 +9,9 @@ import {
 	clientWebSocketHandler,
 	downloadSensorList,
 } from "./connectionHandler.ts";
-import { getNewTokenWithRefreshToken } from "./utils.ts";
+import { getNewTokenWithRefreshToken, log } from "./utils.ts";
 import { IRequest, Router } from "npm:itty-router@4.0.23";
 import { handleAPI } from "./api.ts";
-import { hostname } from "https://deno.land/std@0.132.0/_deno_unstable.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -41,7 +40,7 @@ downloadError = await downloadSensorList();
 // Every 15 minutes, re-download the sensor list
 setInterval(
 	async () => {
-		console.info("About to download sensor list from interval");
+		log.info("About to download sensor list from interval");
 		downloadError = await downloadSensorList();
 	},
 	15 * 60 * 1000 // Every 15 minutes
@@ -55,7 +54,7 @@ function getSensorIDMiddleware(req: IRequest) {
 		if (isNaN(sensorID))
 			return new Response("Invalid sensor ID", { status: 400 });
 	} catch (err) {
-		console.warn("Failed to get sensor ID from URL: ", err);
+		log.warn("Failed to get sensor ID from URL: ", err);
 		return new Response("Failed to get sensor ID from URL", { status: 400 });
 	}
 	req.sensorID = sensorID;
@@ -96,11 +95,11 @@ Deno.serve(
 		port: httpPort,
 		hostname: "0.0.0.0",
 		onListen: ({ hostname, port }) =>
-			console.info(`HTTP server started http://${hostname}:${port}`),
+			log.info(`HTTP server started http://${hostname}:${port}`),
 	},
 	async (req, connectionInfo) => {
 		try {
-			console.info(
+			log.info(
 				`HTTP ${req.method} ${req.url} from ${connectionInfo.remoteAddr.hostname}`
 			);
 
@@ -112,7 +111,7 @@ Deno.serve(
 
 			return res;
 		} catch (err) {
-			console.error(`Error handling HTTP: `, err);
+			log.error(`Error handling HTTP: `, err);
 			return new Response("Internal error", { status: 500 });
 		}
 	}
@@ -125,7 +124,7 @@ const socket = await Deno.listenDatagram({
 	hostname: "0.0.0.0",
 });
 const socketAddr = socket.addr as Deno.NetAddr;
-console.info(`UDP listening on ${socketAddr.hostname}:${socketAddr.port}`);
+log.info(`UDP listening on ${socketAddr.hostname}:${socketAddr.port}`);
 
 // Handle incoming UDP packets
 for await (const [data, addr] of socket) {

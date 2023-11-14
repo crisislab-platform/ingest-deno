@@ -1,9 +1,31 @@
 import postgres from "https://deno.land/x/postgresjs@v3.3.5/mod.js";
 
+function loggerTimeAndInfo(): string {
+	return `[${new Date().toISOString()}]`;
+}
+
+export const log = {
+	// deno-lint-ignore no-explicit-any
+	log(...data: any[]) {
+		console.log(loggerTimeAndInfo(), ...data);
+	},
+	// deno-lint-ignore no-explicit-any
+	info(...data: any[]) {
+		console.info(loggerTimeAndInfo(), ...data);
+	},
+	// deno-lint-ignore no-explicit-any
+	warn(...data: any[]) {
+		console.warn(loggerTimeAndInfo(), ...data);
+	},
+	// deno-lint-ignore no-explicit-any
+	error(...data: any[]) {
+		console.error(loggerTimeAndInfo(), ...data);
+	},
+};
 // @ts-expect-error It won't return undefined because process will exit
 export function getDB(): postgres.Sql<{}> {
 	try {
-		console.info("Connecting to database...");
+		log.info("Connecting to database...");
 		// Connect with credentials from env
 		const sql = postgres({
 			user: Deno.env.get("DATABASE_USERNAME"),
@@ -12,13 +34,13 @@ export function getDB(): postgres.Sql<{}> {
 			hostname: "localhost",
 			port: 5432,
 		});
-		console.info("Connected to database!");
+		log.info("Connected to database!");
 		return sql;
 	} catch (err) {
-		console.error("Failed to connect to database: ", err);
+		log.error("Failed to connect to database: ", err);
 		if (parseInt(Deno.env.get("SHOULD_STORE") || "0")) {
 			// Only kill the process if we want to store data
-			console.info("Exiting due to no database connection");
+			log.info("Exiting due to no database connection");
 			Deno.exit(1);
 		}
 	}
@@ -38,7 +60,7 @@ export function fetchAPI(path: string, options: RequestInit = {}) {
 }
 
 export async function getNewTokenWithRefreshToken(): Promise<boolean> {
-	console.info("Attempting to get new token with refresh token...");
+	log.info("Attempting to get new token with refresh token...");
 	const response = await fetchAPI("auth/refresh", {
 		method: "POST",
 		body: JSON.stringify({
@@ -52,7 +74,7 @@ export async function getNewTokenWithRefreshToken(): Promise<boolean> {
 		apiToken = token;
 		return true;
 	} else {
-		console.warn("No token found when refreshing!");
+		log.warn("No token found when refreshing!");
 	}
 	return false;
 }

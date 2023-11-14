@@ -3,7 +3,7 @@ import * as Sentry from "npm:@sentry/node";
 import "./types.d.ts";
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
-import { fetchAPI, getNewTokenWithRefreshToken } from "./utils.ts";
+import { fetchAPI, getNewTokenWithRefreshToken, log } from "./utils.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -22,7 +22,7 @@ const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
 const duplicateIPSensors = new Map<number, number>();
 let hasDownloadedSensorsYet = false;
-console.info("Dev mode: ", devMode);
+log.info("Dev mode: ", devMode);
 
 // if (devMode) {
 // 	ipToSensorMap.set(
@@ -56,7 +56,7 @@ export function getSensor(_sensorID: number | string): Sensor | undefined {
 		try {
 			sensorID = Number.parseInt(_sensorID);
 		} catch (err) {
-			console.warn("Failed to parse sensor ID: ", err);
+			log.warn("Failed to parse sensor ID: ", err);
 			return undefined;
 		}
 	}
@@ -84,9 +84,9 @@ async function setState({
 		sensor.online = connected;
 
 		if (connected === true) {
-			console.info(`Sensor connected: #${sensorID}`);
+			log.info(`Sensor connected: #${sensorID}`);
 		} else {
-			console.info(`Sensor disconnected: #${sensorID}`);
+			log.info(`Sensor disconnected: #${sensorID}`);
 		}
 
 		if (devMode) return;
@@ -101,7 +101,7 @@ async function setState({
 		});
 
 		if (res.status !== 200) {
-			console.warn("Error setting state:", await res.text());
+			log.warn("Error setting state:", await res.text());
 		}
 	}
 }
@@ -117,7 +117,7 @@ export async function downloadSensorList(): Promise<string | undefined> {
 		const json = await res.json();
 
 		if (!json?.privileged) {
-			console.error("Non-privileged response received from worker!");
+			log.error("Non-privileged response received from worker!");
 			const success = await getNewTokenWithRefreshToken();
 			// If it worked, try downloading again
 			if (success) return await downloadSensorList();
@@ -140,13 +140,13 @@ export async function downloadSensorList(): Promise<string | undefined> {
 				ipToSensorMap.set(sensor.ip, sensor);
 			}
 		} else {
-			console.warn(
+			log.warn(
 				`Not including sensor #${sensor.id} because it doesn't have an IP set.`
 			);
 			closeSensorConnections(sensor.id);
 		}
 	}
-	console.info(
+	log.info(
 		`Downloaded sensor list (${ipToSensorMap.size} sensors, ${duplicateIPSensors.size} duplicate)`
 	);
 
@@ -180,7 +180,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 	if (!sensor) {
 		// Don't spam logs too much
 		if (Math.random() < 0.001)
-			console.info(
+			log.info(
 				`Packet received from unknown sensor IP address: ${addr.hostname}`
 			);
 		return;
@@ -226,7 +226,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 					return true;
 				} catch (err) {
 					Sentry.captureException(err);
-					console.error("Error sending packet: ", err);
+					log.error("Error sending packet: ", err);
 					return false;
 				}
 			})
@@ -235,7 +235,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 		dataWritingWorker.postMessage({ sensor, parsedData });
 	} catch (err) {
 		Sentry.captureException(err);
-		console.warn("Failure when parsing/forwarding datagram: ", err);
+		log.warn("Failure when parsing/forwarding datagram: ", err);
 	}
 }
 
@@ -259,7 +259,7 @@ export function clientWebSocketHandler(
 		const sensor = getSensor(sensorID);
 
 		if (sensor) {
-			console.info(`Connected websocket for sensor #${sensorID}`);
+			log.info(`Connected websocket for sensor #${sensorID}`);
 
 			client.send(
 				pack({
@@ -274,7 +274,7 @@ export function clientWebSocketHandler(
 				})
 			);
 		} else {
-			console.info(
+			log.info(
 				`Couldn't connect websocket for sensor #${sensorID} - does it exist?`
 			);
 			if (hasDownloadedSensorsYet) {
