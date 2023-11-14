@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS sensor_data_2 (
 	data_channel char(3) NOT NULL,
 	counts_values int[] NOT NULL
 );`;
-
+	await sql`CREATE EXTENSION IF NOT EXISTS timescaledb;`;
 	await sql`SELECT create_hypertable('sensor_data_2','data_timestamp', if_not_exists => TRUE);`;
 
 	try {
