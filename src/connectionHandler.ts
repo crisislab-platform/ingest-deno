@@ -38,8 +38,8 @@ setInterval(
 		for (const sensor of ipToSensorMap.values()) {
 			// If no messages in the last  2 minutes, set it as offline
 			if (
-				(lastMessageTimestampMap.get(sensor.id) || 0) <
-				Date.now() - 2 * 60 * 1000 // 2 minutes
+				Date.now() - (lastMessageTimestampMap.get(sensor.id) || 0) >
+				2 * 60 * 1000 // 2 minutes
 			) {
 				setState({ sensorID: sensor.id, connected: false });
 			} else {
@@ -77,9 +77,26 @@ async function setState({
 	sensorID: number;
 	connected: boolean;
 }) {
-	// Avoid spamming the API by not updating things if they haven't changed.
 	const sensor = getSensor(sensorID);
-	if (sensor && sensor.online !== connected) {
+	if (!sensor) return;
+
+	// Avoid spamming the API by not updating things if they haven't changed.
+	if (sensor.online !== connected) return;
+
+	let res;
+	if (devMode) {
+		res = { ok: true };
+	} else {
+		res = await fetchAPI("sensors/online", {
+			method: "POST",
+			body: JSON.stringify({
+				sensor: sensorID,
+				timestamp: Date.now(),
+				connected,
+			}),
+		});
+	}
+	if (res.ok) {
 		// Update sensor object
 		sensor.online = connected;
 
@@ -88,21 +105,8 @@ async function setState({
 		} else {
 			log.info(`Sensor disconnected: #${sensorID}`);
 		}
-
-		if (devMode) return;
-
-		const res = await fetchAPI("sensors/online", {
-			method: "POST",
-			body: JSON.stringify({
-				sensor: sensorID,
-				timestamp: Date.now(),
-				connected,
-			}),
-		});
-
-		if (res.status !== 200) {
-			log.warn("Error setting state:", await res.text());
-		}
+	} else {
+		log.warn("Error setting state:", await res.text());
 	}
 }
 
