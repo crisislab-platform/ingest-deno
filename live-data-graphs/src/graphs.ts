@@ -15,6 +15,7 @@ import {
 	formatTime,
 	round,
 } from "./ui";
+import { SensorVariety } from "./main";
 
 export type Datagram = [string, number, ...number[]];
 
@@ -95,9 +96,13 @@ export function handleData(packet: Datagram) {
 
 	for (const i of measurements) {
 		let value = i;
-		// If the channel is an accelerometer
-		if (channel.startsWith("EN")) {
-			// Magic number to convert to m/s^2
+		if (
+			// If the sensor is a raspberry shake
+			window.CRISiSLab.sensorVariety === SensorVariety.RaspberryShake &&
+			// and the channel is an accelerometer
+			channel.startsWith("EN")
+		) {
+			// Magic number to convert from counts to m/s^2
 			value = value / 3.845e5;
 		}
 		window.CRISiSLab.data[channel].push({

@@ -5,6 +5,13 @@ import { connectSocket } from "./ws";
 import { handleData } from "./graphs";
 import type { TimeLine } from "@crisislab/timeline";
 
+export enum SensorVariety {
+	Unknown,
+	RaspberryShake,
+	Palert,
+	CSI,
+}
+
 declare global {
 	interface Window {
 		CRISiSLab: {
@@ -18,8 +25,10 @@ declare global {
 			connectionAttempts: number;
 			sensorMeta: null | {
 				online?: boolean;
+				type?: string;
 				[key: string]: any;
 			};
+			sensorVariety: SensorVariety;
 			charts: Record<string, TimeLine>;
 			data: Record<string, Array<{ x: number; y: number }>>;
 		};
@@ -33,6 +42,7 @@ window.CRISiSLab = {
 	ws: null,
 	connectionAttempts: 0,
 	sensorMeta: null,
+	sensorVariety: SensorVariety.Unknown,
 	hideHoverInspector:
 		new URLSearchParams(location.search).get("hide-hover-inspector") ===
 		"yes",

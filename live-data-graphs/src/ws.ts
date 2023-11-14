@@ -1,4 +1,5 @@
 import { Datagram } from "./graphs";
+import { SensorVariety } from "./main";
 import { showMessage, reloadButton } from "./ui";
 import { unpack } from "msgpackr";
 
@@ -67,6 +68,15 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 			}
 		} else if (parsed?.type === "sensor-meta") {
 			window.CRISiSLab.sensorMeta = parsed?.data;
+
+			if (
+				window.CRISiSLab.sensorMeta?.type
+					?.toLowerCase()
+					?.includes("raspberry")
+			) {
+				window.CRISiSLab.sensorVariety = SensorVariety.RaspberryShake;
+			}
+
 			if (window.CRISiSLab.sensorMeta?.online !== true) {
 				showMessage(
 					`Sensor #${window.CRISiSLab.sensorID} seems to be offline.`,
