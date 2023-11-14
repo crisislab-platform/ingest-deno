@@ -81,7 +81,7 @@ async function setState({
 	if (!sensor) return;
 
 	// Avoid spamming the API by not updating things if they haven't changed.
-	if (sensor.online !== connected) return;
+	if (sensor.online === connected) return;
 
 	let res;
 	if (devMode) {
