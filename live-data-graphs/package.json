@@ -1,6 +1,7 @@
 {
 	"name": "live-data-graphs",
 	"private": true,
+	"type": "module",
 	"version": "0.0.0",
 	"scripts": {
 		"dev": "vite",
@@ -10,10 +11,10 @@
 	},
 	"dependencies": {
 		"@crisislab/timeline": "^0.8.2",
-		"msgpackr": "^1.9.7"
+		"msgpackr": "^1.9.9"
 	},
 	"devDependencies": {
-		"typescript": "^5.1.6",
-		"vite": "^4.4.9"
+		"typescript": "^5.2.2",
+		"vite": "^4.5.0"
 	}
 }
