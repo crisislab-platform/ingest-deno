@@ -6,10 +6,10 @@ import {
 import * as Sentry from "npm:@sentry/node";
 import {
 	sensorHandler,
-	clientWebSocketHandler,
-	downloadSensorList,
+	downloadErrorMiddleware,
+	handleWebSockets,
 } from "./connectionHandler.ts";
-import { getNewTokenWithRefreshToken, log } from "./utils.ts";
+import { log } from "./utils.ts";
 import { IRequest, Router } from "npm:itty-router@4.0.23";
 import { handleAPI } from "./api.ts";
 
@@ -28,56 +28,11 @@ Sentry.init({
 
 // Imports
 
-// Get an access token
-if (!(await getNewTokenWithRefreshToken()))
-	throw "Error getting token with refresh token on startup.";
-
-// Get the list of sensors.
-// Need to do this first thing to avoid spamming stuff.
-let downloadError: string | undefined;
-downloadError = await downloadSensorList();
-
-// Every 15 minutes, re-download the sensor list
-setInterval(
-	async () => {
-		log.info("About to download sensor list from interval");
-		downloadError = await downloadSensorList();
-	},
-	15 * 60 * 1000 // Every 15 minutes
-);
-
 // HTTP request handler
-function getSensorIDMiddleware(req: IRequest) {
-	let sensorID: number;
-	try {
-		sensorID = parseInt(req?.params?.id);
-		if (isNaN(sensorID))
-			return new Response("Invalid sensor ID", { status: 400 });
-	} catch (err) {
-		log.warn("Failed to get sensor ID from URL: ", err);
-		return new Response("Failed to get sensor ID from URL", { status: 400 });
-	}
-	req.sensorID = sensorID;
-}
-function downloadErrorMiddleware() {
-	if (downloadError) return new Response(downloadError);
-}
 const router = Router<IRequest & { sensorID?: number }>();
 router
 	.all("/api/v1/*", handleAPI)
-	.get(
-		"/consume/:id/live",
-		downloadErrorMiddleware,
-		getSensorIDMiddleware,
-		(req) => {
-			if (downloadError) return new Response(downloadError);
-
-			if (req.headers.get("Upgrade") !== "websocket") {
-				return new Response("Needs websocket Upgrade header", { status: 400 });
-			}
-			return clientWebSocketHandler(req, req.sensorID!);
-		}
-	)
+	.get("/consume/:id/live", downloadErrorMiddleware, handleWebSockets)
 	.all("/assets/*", (req) =>
 		serveDir(req, { fsRoot: "live-data-graphs/dist/assets", urlRoot: "assets" })
 	)

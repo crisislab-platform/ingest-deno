@@ -4,6 +4,7 @@ import "./types.d.ts";
 // @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
 import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
 import { fetchAPI, getNewTokenWithRefreshToken, log } from "./utils.ts";
+import { IRequest } from "npm:itty-router@4.0.23";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -22,7 +23,30 @@ const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
 const duplicateIPSensors = new Map<number, number>();
 let hasDownloadedSensorsYet = false;
+let downloadError: string | undefined;
+
 log.info("Dev mode: ", devMode);
+
+// Get an access token
+if (!(await getNewTokenWithRefreshToken()))
+	throw "Error getting token with refresh token on startup.";
+
+// Get the list of sensors.
+// Need to do this first thing to avoid spamming stuff.
+downloadError = await downloadSensorList();
+
+// Every 15 minutes, re-download the sensor list
+setInterval(
+	async () => {
+		log.info("About to download sensor list from interval");
+		downloadError = await downloadSensorList();
+	},
+	15 * 60 * 1000 // Every 15 minutes
+);
+
+export function downloadErrorMiddleware() {
+	if (downloadError) return new Response(downloadError);
+}
 
 // if (devMode) {
 // 	ipToSensorMap.set(
@@ -85,7 +109,7 @@ async function setState({
 
 	let res;
 	if (devMode) {
-		res = { ok: true };
+		res = { ok: true, text() {} };
 	} else {
 		res = await fetchAPI("sensors/online", {
 			method: "POST",
@@ -244,10 +268,21 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 }
 
 // Handle websocket connections
-export function clientWebSocketHandler(
-	request: Request,
-	sensorID: number
-): Response {
+export function handleWebSockets(request: IRequest): Response {
+	if (request.headers.get("Upgrade") !== "websocket") {
+		return new Response("Needs websocket Upgrade header", { status: 400 });
+	}
+
+	let sensorID: number;
+	try {
+		sensorID = parseInt(request?.params?.id);
+		if (isNaN(sensorID))
+			return new Response("Invalid sensor ID", { status: 400 });
+	} catch (err) {
+		log.warn("Failed to get sensor ID from URL: ", err);
+		return new Response("Failed to get sensor ID from URL", { status: 400 });
+	}
+
 	const { socket: client, response } = Deno.upgradeWebSocket(request);
 	client.binaryType = "arraybuffer";
 
