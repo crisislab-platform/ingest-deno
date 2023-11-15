@@ -54,7 +54,6 @@ async function flushBuffer() {
 	}
 	log.info(`Wrote ${dbBufferCopy.length} (${packetCount}) packets to DB`);
 }
-setInterval(flushBuffer, 1000);
 
 self.addEventListener("message", (event: MessageEvent) => {
 	dbBuffer.push(event.data);
