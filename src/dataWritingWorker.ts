@@ -42,7 +42,7 @@ async function flushBuffer() {
 
 self.addEventListener("message", (event: MessageEvent) => {
 	dbBuffer.push(event.data);
-	if (dbBuffer.length >= 2500) {
+	if (dbBuffer.length >= 250) {
 		flushBuffer();
 	}
 });
