@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import { db } from "https://deno.land/std@0.204.0/media_types/_db.ts";
 import { getDB, log } from "./utils.ts";
 const shouldStore = Boolean(parseInt(Deno.env.get("SHOULD_STORE") || "0"));
 
@@ -42,6 +43,7 @@ async function flushBuffer() {
 
 self.addEventListener("message", (event: MessageEvent) => {
 	dbBuffer.push(event.data);
+	log.info(dbBuffer.length);
 	if (dbBuffer.length >= 250) {
 		flushBuffer();
 	}
