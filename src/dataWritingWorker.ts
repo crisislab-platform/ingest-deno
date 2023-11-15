@@ -20,6 +20,7 @@ let dbBuffer: {
 }[] = [];
 
 async function flushBuffer() {
+	log.info(`Flushing ${dbBuffer.length} packets to DB...`);
 	let packetCount = 0;
 	for (const { sensorID, parsedData } of dbBuffer) {
 		for (const packet of parsedData) {
@@ -37,16 +38,13 @@ async function flushBuffer() {
 			});`;
 		}
 	}
+	log.info(`Wrote ${dbBuffer.length} (${packetCount}) packets to DB`);
 	dbBuffer = [];
-	log.info(`Wrote ${packetCount} packets to DB`);
 }
 
 self.addEventListener("message", (event: MessageEvent) => {
 	dbBuffer.push(event.data);
-	log.info(dbBuffer.length);
-	if (dbBuffer.length >= 250) {
-		flushBuffer();
-	}
+	if (dbBuffer.length >= 2500) flushBuffer();
 });
 // Table setup
 await sql`
