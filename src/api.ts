@@ -225,8 +225,8 @@ apiRouter
 							CRISiSLab: {
 								data_channel: channel,
 								sensor_website_id: sensor.id,
-								sensor_rs_station_id: sensor.secondary_id,
-								sensor_type: sensor.type,
+								sensor_rs_station_id: sensor.meta.secondary_id,
+								sensor_type: sensor.meta.type,
 							},
 						},
 						sampleRatePeriod: 100,

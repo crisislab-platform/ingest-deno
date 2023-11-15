@@ -4,19 +4,24 @@ interface RootObject {
 
 interface Sensor {
 	id: number;
-	SI: number;
-	ip?: string;
-	online?: boolean;
-	type: string;
-	location: Location;
-	geoFeatures: GeoFeatures;
-	name?: string;
-	secondary_id?: string;
-	lastOnline?: number;
-	timestamp?: number;
-	publicLocation?: [number, number];
-	longitude?: number;
-	latitude?: number;
+	webSocketClients: WebSocket[];
+	isDuplicateOf?: number;
+	lastMessageTimestamp?: number;
+	meta: {
+		id: number;
+		ip?: string;
+		online?: boolean;
+		type?: string;
+		location: Location;
+		geoFeatures: GeoFeatures;
+		name?: string;
+		secondary_id?: string;
+		lastOnline?: number;
+		timestamp?: number;
+		publicLocation?: [number, number];
+		longitude?: number;
+		latitude?: number;
+	};
 }
 
 interface GeoFeatures {

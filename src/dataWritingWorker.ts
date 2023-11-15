@@ -13,7 +13,7 @@ if (!shouldStore) {
 	// log.info("Database connected: ", dbClient.connected);
 
 	let dbBuffer: {
-		sensor: Sensor;
+		sensorID: number;
 		parsedData: [string, number, ...number[]][];
 	}[] = [];
 	self.addEventListener("message", (event: MessageEvent) => {
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS sensor_data_2 (
 
 	setInterval(async () => {
 		let packetCount = 0;
-		for (const { sensor, parsedData } of dbBuffer) {
+		for (const { sensorID, parsedData } of dbBuffer) {
 			for (const packet of parsedData) {
 				packetCount++;
 
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS sensor_data_2 (
 
 				await sql`
 			INSERT INTO sensor_data_2 (sensor_website_id, data_timestamp, data_channel, counts_values) 
-							 VALUES (${sensor.id}, to_timestamp(${timestamp}), ${channel}, ${
+							 VALUES (${sensorID}, to_timestamp(${timestamp}), ${channel}, ${
 					"{" + rawDataValues.join(",") + "}"
 				});`;
 			}

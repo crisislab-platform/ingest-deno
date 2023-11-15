@@ -18,11 +18,7 @@ const dataWritingWorker = new Worker(
 	}
 );
 
-const clientsMap = new Map<number, Array<WebSocket>>();
-const lastMessageTimestampMap = new Map<number, number>();
 const ipToSensorMap = new Map<string, Sensor>();
-const duplicateIPSensors = new Map<number, number>();
-let hasDownloadedSensorsYet = false;
 let downloadError: string | undefined;
 
 log.info("Dev mode: ", devMode);
@@ -62,7 +58,7 @@ setInterval(
 		for (const sensor of ipToSensorMap.values()) {
 			// If no messages in the last  2 minutes, set it as offline
 			if (
-				Date.now() - (lastMessageTimestampMap.get(sensor.id) || 0) >
+				Date.now() - (sensor.lastMessageTimestamp || 0) >
 				2 * 60 * 1000 // 2 minutes
 			) {
 				setState({ sensorID: sensor.id, connected: false });
@@ -105,7 +101,7 @@ async function setState({
 	if (!sensor) return;
 
 	// Avoid spamming the API by not updating things if they haven't changed.
-	if (sensor.online === connected) return;
+	if (sensor.meta.online === connected) return;
 
 	let res;
 	if (devMode) {
@@ -122,7 +118,7 @@ async function setState({
 	}
 	if (res.ok) {
 		// Update sensor object
-		sensor.online = connected;
+		sensor.meta.online = connected;
 
 		if (connected === true) {
 			log.info(`Sensor connected: #${sensorID}`);
@@ -136,9 +132,9 @@ async function setState({
 
 // Download sensor list from internship-worker
 export async function downloadSensorList(): Promise<string | undefined> {
-	let sensors;
+	let rawSensors: Record<string, Sensor["meta"] & { id: number }>;
 	if (devMode) {
-		sensors = { 3: JSON.parse(await Deno.readTextFile("dev-sensor.json")) };
+		rawSensors = { 3: JSON.parse(await Deno.readTextFile("dev-sensor.json")) };
 	} else {
 		// No try/catch here - we want it to throw & crash if this fetch fails
 		const res = await fetchAPI("sensors");
@@ -152,53 +148,33 @@ export async function downloadSensorList(): Promise<string | undefined> {
 			return "Invalid token! Unable to get privileged sensor data from worker.";
 		}
 
-		sensors = json.sensors as Record<string, Sensor>;
+		rawSensors = json.sensors;
 	}
 
 	// Clear the Maps to prevent issues with the sensor being a duplicate of itself
-	ipToSensorMap.clear();
-	duplicateIPSensors.clear();
-	for (const sensor of Object.values(sensors)) {
-		if (sensor.ip) {
-			const firstDuplicate = ipToSensorMap.get(sensor.ip);
-			if (firstDuplicate) {
-				duplicateIPSensors.set(sensor.id, firstDuplicate.id);
-				closeSensorConnections(sensor.id);
+	for (const rawSensor of Object.values(rawSensors)) {
+		if (rawSensor.ip) {
+			let sensorBase = ipToSensorMap.get(rawSensor.ip);
+
+			if (!sensorBase) {
+				sensorBase = {
+					id: rawSensor.id,
+					webSocketClients: [],
+					meta: rawSensor,
+				};
+				ipToSensorMap.set(rawSensor.ip, sensorBase);
+			} else if (sensorBase.id !== rawSensor.id) {
+				sensorBase.isDuplicateOf = rawSensor.id;
 			} else {
-				ipToSensorMap.set(sensor.ip, sensor);
+				sensorBase.meta = rawSensor;
 			}
 		} else {
 			log.warn(
-				`Not including sensor #${sensor.id} because it doesn't have an IP set.`
+				`Not including sensor #${rawSensor.id} because it doesn't have an IP set.`
 			);
-			closeSensorConnections(sensor.id);
 		}
 	}
-	log.info(
-		`Downloaded sensor list (${ipToSensorMap.size} sensors, ${duplicateIPSensors.size} duplicate)`
-	);
-
-	hasDownloadedSensorsYet = true;
-}
-
-function closeSensorConnections(sensorID: number) {
-	const clients = clientsMap.get(sensorID);
-	if (clients) {
-		const firstDupeID = duplicateIPSensors.get(sensorID);
-		clients.forEach((c) => {
-			if (firstDupeID) {
-				c.close(
-					4409,
-					`Sensor #${sensorID} has the same IP address set as sensor #${firstDupeID}. Make sure it has a unique IP set in the dashboard.`
-				);
-			} else
-				c.close(
-					4404,
-					`Couldn't find a sensor with that ID (${sensorID}). Make sure it has a unique IP set in the dashboard.`
-				);
-		});
-	}
-	clientsMap.delete(sensorID);
+	log.info(`Downloaded sensor list (${ipToSensorMap.size} sensors)`);
 }
 
 // Called when a sensor sends a UDP packet. Data is then forwarded to the connected websockets
@@ -227,15 +203,16 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 				.replace("}", "]")
 				.replaceAll("][", "],[")}]`
 		) as (string | number)[][];
-		lastMessageTimestampMap.set(sensor.id, Date.now());
+
+		// TODO: Maybe use the timestamp from the packet?
+		sensor.lastMessageTimestamp = Date.now();
 
 		setState({ sensorID: sensor.id, connected: true });
 
 		// TODO: Change this to just send to all, and run the filtering separately
 		// Send the message to all clients, and filter out the ones that have disconnected
-		clientsMap.set(
-			sensor.id,
-			(clientsMap.get(sensor.id) || []).filter((client) => {
+		sensor.webSocketClients = (sensor.webSocketClients || []).filter(
+			(client) => {
 				try {
 					// Handle race condition where a datagram is received
 					// after a socket is started but before it fully opens
@@ -257,10 +234,10 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 					log.error("Error sending packet: ", err);
 					return false;
 				}
-			})
+			}
 		);
 
-		dataWritingWorker.postMessage({ sensor, parsedData });
+		dataWritingWorker.postMessage({ sensorID: sensor.id, parsedData });
 	} catch (err) {
 		Sentry.captureException(err);
 		log.warn("Failure when parsing/forwarding datagram: ", err);
@@ -283,56 +260,37 @@ export function handleWebSockets(request: IRequest): Response {
 		return new Response("Failed to get sensor ID from URL", { status: 400 });
 	}
 
+	const sensor = getSensor(sensorID);
+
+	if (!sensor)
+		return new Response(`Couldn't find a sensor with that id (#${sensorID})`, {
+			status: 404,
+		});
+
 	const { socket: client, response } = Deno.upgradeWebSocket(request);
 	client.binaryType = "arraybuffer";
 
-	const _sensorClients = clientsMap.get(sensorID);
-
-	const sensorClients: WebSocket[] = _sensorClients
-		? _sensorClients
-		: (clientsMap.set(sensorID, []).get(sensorID) as WebSocket[]);
-
-	sensorClients.push(client);
+	sensor.webSocketClients.push(client);
 
 	client.addEventListener("open", () => {
-		const sensor = getSensor(sensorID);
+		log.info(`Connected websocket for sensor #${sensorID}`);
 
-		if (sensor) {
-			log.info(`Connected websocket for sensor #${sensorID}`);
-
-			client.send(
-				pack({
-					type: "sensor-meta",
-					data: {
-						// Doing this manually to avoid sending sensitive data
-						id: sensor.id,
-						secondary_id: sensor.secondary_id,
-						type: sensor.type,
-						online: sensor.online,
-					},
-				})
-			);
-		} else {
-			log.info(
-				`Couldn't connect websocket for sensor #${sensorID} - does it exist?`
-			);
-			if (hasDownloadedSensorsYet) {
-				// If we've already downloaded the list, close the websocket.
-				// Otherwise, keep it open in hope.
-				closeSensorConnections(sensorID);
-			} else {
-				client.send(
-					pack({
-						type: "message",
-						data: { message: "Awaiting sensor list..." },
-					})
-				);
-			}
-		}
+		client.send(
+			pack({
+				type: "sensor-meta",
+				data: {
+					// Doing this manually to avoid sending sensitive data
+					id: sensor.id,
+					secondary_id: sensor.meta.secondary_id,
+					type: sensor.meta.type,
+					online: sensor.meta.online,
+				},
+			})
+		);
 	});
 
 	client.addEventListener("close", () => {
-		sensorClients.splice(sensorClients.indexOf(client), 1);
+		sensor.webSocketClients.splice(sensor.webSocketClients.indexOf(client), 1);
 	});
 
 	return response;
