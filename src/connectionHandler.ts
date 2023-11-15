@@ -262,13 +262,18 @@ export function handleWebSockets(request: IRequest): Response {
 
 	const sensor = getSensor(sensorID);
 
-	if (!sensor)
-		return new Response(`Couldn't find a sensor with that id (#${sensorID})`, {
-			status: 404,
-		});
-
 	const { socket: client, response } = Deno.upgradeWebSocket(request);
 	client.binaryType = "arraybuffer";
+
+	// We can't just send a regular 404 response,
+	// we have to send a custom close message over the websocket,
+	// otherwise the client can't understand it.
+	if (!sensor) {
+		client.addEventListener("open", () => {
+			client.close(4404, `Couldn't find a sensor with that id (#${sensorID})`);
+		});
+		return response;
+	}
 
 	sensor.webSocketClients.push(client);
 
