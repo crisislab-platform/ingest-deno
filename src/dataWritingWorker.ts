@@ -1,5 +1,4 @@
 /// <reference lib="webworker" />
-import { db } from "https://deno.land/std@0.204.0/media_types/_db.ts";
 import { getDB, log } from "./utils.ts";
 const shouldStore = Boolean(parseInt(Deno.env.get("SHOULD_STORE") || "0"));
 
@@ -24,6 +23,8 @@ async function flushBuffer() {
 	let packetCount = 0;
 	const dbBufferCopy = dbBuffer;
 	dbBuffer = [];
+
+	const toInsert = [];
 	for (const { sensorID, parsedData } of dbBufferCopy) {
 		for (const packet of parsedData) {
 			packetCount++;
@@ -33,13 +34,17 @@ async function flushBuffer() {
 
 			const rawDataValues = packet.slice(2) as number[];
 
-			await sql`
-			INSERT INTO sensor_data_2 (sensor_website_id, data_timestamp, data_channel, counts_values) 
-							 VALUES (${sensorID}, to_timestamp(${timestamp}), ${channel}, ${
-				"{" + rawDataValues.join(",") + "}"
-			});`;
+			toInsert.push({
+				sensor_website_id: sensorID,
+				data_timestamp: `to_timestamp(${timestamp})`,
+				data_channel: channel,
+				counts_values: rawDataValues,
+			});
 		}
 	}
+
+	await sql`INSERT INTO sensor_data_2 ${sql(toInsert)};`;
+
 	log.info(`Wrote ${dbBufferCopy.length} (${packetCount}) packets to DB`);
 }
 
