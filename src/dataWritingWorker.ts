@@ -36,17 +36,25 @@ async function flushBuffer() {
 
 			toInsert.push({
 				sensor_website_id: sensorID,
-				data_timestamp: `to_timestamp(${timestamp})`,
+				data_timestamp: timestamp,
 				data_channel: channel,
 				counts_values: rawDataValues,
 			});
 		}
 	}
 
-	await sql`INSERT INTO sensor_data_2 ${sql(toInsert)};`;
-
+	if (toInsert.length > 0) {
+		await sql`INSERT INTO sensor_data_2 ${sql(
+			toInsert,
+			"sensor_website_id",
+			"data_timestamp",
+			"data_channel",
+			"counts_values"
+		)};`;
+	}
 	log.info(`Wrote ${dbBufferCopy.length} (${packetCount}) packets to DB`);
 }
+setInterval(flushBuffer, 1000);
 
 self.addEventListener("message", (event: MessageEvent) => {
 	dbBuffer.push(event.data);
