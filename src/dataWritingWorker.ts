@@ -22,7 +22,9 @@ let dbBuffer: {
 async function flushBuffer() {
 	log.info(`Flushing ${dbBuffer.length} packets to DB...`);
 	let packetCount = 0;
-	for (const { sensorID, parsedData } of dbBuffer) {
+	const dbBufferCopy = dbBuffer;
+	dbBuffer = [];
+	for (const { sensorID, parsedData } of dbBufferCopy) {
 		for (const packet of parsedData) {
 			packetCount++;
 
@@ -38,8 +40,7 @@ async function flushBuffer() {
 			});`;
 		}
 	}
-	log.info(`Wrote ${dbBuffer.length} (${packetCount}) packets to DB`);
-	dbBuffer = [];
+	log.info(`Wrote ${dbBufferCopy.length} (${packetCount}) packets to DB`);
 }
 
 self.addEventListener("message", (event: MessageEvent) => {
