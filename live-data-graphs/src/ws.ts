@@ -26,6 +26,8 @@ export function connectSocket(handleData: HandleDataFunction) {
 	// Reset
 	window.CRISiSLab.haveRenderedPacket = false;
 
+	// Listeners
+
 	ws.addEventListener("open", function () {
 		console.info("Connected");
 		showMessage("Waiting for data...");
@@ -46,6 +48,11 @@ export function connectSocket(handleData: HandleDataFunction) {
 				showMessage("Disconnected too many times, please reload");
 			}
 		}
+	});
+	ws.addEventListener("error", function (event) {
+		console.warn("WebSocket error: ", event);
+		showMessage("WebSocket error: " + event);
+		reloadButton.toggleAttribute("disabled", false);
 	});
 	ws.addEventListener("message", makeHandleMessage(handleData));
 }
