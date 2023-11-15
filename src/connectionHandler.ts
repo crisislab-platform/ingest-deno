@@ -101,7 +101,7 @@ async function setState({
 	if (!sensor) return;
 
 	// Avoid spamming the API by not updating things if they haven't changed.
-	if (sensor.meta.online === connected) return;
+	if (sensor.meta?.online === connected) return;
 
 	let res;
 	if (devMode) {
@@ -286,9 +286,9 @@ export function handleWebSockets(request: IRequest): Response {
 				data: {
 					// Doing this manually to avoid sending sensitive data
 					id: sensor.id,
-					secondary_id: sensor.meta.secondary_id,
-					type: sensor.meta.type,
-					online: sensor.meta.online,
+					secondary_id: sensor.meta?.secondary_id,
+					type: sensor.meta?.type,
+					online: sensor.meta?.online,
 				},
 			})
 		);
