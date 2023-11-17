@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import { getDB, log } from "./utils.ts";
 const shouldStore = Boolean(parseInt(Deno.env.get("SHOULD_STORE") || "0"));
+import * as Sentry from "npm:@sentry/node";
 
 if (!shouldStore) {
 	log.info("SHOULD_STORE is false, exiting data writing worker");
@@ -57,7 +58,12 @@ async function flushBuffer() {
 
 self.addEventListener("message", (event: MessageEvent) => {
 	dbBuffer.push(event.data);
-	if (dbBuffer.length >= 2500) flushBuffer();
+	try {
+		if (dbBuffer.length >= 2500) flushBuffer();
+	} catch (err) {
+		log.warn("Error flushing buffer to DB: ", err);
+		Sentry.captureException(err);
+	}
 });
 // Table setup
 await sql`
