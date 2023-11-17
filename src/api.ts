@@ -142,7 +142,7 @@ apiRouter
 			switch (format) {
 				case "tsv1": {
 					const channelsQuerySegment = sql(channels);
-					const query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, counts_values FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+					const query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, data_values FROM sensor_data_3 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 					const body = new ReadableStream({
 						start(controller) {
 							controller.enqueue(
@@ -157,7 +157,7 @@ apiRouter
 											sensor.id,
 											row["data_timestamp"],
 											row["data_channel"],
-											row["counts_values"],
+											row["data_values"],
 										].join("	") + "\n";
 									controller.enqueue(new TextEncoder().encode(message));
 								})
@@ -174,7 +174,7 @@ apiRouter
 					// This is for the progress bar
 					const count = parseInt(
 						(
-							await sql`SELECT count(sensor_website_id) FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
+							await sql`SELECT count(sensor_website_id) FROM sensor_data_3 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
 						)[0]["count"]
 					);
 
@@ -202,7 +202,7 @@ apiRouter
 					const channel = channels[0];
 					// TODO: Limit time range
 
-					const query = sql`SELECT data_timestamp, counts_values FROM sensor_data_2 WHERE sensor_website_id=${sensor.id} AND data_channel=${channel} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+					const query = sql`SELECT data_timestamp, data_values FROM sensor_data_3 WHERE sensor_website_id=${sensor.id} AND data_channel=${channel} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 
 					const rows = await query.execute();
 
@@ -214,7 +214,7 @@ apiRouter
 					const startTime: Date = rows[0].data_timestamp;
 
 					// TODO: Check for gaps
-					const data = rows.flatMap((row) => row.counts_values);
+					const data = rows.flatMap((row) => row.data_values);
 
 					// TODO: Change to a proper FDSN network code when we have a station ID
 					const identifier = `https://shakemap.crisislab.org.nz/sensor/${sensor.id}`;

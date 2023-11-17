@@ -39,18 +39,18 @@ async function flushBuffer() {
 				sensor_website_id: sensorID,
 				data_timestamp: timestamp,
 				data_channel: channel,
-				counts_values: rawDataValues,
+				data_values: rawDataValues,
 			});
 		}
 	}
 
 	if (toInsert.length > 0) {
-		await sql`INSERT INTO sensor_data_2 ${sql(
+		await sql`INSERT INTO sensor_data_3 ${sql(
 			toInsert,
 			"sensor_website_id",
 			"data_timestamp",
 			"data_channel",
-			"counts_values"
+			"data_values"
 		)};`;
 	}
 	log.info(`Wrote ${dbBufferCopy.length} (${packetCount}) packets to DB`);
@@ -67,19 +67,19 @@ self.addEventListener("message", (event: MessageEvent) => {
 });
 // Table setup
 await sql`
-CREATE TABLE IF NOT EXISTS sensor_data_2 (
+CREATE TABLE IF NOT EXISTS sensor_data_3 (
 	sensor_website_id int NOT NULL,
 	data_timestamp timestamptz NOT NULL,
 	data_channel char(3) NOT NULL,
-	counts_values int[] NOT NULL
+	data_values FLOAT[] NOT NULL
 );`;
 await sql`CREATE EXTENSION IF NOT EXISTS timescaledb;`;
-await sql`SELECT create_hypertable('sensor_data_2','data_timestamp', if_not_exists => TRUE);`;
+await sql`SELECT create_hypertable('sensor_data_3','data_timestamp', if_not_exists => TRUE);`;
 
 try {
 	// These sometimes throw because timescale is being silly
-	await sql`ALTER TABLE sensor_data_2 SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_website_id');`;
-	await sql`SELECT add_compression_policy('sensor_data_2', INTERVAL '2 days', if_not_exists => TRUE);`;
+	await sql`ALTER TABLE sensor_data_3 SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_website_id');`;
+	await sql`SELECT add_compression_policy('sensor_data_3', INTERVAL '2 days', if_not_exists => TRUE);`;
 } catch (err) {
 	log.error(`Error setting up table: ${err}`);
 }
