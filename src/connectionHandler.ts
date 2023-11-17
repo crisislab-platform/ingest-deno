@@ -41,7 +41,7 @@ setInterval(
 );
 
 export function downloadErrorMiddleware() {
-	if (downloadError) return new Response(downloadError);
+	if (downloadError) return new Response(downloadError, { status: 500 });
 }
 
 // if (devMode) {
@@ -134,7 +134,7 @@ async function setState({
 export async function downloadSensorList(): Promise<string | undefined> {
 	let rawSensors: Record<string, Sensor["meta"] & { id: number }>;
 	if (devMode) {
-		rawSensors = { 3: JSON.parse(await Deno.readTextFile("dev-sensor.json")) };
+		rawSensors = JSON.parse(await Deno.readTextFile("dev-sensors.json"));
 	} else {
 		// No try/catch here - we want it to throw & crash if this fetch fails
 		const res = await fetchAPI("sensors");
@@ -240,7 +240,10 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 		dataWritingWorker.postMessage({ sensorID: sensor.id, parsedData });
 	} catch (err) {
 		Sentry.captureException(err);
-		log.warn("Failure when parsing/forwarding datagram: ", err);
+		log.warn(
+			`Failure when parsing/forwarding datagram from ${addr.hostname}: `,
+			err
+		);
 	}
 }
 
