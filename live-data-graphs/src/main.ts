@@ -70,7 +70,9 @@ else {
 		// Otherwise we connect (securely) to the server on the origin the page is being served from
 		window.CRISiSLab.wsURL = `${
 			import.meta.env.DEV
-				? "wss://crisislab-data.massey.ac.nz"
+				? new URLSearchParams(location.search).has("local")
+					? `ws://localhost:8080`
+					: "wss://crisislab-data.massey.ac.nz"
 				: location.host.startsWith("localhost")
 				? `ws://${location.host}`
 				: `wss://${location.host}`
