@@ -16,32 +16,27 @@ const sql = await getDB();
 
 let dbBuffer: {
 	sensorID: number;
-	parsedData: [string, number, ...number[]][];
+	parsedData: [string, number, ...number[]];
 }[] = [];
 
 async function flushBuffer() {
 	log.info(`Flushing ${dbBuffer.length} packets to DB...`);
-	let packetCount = 0;
 	const dbBufferCopy = dbBuffer;
 	dbBuffer = [];
 
 	const toInsert = [];
 	for (const { sensorID, parsedData } of dbBufferCopy) {
-		for (const packet of parsedData) {
-			packetCount++;
+		const channel = parsedData[0];
+		const timestamp = parsedData[1];
 
-			const channel = packet[0];
-			const timestamp = packet[1];
+		const rawDataValues = parsedData.slice(2) as number[];
 
-			const rawDataValues = packet.slice(2) as number[];
-
-			toInsert.push({
-				sensor_website_id: sensorID,
-				data_timestamp: timestamp,
-				data_channel: channel,
-				data_values: rawDataValues,
-			});
-		}
+		toInsert.push({
+			sensor_website_id: sensorID,
+			data_timestamp: timestamp,
+			data_channel: channel,
+			data_values: rawDataValues,
+		});
 	}
 
 	if (toInsert.length > 0) {
@@ -53,7 +48,7 @@ async function flushBuffer() {
 			"data_values"
 		)};`;
 	}
-	log.info(`Wrote ${dbBufferCopy.length} (${packetCount}) packets to DB`);
+	log.info(`Wrote ${dbBufferCopy.length} packets to DB`);
 }
 
 self.addEventListener("message", (event: MessageEvent) => {

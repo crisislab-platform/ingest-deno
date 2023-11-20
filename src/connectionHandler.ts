@@ -195,18 +195,22 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 
 		// Convert the data to a JSON array to make it easier for browser clients to parse
 		const message = new TextDecoder().decode(rawData);
-		const parsedData = JSON.parse(
-			`[${message
-				.replaceAll("'", '"')
-				.replace("{", "[")
-				.replace("}", "]")
-				.replaceAll("][", "],[")}]`
-		) as (string | number)[][];
+		const split = message.slice(1, -1).split(", ");
+		const channel = split[0].slice(1, -1);
+		const timestamp = Number(split[1]);
+		const values = split.slice(2).map((v) => Number(v));
 
-		// TODO: Maybe use the timestamp from the packet?
-		sensor.lastMessageTimestamp = Date.now();
+		// Keep the sensor showing as online
+		sensor.lastMessageTimestamp = timestamp;
 
 		setState({ sensorID: sensor.id, connected: true });
+
+		// Reconstruct the original data shape
+		const parsedData: [string, number, ...number[]] = [
+			channel,
+			timestamp,
+			...values,
+		];
 
 		// TODO: Change this to just send to all, and run the filtering separately
 		// Send the message to all clients, and filter out the ones that have disconnected

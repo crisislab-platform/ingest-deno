@@ -70,9 +70,7 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 				showMessage("Rendering data...");
 				window.CRISiSLab.connected = true;
 			}
-			for (const packet of parsed.data) {
-				handleData(packet);
-			}
+			handleData(parsed.data);
 		} else if (parsed?.type === "sensor-meta") {
 			window.CRISiSLab.sensorMeta = parsed?.data;
 
