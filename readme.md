@@ -16,7 +16,7 @@ Modify the .env file to have an API refresh token & the email associated with it
 Then run:
 
 ```bash
-deno run --allow-net --allow-read --allow-env --allow-run --allow-sys src/server.ts
+deno run --allow-ffi --allow-net --allow-read --allow-env --allow-run --allow-sys src/server.ts
 ```
 
 You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:

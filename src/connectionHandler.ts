@@ -1,8 +1,7 @@
 import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
 import * as Sentry from "npm:@sentry/node";
 import "./types.d.ts";
-// @deno-types="https://github.com/kriszyp/msgpackr/blob/master/index.d.ts"
-import { pack } from "https://deno.land/x/msgpackr@v1.9.3/index.js";
+import { pack } from "npm:msgpackr@1.9.9";
 import { fetchAPI, getNewTokenWithRefreshToken, log } from "./utils.ts";
 import { IRequest } from "npm:itty-router@4.0.23";
 
