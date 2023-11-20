@@ -2,7 +2,7 @@
 	"name": "live-data-graphs",
 	"private": true,
 	"type": "module",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
@@ -15,6 +15,6 @@
 	},
 	"devDependencies": {
 		"typescript": "^5.2.2",
-		"vite": "^4.5.0"
+		"vite": "^5.0.0"
 	}
 }
