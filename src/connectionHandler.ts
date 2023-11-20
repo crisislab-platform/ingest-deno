@@ -66,7 +66,7 @@ setInterval(
 			}
 		}
 	},
-	60 * 1000 // Every minute
+	5 * 1000 // Every 5 minutes to help avoid some race conditions.
 );
 
 export function getSensor(_sensorID: number | string): Sensor | undefined {
