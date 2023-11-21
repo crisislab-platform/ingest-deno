@@ -1,4 +1,5 @@
 import { IRequest } from "itty-router";
+import { fetchAPI } from "../utils.ts";
 
 export function authMiddleware(roles?: string[]) {
 	return async (req: IRequest) => {
