@@ -1,7 +1,8 @@
-import { IRequest, Router } from "npm:itty-router@4.0.23";
-import { fetchAPI } from "../utils.ts";
-import { databaseSize } from "./database-size.ts";
-import { dataBulkExport } from "./dataBulkExport.ts";
+import { IRequest, Router, json } from "itty-router";
+import { dbRouter } from "./db/dbRouter.ts";
+import { authRouter } from "./authenticate/index.ts";
+import auth from "./auth.ts";
+import usersRouter from "./users/index.ts";
 
 function setCORSHeaders(req: IRequest, res: Response) {
 	// itty-router's built-in cors is broken
@@ -23,44 +24,7 @@ function deArrayQueryParamsMiddleware(req: IRequest) {
 	}
 }
 
-function authMiddleware(roles?: string[]) {
-	return async (req: IRequest) => {
-		// Check Auth
-		const tokenMatch = req.headers.get("Authorization")?.match(/Bearer (.+)/);
-		if (!tokenMatch || tokenMatch.length < 2)
-			return new Response("Unauthorised", {
-				status: 401,
-			});
-
-		const token = tokenMatch[1];
-
-		let userDetails;
-
-		// Very cursed
-		try {
-			// Pretend to be the user making the request to the API
-			// to figure out if they have the correct role.
-			userDetails = await (
-				await fetchAPI("auth/me", {
-					headers: { authorization: `Bearer ${token}` },
-				})
-			).json();
-		} catch {
-			return new Response("Invalid user token", {
-				status: 500,
-			});
-		}
-
-		if (roles)
-			for (const role of roles)
-				if (!userDetails.roles.includes(role))
-					return new Response("Missing permissions", {
-						status: 401,
-					});
-	};
-}
-
-const apiRouter = Router({ base: "/api/v1" });
+const apiRouter = Router({ base: "/api/v2" });
 apiRouter
 	.all("*", deArrayQueryParamsMiddleware)
 	.options("*", (req) => {
@@ -68,11 +32,13 @@ apiRouter
 		setCORSHeaders(req, res);
 		return res;
 	})
-	.get("/database-size", authMiddleware(["sensor-data:db-size"]), databaseSize)
+	.all("/db/*", dbRouter.handle)
+	.all("/auth/*", authRouter.handle)
+	.all("/users/*", usersRouter.handle)
 	.get(
-		"/data-bulk-export",
-		authMiddleware(["sensor-data:bulk-export"]),
-		dataBulkExport
+		"/user",
+		auth(),
+		({ user }: { user: Record<string, unknown> } & IRequest) => json(user)
 	)
 	.get("*", () => new Response("API route not found", { status: 404 }));
 

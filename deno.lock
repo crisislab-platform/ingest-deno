@@ -4,6 +4,8 @@
     "specifiers": {
       "npm:@sentry/node": "npm:@sentry/node@7.73.0",
       "npm:itty-router@4.0.23": "npm:itty-router@4.0.23",
+      "npm:js-base64": "npm:js-base64@3.7.5",
+      "npm:js-base64@3.7.5": "npm:js-base64@3.7.5",
       "npm:miniseed@0.2.1": "npm:miniseed@0.2.1",
       "npm:msgpackr@1.9": "npm:msgpackr@1.9.9",
       "npm:msgpackr@1.9.9": "npm:msgpackr@1.9.9"
@@ -103,6 +105,10 @@
       },
       "itty-router@4.0.23": {
         "integrity": "sha512-tP1NI8PVK43vWlBnIPqj47ni5FDSczFviA4wgBznscndo8lEvBA+pO3DD1rNbIQPcZhprr775iUTunyGvQMcBw==",
+        "dependencies": {}
+      },
+      "js-base64@3.7.5": {
+        "integrity": "sha512-3MEt5DTINKqfScXKfJFrRbxkrnk2AxPWGBL/ycjz4dK8iqiSJ06UxD8jh8xuh6p10TX4t2+7FsBYVxxQbMg+qA==",
         "dependencies": {}
       },
       "lru_map@0.3.3": {

@@ -1,4 +1,4 @@
-import { getDB } from "../utils.ts";
+import { getDB } from "../../utils.ts";
 
 export async function databaseSize() {
 	const sql = await getDB();

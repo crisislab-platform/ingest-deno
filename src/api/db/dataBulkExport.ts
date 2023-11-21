@@ -1,6 +1,6 @@
 import { IRequest } from "npm:itty-router@4.0.23/Router";
-import { getSensor } from "../connectionHandler.ts";
-import { getDB, log } from "../utils.ts";
+import { getSensor } from "../../connectionHandler.ts";
+import { getDB, log } from "../../utils.ts";
 import {
 	serialiseToMiniSEEDUint8Array,
 	startTimeFromDate,

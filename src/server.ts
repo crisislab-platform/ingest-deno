@@ -10,8 +10,8 @@ import {
 	handleWebSockets,
 } from "./connectionHandler.ts";
 import { log } from "./utils.ts";
-import { IRequest, Router } from "npm:itty-router@4.0.23";
-import { handleAPI } from "./api.ts";
+import { IRequest, Router } from "itty-router";
+import { handleAPI } from "./api/api.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -31,7 +31,7 @@ Sentry.init({
 // HTTP request handler
 const router = Router<IRequest & { sensorID?: number }>();
 router
-	.all("/api/v1/*", handleAPI)
+	.all("/api/v2/*", handleAPI)
 	.get("/consume/:id/live", downloadErrorMiddleware, handleWebSockets)
 	.all("/assets/*", (req) =>
 		serveDir(req, { fsRoot: "live-data-graphs/dist/assets", urlRoot: "assets" })

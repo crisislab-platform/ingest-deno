@@ -1,0 +1,42 @@
+import { IRequest, json } from "itty-router";
+import { pbkdf2Verify } from "./crypto-pbkdf2.ts";
+import createUserToken from "./createUserToken.ts";
+
+// declare global {
+//   const PRIVATE_JWK: string;
+//   const PUBLIC_JWK: string;
+//   const REALM_APPID: string;
+//   const REALM_API_KEY: string;
+//   const PURPLE_AIR_TOKEN: string;
+//   const USERS: KVNamespace;
+// }
+
+export default async function usernameAndPassword(request: IRequest) {
+	const data = await request.json();
+
+	const email = data.email.toLowerCase();
+	const password = data.password;
+
+	if (email === null || password === null) {
+		return new Response("Bad request", { status: 400 });
+	}
+
+	const hash = await HASHES.get(email);
+
+	if (hash === null) {
+		return new Response("Invalid username/password", { status: 401 });
+	}
+
+	const isValid = await pbkdf2Verify(hash, password);
+
+	if (!isValid) {
+		return new Response("Invalid username/password", { status: 401 });
+	}
+
+	try {
+		const token = await createUserToken(email);
+		return json({ token }, { status: 201 });
+	} catch (e) {
+		return new Response("User does not exist", { status: 401 });
+	}
+}

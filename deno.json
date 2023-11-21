@@ -1,5 +1,8 @@
 {
     "unstable": [
         "net"
-    ]
+    ],
+    "imports": {
+        "itty-router": "npm:itty-router@4.0.23"
+    }
 }

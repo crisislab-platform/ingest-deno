@@ -3,7 +3,7 @@ import * as Sentry from "npm:@sentry/node";
 import "./types.d.ts";
 import { pack } from "npm:msgpackr@1.9.9";
 import { fetchAPI, getNewTokenWithRefreshToken, log } from "./utils.ts";
-import { IRequest } from "npm:itty-router@4.0.23";
+import { IRequest } from "itty-router";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
