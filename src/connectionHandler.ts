@@ -36,7 +36,7 @@ setInterval(
 		log.info("About to download sensor list from interval");
 		downloadError = await downloadSensorList();
 	},
-	15 * 60 * 1000 // Every 15 minutes
+	20 * 60 * 1000 // Every 20 minutes
 );
 
 export function downloadErrorMiddleware() {
@@ -58,7 +58,7 @@ setInterval(
 			// If no messages in the last  2 minutes, set it as offline
 			if (
 				Date.now() - (sensor.lastMessageTimestamp || 0) >
-				2 * 60 * 1000 // 2 minutes
+				5 * 60 * 1000 // 5 minutes
 			) {
 				setState({ sensorID: sensor.id, connected: false });
 			} else {
@@ -66,7 +66,7 @@ setInterval(
 			}
 		}
 	},
-	5 * 1000 // Every 5 minutes to help avoid some race conditions.
+	10 * 60 * 1000 // Every 10 minutes to avoid hammering infra
 );
 
 export function getSensor(_sensorID: number | string): Sensor | undefined {
@@ -110,7 +110,7 @@ async function setState({
 			method: "POST",
 			body: JSON.stringify({
 				sensor: sensorID,
-				timestamp: Date.now(),
+				timestamp: sensor.lastMessageTimestamp ?? Date.now(),
 				connected,
 			}),
 		});
