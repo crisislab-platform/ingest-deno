@@ -20,6 +20,8 @@ const dataWritingWorker = new Worker(
 const ipToSensorMap = new Map<string, Sensor>();
 let downloadError: string | undefined;
 
+const sensorAPIHitMinimumGap = 1000 * 10 * 60; // 10 minutes
+
 log.info("Dev mode: ", devMode);
 
 // Get an access token
@@ -29,15 +31,6 @@ if (!(await getNewTokenWithRefreshToken()))
 // Get the list of sensors.
 // Need to do this first thing to avoid spamming stuff.
 downloadError = await downloadSensorList();
-
-// Every 15 minutes, re-download the sensor list
-setInterval(
-	async () => {
-		log.info("About to download sensor list from interval");
-		downloadError = await downloadSensorList();
-	},
-	20 * 60 * 1000 // Every 20 minutes
-);
 
 export function downloadErrorMiddleware() {
 	if (downloadError) return new Response(downloadError, { status: 500 });
@@ -53,7 +46,13 @@ export function downloadErrorMiddleware() {
 // Every minute, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
 setInterval(
-	() => {
+	async () => {
+		// First re-download sensor list
+		log.info("About to download sensor list from interval");
+		downloadError = await downloadSensorList();
+
+		// Then go through map
+		log.info("About to update sensor statuses from interval");
 		for (const sensor of ipToSensorMap.values()) {
 			// If no messages in the last  2 minutes, set it as offline
 			if (
@@ -99,6 +98,9 @@ async function setState({
 	const sensor = getSensor(sensorID);
 	if (!sensor) return;
 
+	if (Date.now() - sensor.lastHitAPI < sensorAPIHitMinimumGap) return;
+	sensor.lastHitAPI = Date.now();
+
 	// Avoid spamming the API by not updating things if they haven't changed.
 	if (sensor.meta?.online === connected) return;
 
@@ -120,12 +122,12 @@ async function setState({
 		sensor.meta.online = connected;
 
 		if (connected === true) {
-			log.info(`Sensor connected: #${sensorID}`);
+			log.info(`Sensor connected: #${sensor.id}`);
 		} else {
-			log.info(`Sensor disconnected: #${sensorID}`);
+			log.info(`Sensor disconnected: #${sensor.id}`);
 		}
 	} else {
-		log.warn("Error setting state:", await res.text());
+		log.warn(`Error setting state for sensor #${sensor.id}:`, await res.text());
 	}
 }
 
@@ -160,6 +162,7 @@ export async function downloadSensorList(): Promise<string | undefined> {
 					id: rawSensor.id,
 					webSocketClients: [],
 					meta: rawSensor,
+					lastHitAPI: 0,
 				};
 				ipToSensorMap.set(rawSensor.ip, sensorBase);
 			} else if (sensorBase.id !== rawSensor.id) {
@@ -201,7 +204,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 		const values = split.slice(2).map((v) => Number(v));
 
 		// Keep the sensor showing as online
-		sensor.lastMessageTimestamp = timestamp;
+		sensor.lastMessageTimestamp = timestamp * 1000;
 
 		setState({ sensorID: sensor.id, connected: true });
 

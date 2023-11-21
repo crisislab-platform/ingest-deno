@@ -115,10 +115,9 @@ export function handleData(packet: Datagram) {
 			window.CRISiSLab.data[channel].shift();
 		}
 	}
+	current[channel] = 0;
 
 	window.CRISiSLab.charts[channel].recompute();
-
-	current[channel] = 0;
 
 	hideMessages();
 	if (!window.CRISiSLab.haveRenderedPacket) {

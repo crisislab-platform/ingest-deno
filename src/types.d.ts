@@ -7,6 +7,7 @@ interface Sensor {
 	webSocketClients: WebSocket[];
 	isDuplicateOf?: number;
 	lastMessageTimestamp?: number;
+	lastHitAPI: number;
 	meta: {
 		id: number;
 		ip?: string;
