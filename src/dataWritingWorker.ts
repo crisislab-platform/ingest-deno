@@ -60,16 +60,6 @@ self.addEventListener("message", (event: MessageEvent) => {
 		Sentry.captureException(err);
 	}
 });
-// Table setup
-await sql`
-CREATE TABLE IF NOT EXISTS sensor_data_3 (
-	sensor_website_id int NOT NULL,
-	data_timestamp timestamptz NOT NULL,
-	data_channel char(3) NOT NULL,
-	data_values FLOAT[] NOT NULL
-);`;
-await sql`CREATE EXTENSION IF NOT EXISTS timescaledb;`;
-await sql`SELECT create_hypertable('sensor_data_3','data_timestamp', if_not_exists => TRUE);`;
 
 try {
 	// These sometimes throw because timescale is being silly

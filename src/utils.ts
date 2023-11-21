@@ -22,8 +22,40 @@ export const log = {
 		console.error(loggerTimeAndInfo(), ...data);
 	},
 };
-// @ts-expect-error It won't return undefined because process will exit
-export function getDB(): postgres.Sql<{}> {
+
+/**
+ * Simplify setup by autogenerate tables
+ */
+async function setupTables(sql: postgres.Sql) {
+	// Sensor data (timescale)
+	await sql`
+CREATE TABLE IF NOT EXISTS sensor_data_3 (
+	sensor_website_id int NOT NULL,
+	data_timestamp timestamptz NOT NULL,
+	data_channel char(3) NOT NULL,
+	data_values FLOAT[] NOT NULL
+);`;
+	await sql`CREATE EXTENSION IF NOT EXISTS timescaledb;`;
+	await sql`SELECT create_hypertable('sensor_data_3','data_timestamp', if_not_exists => TRUE);`;
+
+	// Users
+	await sql`
+	CREATE TABLE IF NOT EXISTS users (
+		"id" serial NOT NULL
+		"email" text NOT NULL,
+		"name" text NOT NULL,
+		"roles" text[] NOT NULL,
+		"hash" text,
+		"refresh" text,
+		PRIMARY KEY ("id")
+	);
+	`;
+}
+
+let dbConn: postgres.Sql | null = null;
+export async function getDB(): Promise<postgres.Sql> {
+	if (dbConn !== null) return dbConn;
+
 	try {
 		log.info("Connecting to database...");
 		// Connect with credentials from env
@@ -35,15 +67,18 @@ export function getDB(): postgres.Sql<{}> {
 			port: 5432,
 		});
 		log.info("Connected to database!");
+		await setupTables(sql);
+		dbConn = sql;
 		return sql;
 	} catch (err) {
 		log.error("Failed to connect to database: ", err);
 		if (parseInt(Deno.env.get("SHOULD_STORE") || "0")) {
 			// Only kill the process if we want to store data
 			log.info("Exiting due to no database connection");
-			Deno.exit(1);
+			throw Deno.exit(1);
 		}
 	}
+	throw "We should never get here";
 }
 
 let apiToken: string | null = null;
