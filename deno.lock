@@ -3,6 +3,7 @@
   "packages": {
     "specifiers": {
       "npm:@sentry/node": "npm:@sentry/node@7.73.0",
+      "npm:date-fns@2.30.0": "npm:date-fns@2.30.0",
       "npm:itty-router@4.0.23": "npm:itty-router@4.0.23",
       "npm:js-base64": "npm:js-base64@3.7.5",
       "npm:js-base64@3.7.5": "npm:js-base64@3.7.5",
@@ -11,6 +12,12 @@
       "npm:msgpackr@1.9.9": "npm:msgpackr@1.9.9"
     },
     "npm": {
+      "@babel/runtime@7.21.0": {
+        "integrity": "sha512-xwII0//EObnq89Ji5AKYQaRYiW/nZ3llSv29d49IuxPhKbtJoLP+9QUUZ4nVragQVtaVGeZrpB+ZtG/Pdy/POw==",
+        "dependencies": {
+          "regenerator-runtime": "regenerator-runtime@0.13.11"
+        }
+      },
       "@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.2": {
         "integrity": "sha512-9bfjwDxIDWmmOKusUcqdS4Rw+SETlp9Dy39Xui9BEGEk19dDwH0jhipwFzEff/pFg95NKymc6TOTbRKcWeRqyQ==",
         "dependencies": {}
@@ -90,6 +97,12 @@
         "integrity": "sha512-ROmzCKrTnOwybPcJApAA6WBWij23HVfGVNKqqrZpuyZOHqK2CwHSvpGuyt/UNNvaIjEd8X5IFGp4Mh+Ie1IHJQ==",
         "dependencies": {}
       },
+      "date-fns@2.30.0": {
+        "integrity": "sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==",
+        "dependencies": {
+          "@babel/runtime": "@babel/runtime@7.21.0"
+        }
+      },
       "debug@4.3.4": {
         "integrity": "sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==",
         "dependencies": {
@@ -146,6 +159,10 @@
       },
       "node-gyp-build-optional-packages@5.0.7": {
         "integrity": "sha512-YlCCc6Wffkx0kHkmam79GKvDQ6x+QZkMjFGrIMxgFNILFvGSbCp2fCBC55pGTT9gVaz8Na5CLmxt/urtzRv36w==",
+        "dependencies": {}
+      },
+      "regenerator-runtime@0.13.11": {
+        "integrity": "sha512-kY1AZVr2Ra+t+piVaJ4gxaFaReZVH40AKNo7UCX6W+dEwBo/2oZJzqfuN1qLq1oL45o56cPaTXELwrTh8Fpggg==",
         "dependencies": {}
       },
       "tslib@2.6.2": {

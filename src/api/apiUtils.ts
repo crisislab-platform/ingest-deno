@@ -38,6 +38,27 @@ export function authMiddleware(roles?: string[]) {
 	};
 }
 
+export interface Sensor {
+	id: number;
+	longitude: number;
+	latitude: number;
+	location: {
+		type: string;
+		coordinates: [number, number];
+	};
+	realLocation: number[];
+	timestamp?: number;
+	name?: string;
+	elevation?: number;
+	total_floors?: number;
+	on_floor?: number;
+	contact_email?: string;
+	online?: boolean;
+	type?: string;
+	secondary_id?: string;
+	publicLocation?: [number, number];
+}
+
 export interface User {
 	id: number;
 	name: string;
@@ -72,4 +93,85 @@ export async function getUserByID(id: number): Promise<User | null> {
 		)?.[0] ?? null;
 
 	return user;
+}
+
+export function randomizeLocation(
+	location: [number, number]
+): [number, number] {
+	const lng = location[0] + (Math.random() - 0.5) * 0.002;
+	const lat = location[1] + (Math.random() - 0.5) * 0.002;
+	return [Math.round(lng * 100000) / 100000, Math.round(lat * 100000) / 100000];
+}
+
+import { Sensor } from "../apiUtils.ts";
+
+const publicSensorKeys: (keyof Sensor)[] = [
+	"id",
+	"type",
+	"publicLocation",
+	"online",
+	"timestamp",
+	"secondary_id",
+];
+
+const filterValues = (sensor: Sensor): Partial<Sensor> =>
+	Object.fromEntries(
+		Object.entries(sensor).filter(([k]) =>
+			publicSensorKeys.includes(k as keyof Sensor)
+		)
+	);
+
+export async function getSensor(
+	id: number | string,
+	unfiltered = true
+): Promise<Partial<Sensor>> {
+	const sensor = (await SENSORS.get(id + "", "json")) as Sensor;
+
+	if (sensor.location) {
+		sensor.longitude = sensor.location.coordinates[0];
+		sensor.latitude = sensor.location.coordinates[1];
+	}
+
+	if (unfiltered) {
+		return sensor;
+	} else {
+		return filterValues(sensor);
+	}
+}
+
+function fixSensorLocation(sensor: Sensor) {
+	if (sensor.location) {
+		sensor.longitude = sensor.location.coordinates[0];
+		sensor.latitude = sensor.location.coordinates[1];
+	}
+}
+
+export async function getSensors(
+	unfiltered = true
+): Promise<{ [key: string]: Partial<Sensor> }> {
+	const sensors = await Promise.all(
+		(
+			await SENSORS.list()
+		).keys.map(async (key) => SENSORS.get(key.name, "json") as Promise<Sensor>)
+	);
+
+	const sensorsObj: { [key: string]: Sensor } = {};
+
+	for (const sensor of sensors) {
+		fixSensorLocation(sensor);
+
+		sensorsObj[sensor.id] = sensor;
+	}
+
+	if (unfiltered) {
+		return sensorsObj;
+	} else {
+		// I <3 Object.fromEntries
+		return Object.fromEntries(
+			Object.entries(sensorsObj).map(([sensorID, sensor]) => [
+				sensorID,
+				filterValues(sensor),
+			])
+		);
+	}
 }

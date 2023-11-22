@@ -5,14 +5,12 @@ import { getUserRoute } from "./getUserRoute.ts";
 import updateUser from "./createUser.ts";
 import deleteUser from "./deleteUser.ts";
 import { issueRefreshToken } from "./issueRefreshToken.ts";
-// import getSensorToken from './getSensorToken'
 
 const usersRouter = Router({ base: "/api/v2/users" });
 
 // with some routes on it (these will be relative to the base)...
 usersRouter
 	.get("/", auth("users:read"), listAll)
-	//   .get('/:id/token', auth("sensors:update"), getSensorToken)
 	.get("/:email", auth("users:read"), getUserRoute)
 	.put("/:email", auth("users:write"), updateUser)
 	.delete("/:email", auth("users:write"), deleteUser)

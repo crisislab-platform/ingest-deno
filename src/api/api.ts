@@ -3,6 +3,7 @@ import { dbRouter } from "./db/dbRouter.ts";
 import { authRouter } from "./authenticate/index.ts";
 import auth from "./auth.ts";
 import usersRouter from "./users/index.ts";
+import { sensorsRouter } from "./sensors/index.ts";
 
 function setCORSHeaders(req: IRequest, res: Response) {
 	// itty-router's built-in cors is broken
@@ -32,6 +33,7 @@ apiRouter
 		setCORSHeaders(req, res);
 		return res;
 	})
+	.all("/sensors/*", sensorsRouter.handle)
 	.all("/db/*", dbRouter.handle)
 	.all("/auth/*", authRouter.handle)
 	.all("/users/*", usersRouter.handle)
