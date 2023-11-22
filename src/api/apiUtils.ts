@@ -114,13 +114,6 @@ const publicSensorKeys: (keyof Sensor)[] = [
 	"secondary_id",
 ];
 
-const filterValues = (sensor: Sensor): Partial<Sensor> =>
-	Object.fromEntries(
-		Object.entries(sensor).filter(([k]) =>
-			publicSensorKeys.includes(k as keyof Sensor)
-		)
-	);
-
 export async function getSensor(
 	id: number | string,
 	unfiltered = true
@@ -149,11 +142,8 @@ function fixSensorLocation(sensor: Sensor) {
 export async function getSensors(
 	unfiltered = true
 ): Promise<{ [key: string]: Partial<Sensor> }> {
-	const sensors = await Promise.all(
-		(
-			await SENSORS.list()
-		).keys.map(async (key) => SENSORS.get(key.name, "json") as Promise<Sensor>)
-	);
+	const sql = await getDB();
+	const sensors = await sql``;
 
 	const sensorsObj: { [key: string]: Sensor } = {};
 

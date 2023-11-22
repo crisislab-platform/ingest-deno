@@ -69,7 +69,7 @@ export async function dataBulkExport(req: IRequest) {
 	switch (format) {
 		case "tsv1": {
 			const channelsQuerySegment = sql(channels);
-			const query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, data_values FROM sensor_data_3 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+			const query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 			const body = new ReadableStream({
 				start(controller) {
 					controller.enqueue(
@@ -101,7 +101,7 @@ export async function dataBulkExport(req: IRequest) {
 			// This is for the progress bar
 			const count = parseInt(
 				(
-					await sql`SELECT count(sensor_website_id) FROM sensor_data_3 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
+					await sql`SELECT count(*) FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
 				)[0]["count"]
 			);
 
@@ -129,7 +129,7 @@ export async function dataBulkExport(req: IRequest) {
 			const channel = channels[0];
 			// TODO: Limit time range
 
-			const query = sql`SELECT data_timestamp, data_values FROM sensor_data_3 WHERE sensor_website_id=${sensor.id} AND data_channel=${channel} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+			const query = sql`SELECT data_timestamp, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel=${channel} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 
 			const rows = await query.execute();
 

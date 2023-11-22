@@ -27,16 +27,8 @@ export const log = {
  * Simplify setup by autogenerate tables
  */
 async function setupTables(sql: postgres.Sql) {
-	// Sensor data (timescale)
-	await sql`
-CREATE TABLE IF NOT EXISTS sensor_data_3 (
-	sensor_website_id int NOT NULL,
-	data_timestamp timestamptz NOT NULL,
-	data_channel char(3) NOT NULL,
-	data_values FLOAT[] NOT NULL
-);`;
+	// Setup timescale first so we fail fast if it isn't here
 	await sql`CREATE EXTENSION IF NOT EXISTS timescaledb;`;
-	await sql`SELECT create_hypertable('sensor_data_3','data_timestamp', if_not_exists => TRUE);`;
 
 	// Users
 	await sql`
@@ -50,6 +42,46 @@ CREATE TABLE IF NOT EXISTS sensor_data_3 (
 		PRIMARY KEY ("id", "email")
 	);
 	`;
+	// Sensors
+	await sql`
+	CREATE TABLE IF NOT EXISTS sensor_types (
+		"name" text NOT NULL,
+		"sample_delta" int4, NOT NULL, 
+		PRIMARY KEY ("name")
+	);`;
+	await sql`
+	CREATE TABLE IF NOT EXISTS sensors (
+        "id" serial NOT NULL UNIQUE,
+		"type" text NOT NULL,
+        "ip" text,
+        "online" bool,
+        "location" point,
+        "name" text,
+        "secondary_id" text,
+        "timestamp" int8,
+        "contact_email" text,
+        PRIMARY KEY ("id"),
+		CONSTRAINT fk_sensor_type FOREIGN KEY(type) REFERENCES sensor_types(name)
+    );
+	`;
+	// Sensor data (timescale)
+	await sql`
+	CREATE TABLE IF NOT EXISTS sensor_data_4 (
+		sensor_id int NOT NULL,
+		data_timestamp timestamptz NOT NULL,
+		data_channel char(3) NOT NULL,
+		data_values FLOAT[] NOT NULL,
+		CONSTRAINT fk_sensor_id FOREIGN KEY(sensor_id) REFERENCES sensors(id)
+	);
+	`;
+	await sql`SELECT create_hypertable('sensor_data_4','data_timestamp', if_not_exists => TRUE);`;
+	try {
+		// These sometimes throw because timescale is being silly
+		await sql`ALTER TABLE sensor_data_4 SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_id');`;
+		await sql`SELECT add_compression_policy('sensor_data_4', INTERVAL '2 days', if_not_exists => TRUE);`;
+	} catch (err) {
+		log.error(`Error setting up table: ${err}`);
+	}
 }
 
 let dbConn: postgres.Sql | null = null;

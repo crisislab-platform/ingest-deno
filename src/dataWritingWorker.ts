@@ -32,7 +32,7 @@ async function flushBuffer() {
 		const rawDataValues = parsedData.slice(2) as number[];
 
 		toInsert.push({
-			sensor_website_id: sensorID,
+			sensor_id: sensorID,
 			data_timestamp: timestamp,
 			data_channel: channel,
 			data_values: rawDataValues,
@@ -40,9 +40,9 @@ async function flushBuffer() {
 	}
 
 	if (toInsert.length > 0) {
-		await sql`INSERT INTO sensor_data_3 ${sql(
+		await sql`INSERT INTO sensor_data_4 ${sql(
 			toInsert,
-			"sensor_website_id",
+			"sensor_id",
 			"data_timestamp",
 			"data_channel",
 			"data_values"
@@ -60,11 +60,3 @@ self.addEventListener("message", (event: MessageEvent) => {
 		Sentry.captureException(err);
 	}
 });
-
-try {
-	// These sometimes throw because timescale is being silly
-	await sql`ALTER TABLE sensor_data_3 SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_website_id');`;
-	await sql`SELECT add_compression_policy('sensor_data_3', INTERVAL '2 days', if_not_exists => TRUE);`;
-} catch (err) {
-	log.error(`Error setting up table: ${err}`);
-}
