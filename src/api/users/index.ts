@@ -7,7 +7,7 @@ import deleteUser from "./deleteUser.ts";
 import { issueRefreshToken } from "./issueRefreshToken.ts";
 // import getSensorToken from './getSensorToken'
 
-const usersRouter = Router({ base: "/api/v0/users" });
+const usersRouter = Router({ base: "/api/v2/users" });
 
 // with some routes on it (these will be relative to the base)...
 usersRouter

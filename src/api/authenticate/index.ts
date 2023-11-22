@@ -5,7 +5,7 @@ import auth from "../auth.ts";
 import { refreshToken } from "./refreshToken.ts";
 import { getMe } from "./getMe.ts";
 import { Router } from "itty-router";
-export const authRouter = Router({ base: "/api/v0/auth" });
+export const authRouter = Router({ base: "/api/v2/auth" });
 
 // with some routes on it (these will be relative to the base)...
 authRouter
