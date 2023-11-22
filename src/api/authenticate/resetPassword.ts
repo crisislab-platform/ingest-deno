@@ -3,15 +3,18 @@
 // import {sensors} from "./testData"
 import { IRequest } from "itty-router";
 import { pbkdf2 } from "./crypto-pbkdf2.ts";
+import { getDB } from "../../utils.ts";
 
 export default async function resetPassword(request: IRequest) {
 	const { password } = await request.json();
 
-	console.log("resetting password");
+	const sql = await getDB();
+
+	const email = request.user.email;
 
 	const hash = await pbkdf2(password);
 
-	await HASHES.put(request.user.email, hash);
+	await sql`UPDATE users SET hash=${hash} WHERE email=${email}`;
 
 	return new Response("OK", { status: 200 });
 }

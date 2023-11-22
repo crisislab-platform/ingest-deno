@@ -1,6 +1,7 @@
 import { IRequest, json } from "itty-router";
 import { pbkdf2Verify } from "./crypto-pbkdf2.ts";
 import createUserToken from "./createUserToken.ts";
+import { getDB } from "../../utils.ts";
 
 // declare global {
 //   const PRIVATE_JWK: string;
@@ -21,7 +22,11 @@ export default async function usernameAndPassword(request: IRequest) {
 		return new Response("Bad request", { status: 400 });
 	}
 
-	const hash = await HASHES.get(email);
+	const sql = await getDB();
+
+	const hash = (
+		await sql<{ hash: string }[]>`SELECT hash FROM users WHERE email=${email}`
+	)?.[0]?.hash;
 
 	if (hash === null) {
 		return new Response("Invalid username/password", { status: 401 });
