@@ -1,5 +1,5 @@
 import { IRequest } from "itty-router";
-import { fetchAPI } from "../utils.ts";
+import { fetchAPI, getDB } from "../utils.ts";
 
 export function authMiddleware(roles?: string[]) {
 	return async (req: IRequest) => {
@@ -36,4 +36,40 @@ export function authMiddleware(roles?: string[]) {
 						status: 401,
 					});
 	};
+}
+
+export interface User {
+	id: number;
+	name: string;
+	email: string;
+	roles: string[];
+}
+
+/**
+ * Get a user from an email address. Returns null if no user was found.
+ */
+export async function getUserByEmail(email: string): Promise<User | null> {
+	const sql = await getDB();
+
+	const user: User | null =
+		(
+			await sql<
+				User[]
+			>`SELECT id, name, email, roles FROM users WHERE email=${email}`
+		)?.[0] ?? null;
+
+	return user;
+}
+/**
+ * Get a user from an ID. Returns null if no user was found.
+ */
+export async function getUserByID(id: number): Promise<User | null> {
+	const sql = await getDB();
+
+	const user: User | null =
+		(
+			await sql<User[]>`SELECT id, name, email, roles FROM users WHERE id=${id}`
+		)?.[0] ?? null;
+
+	return user;
 }

@@ -1,13 +1,10 @@
 import { json } from "itty-router";
+import { User } from "../apiUtils.ts";
+import { getDB } from "../../utils.ts";
 
 export default async function listUsers() {
-	const data = (await USERS.list()).keys;
+	const sql = await getDB();
+	const data = await sql<User[]>`SELECT name, email, id, roles FROM users`;
 
-	return json(
-		await Promise.all(
-			data.map(async (key) => {
-				return key.metadata || JSON.parse(await USERS.get(key.name));
-			}),
-		),
-	);
+	return json(data);
 }

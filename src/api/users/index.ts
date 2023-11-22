@@ -1,7 +1,7 @@
 import { Router } from "itty-router";
 import auth from "../auth.ts";
 import listAll from "./listAll.ts";
-import getUser from "./getUser.ts";
+import { getUserRoute } from "./getUserRoute.ts";
 import updateUser from "./createUser.ts";
 import deleteUser from "./deleteUser.ts";
 import { issueRefreshToken } from "./issueRefreshToken.ts";
@@ -13,7 +13,7 @@ const usersRouter = Router({ base: "/api/v0/users" });
 usersRouter
 	.get("/", auth("users:read"), listAll)
 	//   .get('/:id/token', auth("sensors:update"), getSensorToken)
-	.get("/:email", auth("users:read"), getUser)
+	.get("/:email", auth("users:read"), getUserRoute)
 	.put("/:email", auth("users:write"), updateUser)
 	.delete("/:email", auth("users:write"), deleteUser)
 	.get(

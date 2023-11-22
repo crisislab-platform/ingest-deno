@@ -1,3 +1,4 @@
+import { getUserByEmail } from "../apiUtils.ts";
 import { getToken } from "../jwt.ts";
 
 /**
@@ -16,7 +17,7 @@ export default async function createUserToken(
 	audience = ["admin"],
 	expiry = 60 * 60 * 24 * 7
 ): Promise<string> {
-	const user = JSON.parse((await USERS.get(email)) || "undefined");
+	const user = await getUserByEmail(email);
 
 	if (!user) {
 		throw new Error("User not found");

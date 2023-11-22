@@ -1,3 +1,4 @@
+import { getUserByEmail } from "../apiUtils.ts";
 import { verifyToken } from "../jwt.ts";
 
 export async function getMe(req: Request) {
@@ -23,11 +24,11 @@ export async function getMe(req: Request) {
 	if (!email || email.length == 0)
 		return new Response("Bad token", { status: 401 });
 
-	const data = await USERS.get(email);
+	const data = await getUserByEmail(email);
 
 	if (!data) return new Response("Couldn't find user", { status: 404 });
 
-	return new Response(data, {
+	return new Response(JSON.stringify(data), {
 		headers: { "Content-Type": "application/json" },
 	});
 }

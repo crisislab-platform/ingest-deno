@@ -1,4 +1,4 @@
-import postgres from "https://deno.land/x/postgresjs@v3.3.5/mod.js";
+import postgres from "https://deno.land/x/postgresjs@v3.4.3/mod.js";
 
 function loggerTimeAndInfo(): string {
 	return `[${new Date().toISOString()}]`;
@@ -41,13 +41,13 @@ CREATE TABLE IF NOT EXISTS sensor_data_3 (
 	// Users
 	await sql`
 	CREATE TABLE IF NOT EXISTS users (
-		"id" serial NOT NULL
-		"email" text NOT NULL,
+		"id" serial NOT NULL UNIQUE,
+		"email" text NOT NULL UNIQUE,
 		"name" text NOT NULL,
 		"roles" text[] NOT NULL,
 		"hash" text,
 		"refresh" text,
-		PRIMARY KEY ("id")
+		PRIMARY KEY ("id", "email")
 	);
 	`;
 }

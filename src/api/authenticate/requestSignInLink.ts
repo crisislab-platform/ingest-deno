@@ -6,6 +6,7 @@ import {
 	generateSignIn,
 	generateWelcome,
 } from "../emails/index.ts";
+import { getUserByEmail } from "../apiUtils.ts";
 
 const emails = {
 	welcome: {
@@ -34,13 +35,7 @@ export default async function requestSignInLink(
 		return new Response("Invalid", { status: 404 });
 	}
 
-	const userData = await USERS.get(email);
-
-	if (!userData) {
-		return new Response("User not found", { status: 404 });
-	}
-
-	const user = JSON.parse(userData);
+	const user = await getUserByEmail(email);
 
 	if (!user) {
 		return new Response("User not found", { status: 404 });

@@ -1,5 +1,6 @@
 import { IRequest, json } from "itty-router";
 import { toSecureToken, validateEmail } from "./utils.ts";
+import { getDB } from "../../utils.ts";
 
 // Issues a refresh token that can be used instead of a username and password to get new tokens
 export async function issueRefreshToken({ params }: IRequest) {
@@ -9,6 +10,8 @@ export async function issueRefreshToken({ params }: IRequest) {
 	if (!validateEmail(email)) {
 		return new Response("Invalid email", { status: 404 });
 	}
+
+	const sql = await getDB();
 
 	// Generate a token
 	const tokenValues = new Int32Array(128);
@@ -20,8 +23,8 @@ export async function issueRefreshToken({ params }: IRequest) {
 			.join("")
 	);
 
-	// This will overwrite old ones. That's intentional so that there's a way to invalidate old ones`.
-	await REFRESH_TOKENS.put(email, token);
+	// This will overwrite the old token. That's intentional so that there's a way to invalidate old ones`.
+	await sql`UPDATE users SET refresh=${token} WHERE email=${email}`;
 
 	// Return the email as well to help the front-end
 	return json({ email, token }, { status: 201 });

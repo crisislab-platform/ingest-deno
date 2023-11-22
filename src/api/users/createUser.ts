@@ -1,5 +1,6 @@
 import { IRequest, json } from "itty-router";
 import { validateEmail } from "./utils.ts";
+import { getDB } from "../../utils.ts";
 
 export default async function createUser(request: IRequest) {
 	const email = request.params.email.toLowerCase();
@@ -9,28 +10,23 @@ export default async function createUser(request: IRequest) {
 		return new Response("Invalid", { status: 404 });
 	}
 
-	const user = JSON.parse(await USERS.get(email)) || {
-		roles: ["sensors:read"],
-		email,
-	};
+	const sql = await getDB();
+
+	const emailUsed =
+		(await sql`SELECT count(*) FROM users WHERE email=${email}`)?.[0] ?? null;
+
+	if (emailUsed) return new Response("Email in use", { status: 400 });
 
 	const data = await request.json();
+	const userData = {
+		email: data.email,
+		name: data.name ?? "",
+		roles: data.roles ?? [],
+	};
 
-	const { name, roles, metadata } = data;
+	const id = (
+		await sql<{ id: number }[]>`INSERT INTO users ${sql(userData)} RETURNING id`
+	)[0].id;
 
-	if (name) {
-		user.name = name.toString();
-	}
-
-	if (roles) {
-		user.roles = roles.map((role) => role.toString());
-	}
-
-	if (metadata) {
-		user.metadata = metadata;
-	}
-
-	await USERS.put(email, JSON.stringify(user), { metadata: user });
-
-	return json(user, { status: 201 });
+	return json({ ...userData, id }, { status: 201 });
 }

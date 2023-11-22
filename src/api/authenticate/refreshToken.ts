@@ -1,5 +1,6 @@
 import { IRequest, json } from "itty-router";
-import createUserToken from "./createUserToken";
+import createUserToken from "./createUserToken.ts";
+import { getDB } from "../../utils.ts";
 
 export async function refreshToken(req: IRequest) {
 	// This is saddening to read. Please ignore.
@@ -18,7 +19,13 @@ export async function refreshToken(req: IRequest) {
 	if (suppliedRefreshToken.length + email.length === 0)
 		return new Response("Bad request", { status: 400 });
 
-	const actualRefreshToken = await REFRESH_TOKENS.get(email);
+	const sql = await getDB();
+
+	const actualRefreshToken = (
+		await sql<
+			{ refresh: string }[]
+		>`SELECT refresh FROM users WHERE email=${email}`
+	)?.[0]?.refresh;
 
 	if (actualRefreshToken !== suppliedRefreshToken)
 		return new Response("Unauthorised", { status: 401 });
