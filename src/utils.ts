@@ -75,10 +75,15 @@ export async function getDB(): Promise<postgres.Sql> {
 		if (parseInt(Deno.env.get("SHOULD_STORE") || "0")) {
 			// Only kill the process if we want to store data
 			log.info("Exiting due to no database connection");
-			throw Deno.exit(1);
+			throw exit(1);
 		}
 	}
 	throw "We should never get here";
+}
+
+export async function exit(code?: number) {
+	await dbConn?.end();
+	Deno.exit(code);
 }
 
 let apiToken: string | null = null;
