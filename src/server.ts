@@ -11,7 +11,7 @@ import {
 } from "./connectionHandler.ts";
 import { log } from "./utils.ts";
 import { IRequest, Router } from "npm:itty-router@4.0.23";
-import { handleAPI } from "./api.ts";
+import { handleAPI } from "./api/api.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });

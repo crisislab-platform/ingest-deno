@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS sensor_data_3 (
 	// Users
 	await sql`
 	CREATE TABLE IF NOT EXISTS users (
-		"id" serial NOT NULL
+		"id" serial NOT NULL,
 		"email" text NOT NULL,
 		"name" text NOT NULL,
 		"roles" text[] NOT NULL,
