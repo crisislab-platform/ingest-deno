@@ -38,26 +38,22 @@ export function authMiddleware(roles?: string[]) {
 	};
 }
 
-export interface Sensor {
+export interface PublicSensorMeta {
 	id: number;
-	longitude: number;
-	latitude: number;
-	location: {
-		type: string;
-		coordinates: [number, number];
-	};
-	realLocation: number[];
-	timestamp?: number;
-	name?: string;
-	elevation?: number;
-	total_floors?: number;
-	on_floor?: number;
-	contact_email?: string;
-	online?: boolean;
 	type?: string;
+	online?: boolean;
+	timestamp?: number;
 	secondary_id?: string;
-	publicLocation?: [number, number];
+	public_location?: [number, number];
 }
+
+export type PrivateSensorMeta = PublicSensorMeta & {
+	location?: [number, number];
+	name?: string;
+	contact_email?: string;
+	timestamp?: number;
+	ip?: string;
+};
 
 export interface User {
 	id: number;
@@ -103,9 +99,7 @@ export function randomizeLocation(
 	return [Math.round(lng * 100000) / 100000, Math.round(lat * 100000) / 100000];
 }
 
-import { Sensor } from "../apiUtils.ts";
-
-const publicSensorKeys: (keyof Sensor)[] = [
+const publicSensorKeys: (keyof PublicSensorMeta)[] = [
 	"id",
 	"type",
 	"publicLocation",
@@ -117,8 +111,8 @@ const publicSensorKeys: (keyof Sensor)[] = [
 export async function getSensor(
 	id: number | string,
 	unfiltered = true
-): Promise<Partial<Sensor>> {
-	const sensor = (await SENSORS.get(id + "", "json")) as Sensor;
+): Promise<Partial<SensorMeta>> {
+	const sensor = (await SENSORS.get(id + "", "json")) as SensorMeta;
 
 	if (sensor.location) {
 		sensor.longitude = sensor.location.coordinates[0];
@@ -132,7 +126,7 @@ export async function getSensor(
 	}
 }
 
-function fixSensorLocation(sensor: Sensor) {
+function fixSensorLocation(sensor: SensorMeta) {
 	if (sensor.location) {
 		sensor.longitude = sensor.location.coordinates[0];
 		sensor.latitude = sensor.location.coordinates[1];
@@ -141,11 +135,11 @@ function fixSensorLocation(sensor: Sensor) {
 
 export async function getSensors(
 	unfiltered = true
-): Promise<{ [key: string]: Partial<Sensor> }> {
+): Promise<{ [key: string]: Partial<SensorMeta> }> {
 	const sql = await getDB();
 	const sensors = await sql``;
 
-	const sensorsObj: { [key: string]: Sensor } = {};
+	const sensorsObj: { [key: string]: SensorMeta } = {};
 
 	for (const sensor of sensors) {
 		fixSensorLocation(sensor);

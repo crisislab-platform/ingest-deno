@@ -56,6 +56,7 @@ async function setupTables(sql: postgres.Sql) {
         "ip" text,
         "online" bool,
         "location" point,
+		"public_location" point,
         "name" text,
         "secondary_id" text,
         "timestamp" int8,

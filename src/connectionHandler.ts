@@ -4,6 +4,8 @@ import "./types.d.ts";
 import { pack } from "npm:msgpackr@1.9.9";
 import { fetchAPI, getNewTokenWithRefreshToken, log } from "./utils.ts";
 import { IRequest } from "itty-router";
+import { SensorMeta } from "./api/apiUtils.ts";
+import { ServerSensor } from "./types.d.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -17,7 +19,7 @@ const dataWritingWorker = new Worker(
 	}
 );
 
-const ipToSensorMap = new Map<string, Sensor>();
+const ipToSensorMap = new Map<string, ServerSensor>();
 let downloadError: string | undefined;
 
 const sensorAPIHitMinimumGap = 1000 * 10 * 60; // 10 minutes
@@ -68,7 +70,9 @@ setInterval(
 	10 * 60 * 1000 // Every 10 minutes to avoid hammering infra
 );
 
-export function getSensor(_sensorID: number | string): Sensor | undefined {
+export function getSensor(
+	_sensorID: number | string
+): ServerSensor | undefined {
 	let sensorID = _sensorID;
 	if (typeof _sensorID === "string") {
 		try {
@@ -133,7 +137,7 @@ async function setState({
 
 // Download sensor list from internship-worker
 export async function downloadSensorList(): Promise<string | undefined> {
-	let rawSensors: Record<string, Sensor["meta"] & { id: number }>;
+	let rawSensors: Record<string, SensorMeta>;
 	if (devMode) {
 		rawSensors = JSON.parse(await Deno.readTextFile("dev-sensors.json"));
 	} else {
@@ -154,7 +158,7 @@ export async function downloadSensorList(): Promise<string | undefined> {
 
 	// Clear the Maps to prevent issues with the sensor being a duplicate of itself
 	for (const rawSensor of Object.values(rawSensors)) {
-		if (rawSensor.ip) {
+		if (rawSensor?.ip) {
 			let sensorBase = ipToSensorMap.get(rawSensor.ip);
 
 			if (!sensorBase) {

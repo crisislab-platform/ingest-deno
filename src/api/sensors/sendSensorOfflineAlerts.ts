@@ -1,5 +1,5 @@
 import { formatDistance, formatRelative } from "npm:date-fns@2.30.0";
-import { enNZ } from "npm:date-fns@2.30.0/locale";
+import enNZ from "npm:date-fns@2.30.0/locale/en-NZ/index.ts";
 import { getSensors } from "../apiUtils.ts";
 
 const globalRecipients = {
