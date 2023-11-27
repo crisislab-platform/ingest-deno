@@ -10,7 +10,7 @@ To run the server, first install Deno:
 curl -fsSL https://deno.land/x/install/install.sh | sh
 ```
 
-> Deno 1.38.0 has been tested, no grantees for other versions
+> Deno 1.38.3 has been tested, no grantees for other versions
 
 Modify the .env file to have an API refresh token & the email associated with it, and the desired ports.
 Then run:
