@@ -63,6 +63,7 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 
 		// Unpack with msgpackr
 		const parsed = unpack(new Uint8Array(data));
+		if (window.CRISiSLab.debugData) console.log(parsed.data);
 
 		if (parsed?.type === "datagram") {
 			if (!window.CRISiSLab.connected) {

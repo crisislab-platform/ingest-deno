@@ -16,6 +16,7 @@ declare global {
 	interface Window {
 		CRISiSLab: {
 			unpack: typeof unpack;
+			debugData: boolean;
 			ws: WebSocket | null;
 			connected: boolean;
 			haveRenderedPacket: boolean;
@@ -23,6 +24,7 @@ declare global {
 			wsURL: string | null;
 			sensorID: string | null;
 			connectionAttempts: number;
+			sampleGaps: Record<string, number>;
 			sensorMeta: null | {
 				online?: boolean;
 				type?: string;
@@ -36,11 +38,13 @@ declare global {
 }
 window.CRISiSLab = {
 	connected: false,
+	debugData: false,
 	haveRenderedPacket: false,
 	wsURL: null,
 	sensorID: null,
 	ws: null,
 	connectionAttempts: 0,
+	sampleGaps: {},
 	sensorMeta: null,
 	sensorVariety: SensorVariety.Unknown,
 	hideHoverInspector:
