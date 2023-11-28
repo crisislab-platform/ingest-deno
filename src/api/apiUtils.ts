@@ -119,14 +119,14 @@ export async function getSensor(
 
 	if (unfiltered) {
 		const sensor = (
-			await sql<
-				PublicSensorMeta[]
-			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id}`
+			await sql<PrivateSensorMeta[]>`SELECT * FROM sensors WHERE id=${id}`
 		)[0];
 		return sensor;
 	} else {
 		const sensor = (
-			await sql<PrivateSensorMeta[]>`SELECT * FROM sensors WHERE id=${id}`
+			await sql<
+				PublicSensorMeta[]
+			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id}`
 		)[0];
 		return sensor;
 	}
@@ -148,11 +148,12 @@ export async function getSensors(
 
 	const sql = await getDB();
 
+	let sensors;
 	if (unfiltered) {
-		const sensors = await sql``;
-		return Object.fromEntries(sensors.map((sensor) => [sensor.id, sensor]));
+		sensors = await sql`SELECT * FROM sensors;`;
 	} else {
-		const sensors = await sql``;
-		return Object.fromEntries(sensors.map((sensor) => [sensor.id, sensor]));
+		sensors =
+			await sql`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors;`;
 	}
+	return Object.fromEntries(sensors.map((sensor) => [sensor.id, sensor]));
 }

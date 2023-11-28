@@ -24,7 +24,7 @@ export async function issueRefreshToken({ params }: IRequest) {
 	);
 
 	// This will overwrite the old token. That's intentional so that there's a way to invalidate old ones`.
-	await sql`UPDATE users SET refresh=${token} WHERE email=${email}`;
+	await sql`UPDATE users SET refresh=${token} WHERE email=${email};`;
 
 	// Return the email as well to help the front-end
 	return json({ email, token }, { status: 201 });

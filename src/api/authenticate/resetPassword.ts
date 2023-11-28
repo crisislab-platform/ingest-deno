@@ -14,7 +14,7 @@ export default async function resetPassword(request: IRequest) {
 
 	const hash = await pbkdf2(password);
 
-	await sql`UPDATE users SET hash=${hash} WHERE email=${email}`;
+	await sql`UPDATE users SET hash=${hash} WHERE email=${email};`;
 
 	return new Response("OK", { status: 200 });
 }

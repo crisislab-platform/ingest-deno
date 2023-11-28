@@ -1,5 +1,10 @@
 import { IRequest, json } from "itty-router";
-import { getSensor, randomizeLocation, Sensor } from "../apiUtils.ts";
+import {
+	getSensor,
+	randomizeLocation,
+	PrivateSensorMeta,
+} from "../apiUtils.ts";
+import { getDB } from "../../utils.ts";
 
 /**
  * This function creates a sensor with the given data.
@@ -7,40 +12,32 @@ import { getSensor, randomizeLocation, Sensor } from "../apiUtils.ts";
  * @param {Request} request
  */
 export default async function createSensor(request: IRequest) {
-	const id = parseInt(request.params.id);
-	const data: Partial<Sensor> = await request.json();
+	const data: PrivateSensorMeta = await request.json();
+
+	if (!data.id) {
+		return new Response("ID is required", {
+			status: 400,
+		});
+	}
 
 	data.id = parseInt(data.id + "");
 
-	// Account for old API
-	if (!data.location && data.latitude && data.longitude) {
-		data.location = {
-			type: "Point",
-			coordinates: [data.longitude, data.latitude],
-		};
-		data.longitude = undefined;
-		data.latitude = undefined;
-	}
+	const sql = await getDB();
 
-	if (data.id && id !== data.id) {
-		return new Response("ID does not match with ID in data", {
+	const exists =
+		(await sql`SELECT count(*) FROM sensors WHERE id=${data.id};`).length > 0;
+
+	if (exists) {
+		return new Response(`Sensor with id ${data.id} already exists`, {
 			status: 409,
 		});
 	}
 
-	const oldData = await getSensor(id);
-
-	if (oldData) {
-		return new Response(`Sensor with id ${id} already exists`, {
-			status: 409,
-		});
+	if (data.location) {
+		data.public_location = randomizeLocation(data.location);
 	}
 
-	if (data.location?.coordinates) {
-		data.publicLocation = randomizeLocation(data.location.coordinates);
-	}
-
-	await SENSORS.put(data.id + "", JSON.stringify(data));
+	await sql`INSERT INTO sensors ${sql(data)};`;
 
 	return json({ status: "ok" });
 }

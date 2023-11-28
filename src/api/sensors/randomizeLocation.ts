@@ -1,12 +1,22 @@
 import { IRequest, json } from "itty-router";
 import { randomizeLocation, getSensors } from "../apiUtils.ts";
+import { getDB } from "../../utils.ts";
 
 export default async function randomizeSensors(req: IRequest) {
 	const randomizeAll = req.query.all === "true";
 
-	const sensors = Object.values(await getSensors()).filter(
-		(sensor) => !!sensor.location && !randomizeAll && !sensor.publicLocation
-	);
+	const sql = await getDB();
+
+	let sensors;
+	if (randomizeAll) {
+		sensors = await sql<
+			{ location: [number, number] }[]
+		>`SELECT location FROM sensors;`;
+	} else {
+		sensors = await sql<
+			{ location: [number, number] }[]
+		>`SELECT location FROM sensors WHERE location IS NULL;`;
+	}
 
 	await Promise.all(
 		sensors
@@ -14,7 +24,7 @@ export default async function randomizeSensors(req: IRequest) {
 				...sensor,
 				location: {
 					...sensor.location,
-					coordinates: randomizeLocation(sensor.location.coordinates),
+					coordinates: randomizeLocation(sensor.location),
 				},
 			}))
 			.map((sensor) => SENSORS.put(sensor.id! + "", JSON.stringify(sensor)))

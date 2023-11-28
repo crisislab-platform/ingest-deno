@@ -1,4 +1,5 @@
 import { IRequest, json } from "itty-router";
+import { getDB } from "../../utils.ts";
 
 /**
  * Deletes a sensor from the database by ID.
@@ -9,8 +10,8 @@ export default async function deleteSensor(
 	request: IRequest
 ): Promise<Response> {
 	const id = parseInt(request.params.id);
-
-	await SENSORS.delete(id + "");
+	const sql = await getDB();
+	await sql`DELETE FROM sensors WHERE id=${id};`;
 
 	return json({ status: "ok" });
 }

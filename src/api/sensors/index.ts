@@ -16,6 +16,6 @@ sensorsRouter
 	.post("/online", auth("sensors:online"), setOnline)
 	.post("/randomize", auth("sensors:write"), randomizeSensors)
 	.get("/:id", auth("sensors:read"), getSensor)
-	.post("/:id", auth("sensors:write"), createSensor)
+	.post("/", auth("sensors:write"), createSensor)
 	.patch("/:id", auth("sensors:write"), updateSensor)
 	.delete("/:id", auth("sensors:write"), deleteSensor);
