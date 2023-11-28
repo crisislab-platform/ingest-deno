@@ -1,10 +1,10 @@
 import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
-import * as Sentry from "npm:@sentry/node";
+import * as Sentry from "sentry";
 import "./types.d.ts";
-import { pack } from "npm:msgpackr@1.9.9";
+import { pack } from "msgpackr";
 import { fetchAPI, getNewTokenWithRefreshToken, log } from "./utils.ts";
 import { IRequest } from "itty-router";
-import { SensorMeta } from "./api/apiUtils.ts";
+import { PrivateSensorMeta } from "./api/apiUtils.ts";
 import { ServerSensor } from "./types.d.ts";
 
 // Load .env file. This needs to happen before other files run
@@ -137,7 +137,7 @@ async function setState({
 
 // Download sensor list from internship-worker
 export async function downloadSensorList(): Promise<string | undefined> {
-	let rawSensors: Record<string, SensorMeta>;
+	let rawSensors: Record<string, PrivateSensorMeta>;
 	if (devMode) {
 		rawSensors = JSON.parse(await Deno.readTextFile("dev-sensors.json"));
 	} else {

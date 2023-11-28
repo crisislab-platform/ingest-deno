@@ -1,8 +1,8 @@
-import { formatDistance, formatRelative } from "npm:date-fns@2.30.0";
-import enNZ from "npm:date-fns@2.30.0/locale/en-NZ/index.ts";
+import { formatDistance, formatRelative } from "date-fns";
+import enNZ from "date-fns/locale/en-NZ/index.js";
 import { getSensors } from "../apiUtils.ts";
 
-const globalRecipients = {
+const globalRecipients: Record<string, string> = {
 	"zviggers@massey.ac.nz": "Zade Massey",
 	"r.prasanna@massey.ac.nz": "Raj",
 	"c.chandrakumar2@massey.ac.nz": "Chanthujan",
@@ -68,9 +68,9 @@ export async function sendSensorOfflineAlerts() {
 			personalizations: [
 				{
 					to: [{ email, name: globalRecipients[email] || "Sensor Host" }],
-					dkim_domain: DKIM_DOMAIN,
-					dkim_selector: DKIM_SELECTOR,
-					dkim_private_key: DKIM_PRIVATE_KEY,
+					dkim_domain: Deno.env.get("DKIM_DOMAIN"),
+					dkim_selector: Deno.env.get("DKIM_SELECTOR"),
+					dkim_private_key: Deno.env.get("DKIM_PRIVATE_KEY"),
 				},
 			],
 			from: {

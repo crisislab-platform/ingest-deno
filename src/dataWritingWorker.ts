@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { getDB, log } from "./utils.ts";
 const shouldStore = Boolean(parseInt(Deno.env.get("SHOULD_STORE") || "0"));
-import * as Sentry from "npm:@sentry/node";
+import * as Sentry from "sentry";
 
 if (!shouldStore) {
 	log.info("SHOULD_STORE is false, exiting data writing worker");

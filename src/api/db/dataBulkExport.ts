@@ -1,10 +1,7 @@
-import { IRequest } from "npm:itty-router@4.0.23/Router";
+import { IRequest } from "itty-router";
 import { getSensor } from "../../connectionHandler.ts";
 import { getDB, log } from "../../utils.ts";
-import {
-	serialiseToMiniSEEDUint8Array,
-	startTimeFromDate,
-} from "npm:miniseed@0.2.1";
+import { serialiseToMiniSEEDUint8Array, startTimeFromDate } from "miniseed";
 
 export async function dataBulkExport(req: IRequest) {
 	const sensorID = req.query["sensor_id"] as string;

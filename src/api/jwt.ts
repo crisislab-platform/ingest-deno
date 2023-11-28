@@ -1,4 +1,4 @@
-import { Base64 } from "npm:js-base64@3.7.5";
+import { Base64 } from "js-base64";
 
 const str2ab = (str: string): ArrayBuffer => {
 	const buf = new ArrayBuffer(str.length);
@@ -51,7 +51,7 @@ const getHeader = (
 
 /**
  * This function creates a JWT token with the given payload and algorithm.
- * It uses the global variable PRIVATE_JWK as the private key to sign the token.
+ * It uses the env variable PRIVATE_JWK as the private key to sign the token.
  * @param {Object} options
  * @param {Object} options.payload - The payload of the token
  * @param {string} options.alg - The algorithm to use
@@ -63,14 +63,14 @@ export async function getToken({
 	alg = "ES256",
 	headerAdditions = {},
 }: {
-	payload: any;
+	payload: unknown;
 	alg?: keyof typeof algorithms;
-	headerAdditions?: any;
+	headerAdditions?: Record<string, unknown>;
 }): Promise<string> {
 	// Import the private key into a crypto key
 	const privateKey = await crypto.subtle.importKey(
 		"jwk",
-		JSON.parse(PRIVATE_JWK),
+		JSON.parse(Deno.env.get("PRIVATE_JWK")!),
 		{
 			name: "ECDSA",
 			namedCurve: "P-256",
@@ -126,7 +126,7 @@ export async function verifyToken(token: string): Promise<JWTClaims> {
 	// const { kid } = JSON.parse(atob(rawHeader))
 	const key = await crypto.subtle.importKey(
 		"jwk",
-		JSON.parse(PUBLIC_JWK),
+		JSON.parse(Deno.env.get("PUBLIC_JWK")!),
 		{
 			name: "ECDSA",
 			namedCurve: "P-256",

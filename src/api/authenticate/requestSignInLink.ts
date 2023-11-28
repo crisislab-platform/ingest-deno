@@ -60,14 +60,14 @@ export default async function requestSignInLink(
 		personalizations: [
 			{
 				to: [{ email, name: user.name }],
-				dkim_domain: DKIM_DOMAIN,
-				dkim_selector: DKIM_SELECTOR,
-				dkim_private_key: DKIM_PRIVATE_KEY,
+				dkim_domain: Deno.env.get("DKIM_DOMAIN"),
+				dkim_selector: Deno.env.get(" DKIM_SELECTOR"),
+				dkim_private_key: Deno.env.get(" DKIM_PRIVATE_KEY"),
 			},
 		],
 		from: {
-			email: SENDER_EMAIL,
-			name: SENDER_NAME,
+			email: Deno.env.get("SENDER_EMAIL"),
+			name: Deno.env.get("SENDER_NAME"),
 		},
 		subject: emailTemplate.subject,
 		content: [

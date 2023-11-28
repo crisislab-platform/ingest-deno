@@ -48,10 +48,10 @@ export interface PublicSensorMeta {
 }
 
 export type PrivateSensorMeta = PublicSensorMeta & {
-	location?: [number, number];
-	name?: string;
 	contact_email?: string;
 	timestamp?: number;
+	location?: [number, number];
+	name?: string;
 	ip?: string;
 };
 
@@ -99,63 +99,60 @@ export function randomizeLocation(
 	return [Math.round(lng * 100000) / 100000, Math.round(lat * 100000) / 100000];
 }
 
-const publicSensorKeys: (keyof PublicSensorMeta)[] = [
-	"id",
-	"type",
-	"publicLocation",
-	"online",
-	"timestamp",
-	"secondary_id",
-];
-
 export async function getSensor(
-	id: number | string,
+	id: number,
+	unfiltered: true
+): Promise<PrivateSensorMeta>;
+export async function getSensor(
+	id: number,
+	unfiltered: false
+): Promise<PublicSensorMeta>;
+export async function getSensor(
+	id: number,
+	unfiltered?: undefined
+): Promise<PrivateSensorMeta>;
+export async function getSensor(
+	id: number,
 	unfiltered = true
-): Promise<Partial<SensorMeta>> {
-	const sensor = (await SENSORS.get(id + "", "json")) as SensorMeta;
-
-	if (sensor.location) {
-		sensor.longitude = sensor.location.coordinates[0];
-		sensor.latitude = sensor.location.coordinates[1];
-	}
+): Promise<PublicSensorMeta | PrivateSensorMeta> {
+	const sql = await getDB();
 
 	if (unfiltered) {
+		const sensor = (
+			await sql<
+				PublicSensorMeta[]
+			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id}`
+		)[0];
 		return sensor;
 	} else {
-		return filterValues(sensor);
-	}
-}
-
-function fixSensorLocation(sensor: SensorMeta) {
-	if (sensor.location) {
-		sensor.longitude = sensor.location.coordinates[0];
-		sensor.latitude = sensor.location.coordinates[1];
+		const sensor = (
+			await sql<PrivateSensorMeta[]>`SELECT * FROM sensors WHERE id=${id}`
+		)[0];
+		return sensor;
 	}
 }
 
 export async function getSensors(
-	unfiltered = true
-): Promise<{ [key: string]: Partial<SensorMeta> }> {
+	unfiltered: true
+): Promise<Record<string, PrivateSensorMeta>>;
+export async function getSensors(
+	unfiltered: false
+): Promise<Record<string, PublicSensorMeta>>;
+export async function getSensors(
+	unfiltered?: undefined
+): Promise<Record<string, PrivateSensorMeta>>;
+export async function getSensors(
+	unfiltered?: boolean
+): Promise<Record<string, PublicSensorMeta | PrivateSensorMeta>> {
+	unfiltered ??= true;
+
 	const sql = await getDB();
-	const sensors = await sql``;
-
-	const sensorsObj: { [key: string]: SensorMeta } = {};
-
-	for (const sensor of sensors) {
-		fixSensorLocation(sensor);
-
-		sensorsObj[sensor.id] = sensor;
-	}
 
 	if (unfiltered) {
-		return sensorsObj;
+		const sensors = await sql``;
+		return Object.fromEntries(sensors.map((sensor) => [sensor.id, sensor]));
 	} else {
-		// I <3 Object.fromEntries
-		return Object.fromEntries(
-			Object.entries(sensorsObj).map(([sensorID, sensor]) => [
-				sensorID,
-				filterValues(sensor),
-			])
-		);
+		const sensors = await sql``;
+		return Object.fromEntries(sensors.map((sensor) => [sensor.id, sensor]));
 	}
 }

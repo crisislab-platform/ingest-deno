@@ -3,7 +3,7 @@ import {
 	serveDir,
 	serveFile,
 } from "https://deno.land/std@0.204.0/http/file_server.ts";
-import * as Sentry from "npm:@sentry/node";
+import * as Sentry from "sentry";
 import {
 	sensorHandler,
 	downloadErrorMiddleware,
