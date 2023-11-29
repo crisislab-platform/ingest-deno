@@ -42,14 +42,13 @@ export interface PublicSensorMeta {
 	id: number;
 	type?: string;
 	online?: boolean;
-	timestamp?: number;
+	status_change_timestamp?: number;
 	secondary_id?: string;
 	public_location?: [number, number];
 }
 
 export type PrivateSensorMeta = PublicSensorMeta & {
 	contact_email?: string;
-	timestamp?: number;
 	location?: [number, number];
 	name?: string;
 	ip?: string;
@@ -101,20 +100,23 @@ export function randomizeLocation(
 
 export async function getSensor(
 	id: number,
-	unfiltered: true
+	unfiltered?: true | undefined
 ): Promise<PrivateSensorMeta>;
 export async function getSensor(
 	id: number,
 	unfiltered: false
 ): Promise<PublicSensorMeta>;
+// I should not have to re-define the implementation signature
 export async function getSensor(
 	id: number,
-	unfiltered?: undefined
-): Promise<PrivateSensorMeta>;
+	unfiltered?: boolean
+): Promise<PublicSensorMeta | PrivateSensorMeta>;
 export async function getSensor(
 	id: number,
-	unfiltered = true
+	unfiltered?: boolean
 ): Promise<PublicSensorMeta | PrivateSensorMeta> {
+	unfiltered ??= true;
+
 	const sql = await getDB();
 
 	if (unfiltered) {
@@ -133,14 +135,15 @@ export async function getSensor(
 }
 
 export async function getSensors(
-	unfiltered: true
+	unfiltered?: true | undefined
 ): Promise<Record<string, PrivateSensorMeta>>;
 export async function getSensors(
 	unfiltered: false
 ): Promise<Record<string, PublicSensorMeta>>;
+// I should not have to re-define the implementation signature
 export async function getSensors(
-	unfiltered?: undefined
-): Promise<Record<string, PrivateSensorMeta>>;
+	unfiltered?: boolean
+): Promise<Record<string, PublicSensorMeta | PrivateSensorMeta>>;
 export async function getSensors(
 	unfiltered?: boolean
 ): Promise<Record<string, PublicSensorMeta | PrivateSensorMeta>> {

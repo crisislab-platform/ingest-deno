@@ -29,9 +29,9 @@ export async function sendSensorOfflineAlerts() {
 	for (const sensor of Object.values(sensors)) {
 		if (sensor.online) continue;
 
-		if (typeof sensor?.timestamp !== "number") continue;
+		if (typeof sensor?.status_change_timestamp !== "number") continue;
 
-		const lastPacketReceived = new Date(sensor.timestamp);
+		const lastPacketReceived = new Date(sensor.status_change_timestamp);
 
 		if (Date.now() - lastPacketReceived.getTime() < TwentyFourHoursMilliseconds)
 			continue;

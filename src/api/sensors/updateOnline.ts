@@ -6,20 +6,16 @@ export default async function setOnline(request: Request): Promise<Response> {
 
 	console.log("data", data);
 
-	const {
-		sensor: id,
-		timestamp,
-		connected: online,
-	} = data as {
-		sensor?: number | unknown;
-		timestamp?: number | unknown;
-		connected?: boolean | unknown;
+	const { id, status_change_timestamp, online } = data as {
+		id: number;
+		status_change_timestamp: number;
+		online?: boolean;
 	};
 
 	if (
 		typeof id !== "number" ||
 		typeof online !== "boolean" ||
-		typeof timestamp !== "number"
+		typeof status_change_timestamp !== "number"
 	) {
 		console.log(
 			`Invalid request to update online status for sensor #${id} to ${
@@ -48,7 +44,9 @@ export default async function setOnline(request: Request): Promise<Response> {
 		return new Response("Nothing changed", { status: 400 });
 	}
 
-	await sql`UPDATE sensors SET online=${online}, timestamp=${timestamp}
+	await sql`UPDATE sensors SET online=${online}, status_change_timestamp=${new Date(
+		status_change_timestamp
+	)}
 					WHERE id=${id};`;
 
 	// TODO: New analytics to replace this

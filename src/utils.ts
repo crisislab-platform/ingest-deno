@@ -59,7 +59,7 @@ async function setupTables(sql: postgres.Sql) {
 		"public_location" point,
         "name" text,
         "secondary_id" text,
-        "timestamp" int8,
+        "status_change_timestamp" timestamptz,
         "contact_email" text,
         PRIMARY KEY ("id"),
 		CONSTRAINT fk_sensor_type FOREIGN KEY(type) REFERENCES sensor_types(name)

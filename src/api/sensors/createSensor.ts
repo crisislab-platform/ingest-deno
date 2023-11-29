@@ -14,13 +14,11 @@ import { getDB } from "../../utils.ts";
 export default async function createSensor(request: IRequest) {
 	const data: PrivateSensorMeta = await request.json();
 
-	if (!data.id) {
+	if (!data.id || typeof data.id !== "number") {
 		return new Response("ID is required", {
 			status: 400,
 		});
 	}
-
-	data.id = parseInt(data.id + "");
 
 	const sql = await getDB();
 

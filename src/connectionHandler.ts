@@ -112,6 +112,7 @@ async function setState({
 	if (devMode) {
 		res = { ok: true, text() {} };
 	} else {
+		// TODO: Make this hit DB
 		res = await fetchAPI("sensors/online", {
 			method: "POST",
 			body: JSON.stringify({

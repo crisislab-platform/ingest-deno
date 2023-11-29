@@ -1,4 +1,4 @@
-import { SensorMeta } from "./api/apiUtils.ts";
+import { PrivateSensorMeta } from "./api/apiUtils.ts";
 
 interface ServerSensor {
 	id: number;
@@ -6,7 +6,7 @@ interface ServerSensor {
 	isDuplicateOf?: number;
 	lastMessageTimestamp?: number;
 	lastHitAPI: number;
-	meta: SensorMeta;
+	meta: PrivateSensorMeta;
 }
 
 interface GeoFeatures {
