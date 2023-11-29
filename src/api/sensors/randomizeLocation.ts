@@ -1,5 +1,5 @@
 import { IRequest, json } from "itty-router";
-import { randomizeLocation, getSensors } from "../apiUtils.ts";
+import { randomizeLocation } from "../apiUtils.ts";
 import { getDB } from "../../utils.ts";
 
 export default async function randomizeSensors(req: IRequest) {
@@ -7,28 +7,30 @@ export default async function randomizeSensors(req: IRequest) {
 
 	const sql = await getDB();
 
-	let sensors;
+	let sensorLocations: { location: [number, number]; id: number }[];
 	if (randomizeAll) {
-		sensors = await sql<
-			{ location: [number, number] }[]
-		>`SELECT location FROM sensors;`;
+		sensorLocations =
+			await sql`SELECT location, id FROM sensors WHERE location IS NOT NULL;`;
 	} else {
-		sensors = await sql<
-			{ location: [number, number] }[]
-		>`SELECT location FROM sensors WHERE location IS NULL;`;
+		sensorLocations =
+			await sql`SELECT location, id FROM sensors WHERE public_location IS NULL AND location IS NOT NULL;`;
 	}
 
-	await Promise.all(
-		sensors
-			.map((sensor) => ({
-				...sensor,
-				location: {
-					...sensor.location,
-					coordinates: randomizeLocation(sensor.location),
-				},
-			}))
-			.map((sensor) => SENSORS.put(sensor.id! + "", JSON.stringify(sensor)))
-	);
+	const randomized = sensorLocations
+		.map(({ location, id }) => ({
+			public_location: randomizeLocation(location),
+			id,
+		}))
+		.map(
+			({ public_location, id }) =>
+				[public_location, id] as [[number, number], number]
+		);
+
+	await sql`
+	UPDATE sensors SET public_location = update_data.public_location
+	-- FIXME: Figure out this typescript error
+	FROM (VALUES ${sql(randomized)}) AS update_data(public_location, id) 
+	WHERE sensors.id = update_data.id;`;
 
 	return json({ status: "ok" });
 }

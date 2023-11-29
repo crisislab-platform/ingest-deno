@@ -1,4 +1,9 @@
-import { randomizeLocation, getSensor, Sensor } from "../apiUtils.ts";
+import { getDB } from "../../utils.ts";
+import {
+	randomizeLocation,
+	getSensor,
+	PrivateSensorMeta,
+} from "../apiUtils.ts";
 import { IRequest, json } from "itty-router";
 
 const staticKeys = ["id"];
@@ -12,18 +17,9 @@ function normalize(str: string | number | unknown) {
 
 export default async function updateSensor(request: IRequest) {
 	const id = parseInt(request.params.id);
-	const data = (await request.json()) as Partial<Sensor>;
+	const data = (await request.json()) as Partial<PrivateSensorMeta>;
 
 	console.log("data", data);
-
-	if (!data.location && data.latitude && data.longitude) {
-		data.location = {
-			type: "Point",
-			coordinates: [data.longitude, data.latitude],
-		};
-		delete data.longitude;
-		delete data.latitude;
-	}
 
 	const oldData = await getSensor(id);
 
@@ -40,29 +36,17 @@ export default async function updateSensor(request: IRequest) {
 		return new Response("Nothing changed", { status: 400 });
 	}
 
-	for (const key of staticKeys) {
-		if (data[key] && normalize(data[key]) !== normalize(oldData[key])) {
-			// console.log('key', key, 'data[key]', data[key], 'oldData[key]', oldData[key])
-			return new Response("Cannot update static key", {
-				status: 409,
-			});
-		}
+	// Can't let them change the id
+	delete data["id"];
+
+	if (data.location) {
+		data.public_location = randomizeLocation(data.location);
 	}
 
-	const newData = { ...oldData };
+	const sql = await getDB();
 
-	for (const [key, value] of Object.entries(data)) {
-		newData[key] = value;
-	}
-
-	console.log("newData", newData);
-
-	if (newData.location?.coordinates) {
-		newData.publicLocation = randomizeLocation(newData.location.coordinates);
-	}
-
-	await SENSORS.put(id + "", JSON.stringify(newData));
+	await sql`UPDATE sensors SET ${sql(data)} WHERE id=${id};`;
 
 	// return updated data
-	return json(newData);
+	return json({ ...oldData, ...data });
 }

@@ -1,4 +1,5 @@
 import { formatDistance, formatRelative } from "date-fns";
+// FIXME: date-fns locale stuff
 import enNZ from "date-fns/locale/en-NZ/index.js";
 import { getSensors } from "../apiUtils.ts";
 
@@ -74,8 +75,8 @@ export async function sendSensorOfflineAlerts() {
 				},
 			],
 			from: {
-				email: SENDER_EMAIL,
-				name: SENDER_NAME,
+				email: Deno.env.get("SENDER_EMAIL"),
+				name: Deno.env.get("SENDER_NAME"),
 			},
 			subject: `Sensor status update (${alerts
 				.map(({ sensorID }) => `#${sensorID}`)
@@ -114,10 +115,11 @@ If you have any questions or comments, just reply to this email and Zade will ge
 				console.log(m, res);
 			}
 
-			EMAILS_SENT.writeDataPoint({
-				doubles: [alerts.length],
-				indexes: [email],
-			});
+			// TODO: New analytics
+			// EMAILS_SENT.writeDataPoint({
+			// 	doubles: [alerts.length],
+			// 	indexes: [email],
+			// });
 		} catch (err) {
 			console.warn("Failed to send email: ", err);
 		}

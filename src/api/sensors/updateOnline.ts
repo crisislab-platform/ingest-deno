@@ -1,5 +1,5 @@
 import { json } from "itty-router";
-import { getSensor } from "../apiUtils.ts";
+import { getDB } from "../../utils.ts";
 
 export default async function setOnline(request: Request): Promise<Response> {
 	const data = await request.json();
@@ -17,7 +17,7 @@ export default async function setOnline(request: Request): Promise<Response> {
 	};
 
 	if (
-		!(typeof id === "number" || typeof id === "string") ||
+		typeof id !== "number" ||
 		typeof online !== "boolean" ||
 		typeof timestamp !== "number"
 	) {
@@ -35,7 +35,11 @@ export default async function setOnline(request: Request): Promise<Response> {
 		}`
 	);
 
-	const oldSensor = await getSensor(id);
+	const sql = await getDB();
+
+	const oldSensor = (
+		await sql<{ online?: boolean }[]>`SELECT online FROM sensors WHERE id=${id}`
+	)[0];
 
 	if (oldSensor.online === online) {
 		console.info(
@@ -44,13 +48,13 @@ export default async function setOnline(request: Request): Promise<Response> {
 		return new Response("Nothing changed", { status: 400 });
 	}
 
-	const newSensor = { ...oldSensor, timestamp, online };
+	await sql`UPDATE sensors SET online=${online}, timestamp=${timestamp}
+					WHERE id=${id};`;
 
-	await SENSORS.put(id + "", JSON.stringify(newSensor));
-
-	ONLINE_STATUS_UPDATES.writeDataPoint({
-		indexes: [id + ""],
-	});
+	// TODO: New analytics to replace this
+	// ONLINE_STATUS_UPDATES.writeDataPoint({
+	// 	indexes: [id + ""],
+	// });
 
 	return json({ success: true });
 }
