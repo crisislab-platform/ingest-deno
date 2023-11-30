@@ -1,7 +1,7 @@
 import { IRequest, json } from "itty-router";
 import { pbkdf2Verify } from "./crypto-pbkdf2.ts";
 import createUserToken from "./createUserToken.ts";
-import { getDB } from "../../utils.ts";
+import { getDB, log } from "../../utils.ts";
 
 // declare global {
 //   const PRIVATE_JWK: string;
@@ -41,7 +41,8 @@ export default async function usernameAndPassword(request: IRequest) {
 	try {
 		const token = await createUserToken(email);
 		return json({ token }, { status: 201 });
-	} catch (e) {
+	} catch (err) {
+		log.error("Error creating user token", err);
 		return new Response("User does not exist", { status: 401 });
 	}
 }

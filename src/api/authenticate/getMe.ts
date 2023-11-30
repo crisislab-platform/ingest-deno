@@ -1,3 +1,4 @@
+import { log } from "../../utils.ts";
 import { getUserByEmail } from "../apiUtils.ts";
 import { verifyToken } from "../jwt.ts";
 
@@ -5,7 +6,7 @@ export async function getMe(req: Request) {
 	const authHeader = req.headers.get("authorization");
 
 	if (!authHeader) {
-		console.log("No auth header");
+		log.warn("No auth header");
 		return new Response("Unauthorized", { status: 401 });
 	}
 

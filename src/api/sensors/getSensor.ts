@@ -1,6 +1,7 @@
 import { IRequest, json } from "itty-router";
 import { getSensor } from "../apiUtils.ts";
 import authenticate from "../auth.ts";
+import { log } from "../../utils.ts";
 
 export default async function getSensorReq(
 	request: IRequest
@@ -10,7 +11,7 @@ export default async function getSensorReq(
 	const hasSensorsRead =
 		(await authenticate("sensors:read")(request)) === undefined;
 
-	console.log("Has sensors:read: ", hasSensorsRead);
+	log.warn("Has sensors:read: ", hasSensorsRead);
 
 	const sensor = await getSensor(id, hasSensorsRead);
 

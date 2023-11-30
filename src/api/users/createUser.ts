@@ -2,7 +2,7 @@ import { IRequest, json } from "itty-router";
 import { validateEmail } from "./utils.ts";
 import { getDB } from "../../utils.ts";
 
-export default async function createUser(request: IRequest) {
+export async function createUser(request: IRequest) {
 	const email = request.params.email.toLowerCase();
 
 	// check if email is valid

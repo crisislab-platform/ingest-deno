@@ -2,6 +2,7 @@ import { formatDistance, formatRelative } from "date-fns";
 // FIXME: date-fns locale stuff
 import enNZ from "date-fns/locale/en-NZ/index.js";
 import { getSensors } from "../apiUtils.ts";
+import { log } from "../../utils.ts";
 
 const globalRecipients: Record<string, string> = {
 	"zviggers@massey.ac.nz": "Zade Massey",
@@ -112,7 +113,7 @@ If you have any questions or comments, just reply to this email and Zade will ge
 				console.info(`Sent offline alert summary email to ${email}`);
 			} else {
 				console.warn("Failed to send offline alert summary email:", email);
-				console.log(m, res);
+				log.info(m, res);
 			}
 
 			// TODO: New analytics

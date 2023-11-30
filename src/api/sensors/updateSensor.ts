@@ -1,4 +1,4 @@
-import { getDB } from "../../utils.ts";
+import { getDB, log } from "../../utils.ts";
 import {
 	randomizeLocation,
 	getSensor,
@@ -6,20 +6,11 @@ import {
 } from "../apiUtils.ts";
 import { IRequest, json } from "itty-router";
 
-const staticKeys = ["id"];
-
-function normalize(str: string | number | unknown) {
-	if (typeof str == "number" || typeof str != "string") return str;
-	if (!isNaN(parseFloat(str)) && parseFloat(str).toString() === str)
-		return parseFloat(str);
-	return str;
-}
-
 export default async function updateSensor(request: IRequest) {
 	const id = parseInt(request.params.id);
 	const data = (await request.json()) as Partial<PrivateSensorMeta>;
 
-	console.log("data", data);
+	log.info("data", data);
 
 	const oldData = await getSensor(id);
 
@@ -29,7 +20,7 @@ export default async function updateSensor(request: IRequest) {
 		});
 	}
 
-	console.log("oldData", oldData, "data", data);
+	log.info("oldData", oldData, "data", data);
 
 	if (oldData === data) {
 		console.info("oldData is the same as new data");

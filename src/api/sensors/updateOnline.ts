@@ -1,10 +1,10 @@
 import { json } from "itty-router";
-import { getDB } from "../../utils.ts";
+import { getDB, log } from "../../utils.ts";
 
 export default async function setOnline(request: Request): Promise<Response> {
 	const data = await request.json();
 
-	console.log("data", data);
+	log.info("data", data);
 
 	const { id, status_change_timestamp, online } = data as {
 		id: number;
@@ -17,7 +17,7 @@ export default async function setOnline(request: Request): Promise<Response> {
 		typeof online !== "boolean" ||
 		typeof status_change_timestamp !== "number"
 	) {
-		console.log(
+		log.warn(
 			`Invalid request to update online status for sensor #${id} to ${
 				online ? "online" : "offline"
 			}`
