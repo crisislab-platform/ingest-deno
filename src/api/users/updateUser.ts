@@ -1,6 +1,6 @@
 import { IRequest, error, json } from "itty-router";
 import { validateEmail } from "./utils.ts";
-import { getDB } from "../../utils.ts";
+import { getDB, log } from "../../utils.ts";
 import { User, getUserByEmail } from "../apiUtils.ts";
 
 export default async function updateUser(request: IRequest) {
@@ -25,13 +25,9 @@ export default async function updateUser(request: IRequest) {
 	// Can't let them change the id
 	delete data["id"];
 
-	if (data.location) {
-		data.public_location = randomizeLocation(data.location);
-	}
-
 	const sql = await getDB();
 
-	await sql`UPDATE sensors SET ${sql(data)} WHERE id=${id};`;
+	await sql`UPDATE users SET ${sql(data)} WHERE id=${oldData["id"]};`;
 
 	// return updated data
 	return json({ ...oldData, ...data });
