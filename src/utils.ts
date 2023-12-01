@@ -46,7 +46,7 @@ async function setupTables(sql: postgres.Sql) {
 	await sql`
 	CREATE TABLE IF NOT EXISTS sensor_types (
 		"name" text NOT NULL,
-		"sample_delta" int4, NOT NULL, 
+		"sample_delta" int4 NOT NULL, 
 		PRIMARY KEY ("name")
 	);`;
 	await sql`
