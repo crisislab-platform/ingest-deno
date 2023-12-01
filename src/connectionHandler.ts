@@ -63,9 +63,9 @@ setInterval(
 				Date.now() - (sensor.lastMessageTimestamp || 0) >
 				5 * 60 * 1000 // 5 minutes
 			) {
-				setState({ sensorID: sensor.id, connected: false });
+				updateSensorOnlineStatus({ sensorID: sensor.id, online: false });
 			} else {
-				setState({ sensorID: sensor.id, connected: true });
+				updateSensorOnlineStatus({ sensorID: sensor.id, online: true });
 			}
 		}
 	},
@@ -94,34 +94,30 @@ export function getSensorFromCacheByID(
 }
 
 // Update the sensor state in both the the online set and the API
-async function setState({
+async function updateSensorOnlineStatus({
 	sensorID,
-	connected,
+	online,
 }: {
 	sensorID: number;
-	connected: boolean;
+	online: boolean;
 }) {
 	const sensor = getSensorFromCacheByID(sensorID);
 	if (!sensor) return;
 
 	// Avoid spamming the API by not updating things if they haven't changed.
-	if (sensor.meta?.online === connected) return;
+	if (sensor.meta?.online === online) return;
 
 	try {
 		const sql = await getDB();
 
 		await sql`UPDATE sensors SET ${sql({
-			timestamp: sensor.lastMessageTimestamp ?? Date.now(),
-			connected,
+			status_change_timestamp: sensor.lastMessageTimestamp ?? Date.now(),
+			online,
 		})} WHERE id=${sensor.id};`;
 
-		sensor.meta.online = connected;
+		sensor.meta.online = online;
 
-		if (connected === true) {
-			log.info(`Sensor connected: #${sensor.id}`);
-		} else {
-			log.info(`Sensor disconnected: #${sensor.id}`);
-		}
+		log.info(`Sensor #${sensor.id} now ${online ? "online" : "offline"}`);
 	} catch (err) {
 		log.warn(`Error setting state for sensor #${sensor.id}:`, err);
 	}
@@ -175,7 +171,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 		// Keep the sensor showing as online
 		sensor.lastMessageTimestamp = timestamp * 1000;
 
-		setState({ sensorID: sensor.id, connected: true });
+		updateSensorOnlineStatus({ sensorID: sensor.id, online: true });
 
 		// Reconstruct the original data shape
 		const parsedData: [string, number, ...number[]] = [
