@@ -113,36 +113,3 @@ export async function getDB(): Promise<postgres.Sql> {
 	}
 	throw "We should never get here";
 }
-
-let apiToken: string | null = null;
-
-// Helper function to fetch from the API
-export function fetchAPI(path: string, options: RequestInit = {}) {
-	return fetch(Deno.env.get("API_ENDPOINT") + path, {
-		...options,
-		headers: {
-			authorization: `Bearer ${apiToken}`,
-			...options.headers,
-		},
-	});
-}
-
-export async function getNewTokenWithRefreshToken(): Promise<boolean> {
-	log.info("Attempting to get new token with refresh token...");
-	const response = await fetchAPI("auth/refresh", {
-		method: "POST",
-		body: JSON.stringify({
-			email: Deno.env.get("API_EMAIL"),
-			refreshToken: Deno.env.get("API_REFRESH_TOKEN"),
-		}),
-	});
-	const data = await response.json();
-	const token = data.token;
-	if (token) {
-		apiToken = token;
-		return true;
-	} else {
-		log.warn("No token found when refreshing!");
-	}
-	return false;
-}

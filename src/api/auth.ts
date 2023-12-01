@@ -3,7 +3,7 @@ import { verifyToken } from "./jwt.ts";
 import { log } from "../utils.ts";
 
 // Middleware to make sure a user is logged in, and has the correct role
-const authenticate = (role?: string) => async (request: IRequest) => {
+export const authMiddleware = (role?: string) => async (request: IRequest) => {
 	const authHeader = request.headers.get("authorization");
 
 	if (!authHeader) {
@@ -35,5 +35,3 @@ const authenticate = (role?: string) => async (request: IRequest) => {
 
 	request.user = payload;
 };
-
-export default authenticate;

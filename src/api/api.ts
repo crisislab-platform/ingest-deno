@@ -1,7 +1,7 @@
 import { IRequest, Router, json } from "itty-router";
 import { dbRouter } from "./db/dbRouter.ts";
 import { authRouter } from "./authenticate/index.ts";
-import auth from "./auth.ts";
+import { authMiddleware } from "./auth.ts";
 import usersRouter from "./users/index.ts";
 import { sensorsRouter } from "./sensors/index.ts";
 
@@ -39,7 +39,7 @@ apiRouter
 	.all("/users/*", usersRouter.handle)
 	.get(
 		"/user",
-		auth(),
+		authMiddleware(),
 		({ user }: { user: Record<string, unknown> } & IRequest) => json(user)
 	)
 	.get("*", () => new Response("API route not found", { status: 404 }));

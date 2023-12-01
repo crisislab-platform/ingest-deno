@@ -2,7 +2,7 @@ import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
 import * as Sentry from "sentry";
 import "./types.d.ts";
 import { pack } from "msgpackr";
-import { fetchAPI, getDB, getNewTokenWithRefreshToken, log } from "./utils.ts";
+import { getDB, log } from "./utils.ts";
 import { IRequest } from "itty-router";
 import { PrivateSensorMeta } from "./api/apiUtils.ts";
 import { ServerSensor, WithRequired } from "./types.d.ts";
@@ -20,15 +20,9 @@ const dataWritingWorker = new Worker(
 );
 
 const ipToSensorMap = new Map<string, ServerSensor>();
-let downloadError: string | undefined;
-
-const sensorAPIHitMinimumGap = 1000 * 10 * 60; // 10 minutes
+// let downloadError: string | undefined;
 
 log.info("Dev mode: ", devMode);
-
-// Get an access token
-if (!(await getNewTokenWithRefreshToken()))
-	throw "Error getting token with refresh token on startup.";
 
 // Get the list of sensors.
 // Need to do this first thing to avoid spamming stuff.

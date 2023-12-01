@@ -3,7 +3,7 @@ import { validateEmail } from "./utils.ts";
 import { getDB, log } from "../../utils.ts";
 import { User, getUserByEmail } from "../apiUtils.ts";
 
-export default async function updateUser(request: IRequest) {
+export async function updateUser(request: IRequest) {
 	const email = request.params.email;
 	const data = (await request.json()) as Partial<User>;
 
