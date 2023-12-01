@@ -2,10 +2,10 @@ import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
 import * as Sentry from "sentry";
 import "./types.d.ts";
 import { pack } from "msgpackr";
-import { fetchAPI, getNewTokenWithRefreshToken, log } from "./utils.ts";
+import { fetchAPI, getDB, getNewTokenWithRefreshToken, log } from "./utils.ts";
 import { IRequest } from "itty-router";
 import { PrivateSensorMeta } from "./api/apiUtils.ts";
-import { ServerSensor } from "./types.d.ts";
+import { ServerSensor, WithRequired } from "./types.d.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -32,10 +32,11 @@ if (!(await getNewTokenWithRefreshToken()))
 
 // Get the list of sensors.
 // Need to do this first thing to avoid spamming stuff.
-downloadError = await downloadSensorList();
+// downloadError = await updateSensorCache();
+await updateSensorCache();
 
 export function downloadErrorMiddleware() {
-	if (downloadError) return new Response(downloadError, { status: 500 });
+	// if (downloadError) return new Response(downloadError, { status: 500 });
 }
 
 // if (devMode) {
@@ -51,7 +52,8 @@ setInterval(
 	async () => {
 		// First re-download sensor list
 		log.info("About to download sensor list from interval");
-		downloadError = await downloadSensorList();
+		// downloadError = await updateSensorCache();
+		await updateSensorCache();
 
 		// Then go through map
 		log.info("About to update sensor statuses from interval");
@@ -70,7 +72,7 @@ setInterval(
 	10 * 60 * 1000 // Every 10 minutes to avoid hammering infra
 );
 
-export function getSensor(
+export function getSensorFromCacheByID(
 	_sensorID: number | string
 ): ServerSensor | undefined {
 	let sensorID = _sensorID;
@@ -99,31 +101,20 @@ async function setState({
 	sensorID: number;
 	connected: boolean;
 }) {
-	const sensor = getSensor(sensorID);
+	const sensor = getSensorFromCacheByID(sensorID);
 	if (!sensor) return;
-
-	if (Date.now() - sensor.lastHitAPI < sensorAPIHitMinimumGap) return;
-	sensor.lastHitAPI = Date.now();
 
 	// Avoid spamming the API by not updating things if they haven't changed.
 	if (sensor.meta?.online === connected) return;
 
-	let res;
-	if (devMode) {
-		res = { ok: true, text() {} };
-	} else {
-		// TODO: Make this hit DB
-		res = await fetchAPI("sensors/online", {
-			method: "POST",
-			body: JSON.stringify({
-				sensor: sensorID,
-				timestamp: sensor.lastMessageTimestamp ?? Date.now(),
-				connected,
-			}),
-		});
-	}
-	if (res.ok) {
-		// Update sensor object
+	try {
+		const sql = await getDB();
+
+		await sql`UPDATE sensors SET ${sql({
+			timestamp: sensor.lastMessageTimestamp ?? Date.now(),
+			connected,
+		})} WHERE id=${sensor.id};`;
+
 		sensor.meta.online = connected;
 
 		if (connected === true) {
@@ -131,57 +122,30 @@ async function setState({
 		} else {
 			log.info(`Sensor disconnected: #${sensor.id}`);
 		}
-	} else {
-		log.warn(`Error setting state for sensor #${sensor.id}:`, await res.text());
+	} catch (err) {
+		log.warn(`Error setting state for sensor #${sensor.id}:`, err);
 	}
 }
 
-// Download sensor list from internship-worker
-export async function downloadSensorList(): Promise<string | undefined> {
-	let rawSensors: Record<string, PrivateSensorMeta>;
-	if (devMode) {
-		rawSensors = JSON.parse(await Deno.readTextFile("dev-sensors.json"));
-	} else {
-		// No try/catch here - we want it to throw & crash if this fetch fails
-		const res = await fetchAPI("sensors");
-		const json = await res.json();
-
-		if (!json?.privileged) {
-			log.error("Non-privileged response received from worker!");
-			const success = await getNewTokenWithRefreshToken();
-			// If it worked, try downloading again
-			if (success) return await downloadSensorList();
-			return "Invalid token! Unable to get privileged sensor data from worker.";
-		}
-
-		rawSensors = json.sensors;
-	}
+// Update in-memory cache of sensors
+export async function updateSensorCache() {
+	const sql = await getDB();
+	const sensors = await sql<
+		WithRequired<PrivateSensorMeta, "ip">[]
+	>`SELECT DISTINCT ON (ip) * FROM sensors WHERE ip IS NOT NULL;`;
 
 	// Clear the Maps to prevent issues with the sensor being a duplicate of itself
-	for (const rawSensor of Object.values(rawSensors)) {
-		if (rawSensor?.ip) {
-			let sensorBase = ipToSensorMap.get(rawSensor.ip);
+	for (const meta of sensors) {
+		const sensorClients = ipToSensorMap.get(meta.ip)?.webSocketClients || [];
 
-			if (!sensorBase) {
-				sensorBase = {
-					id: rawSensor.id,
-					webSocketClients: [],
-					meta: rawSensor,
-					lastHitAPI: 0,
-				};
-				ipToSensorMap.set(rawSensor.ip, sensorBase);
-			} else if (sensorBase.id !== rawSensor.id) {
-				sensorBase.isDuplicateOf = rawSensor.id;
-			} else {
-				sensorBase.meta = rawSensor;
-			}
-		} else {
-			log.warn(
-				`Not including sensor #${rawSensor.id} because it doesn't have an IP set.`
-			);
-		}
+		const sensor = {
+			id: meta.id,
+			webSocketClients: sensorClients,
+			meta,
+		};
+		ipToSensorMap.set(meta.ip, sensor);
 	}
-	log.info(`Downloaded sensor list (${ipToSensorMap.size} sensors)`);
+	log.info(`Cached sensor list (${ipToSensorMap.size} sensors)`);
 }
 
 // Called when a sensor sends a UDP packet. Data is then forwarded to the connected websockets
@@ -274,7 +238,7 @@ export function handleWebSockets(request: IRequest): Response {
 		return new Response("Failed to get sensor ID from URL", { status: 400 });
 	}
 
-	const sensor = getSensor(sensorID);
+	const sensor = getSensorFromCacheByID(sensorID);
 
 	const { socket: client, response } = Deno.upgradeWebSocket(request);
 	client.binaryType = "arraybuffer";

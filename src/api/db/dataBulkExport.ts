@@ -1,5 +1,5 @@
 import { IRequest } from "itty-router";
-import { getSensor } from "../../connectionHandler.ts";
+import { getSensorFromCacheByID } from "../../connectionHandler.ts";
 import { getDB, log } from "../../utils.ts";
 import { serialiseToMiniSEEDUint8Array, startTimeFromDate } from "miniseed";
 
@@ -54,7 +54,7 @@ export async function dataBulkExport(req: IRequest) {
 		});
 	}
 
-	const sensor = getSensor(sensorID);
+	const sensor = getSensorFromCacheByID(sensorID);
 
 	if (!sensor)
 		return new Response("Couldn't find a sensor with that ID", {

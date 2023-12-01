@@ -1,11 +1,13 @@
 import { PrivateSensorMeta } from "./api/apiUtils.ts";
 
+// From https://stackoverflow.com/a/69328045
+export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
 interface ServerSensor {
 	id: number;
 	webSocketClients: WebSocket[];
 	isDuplicateOf?: number;
 	lastMessageTimestamp?: number;
-	lastHitAPI: number;
 	meta: PrivateSensorMeta;
 }
 
