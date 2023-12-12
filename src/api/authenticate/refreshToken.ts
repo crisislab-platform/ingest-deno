@@ -34,7 +34,7 @@ export async function refreshToken(req: IRequest) {
 	try {
 		const token = await createUserToken(email);
 		return json({ token }, { status: 201 });
-	} catch (e) {
+	} catch {
 		return new Response("User does not exist", { status: 401 });
 	}
 }
