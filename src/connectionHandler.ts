@@ -25,7 +25,6 @@ log.info("Dev mode: ", devMode);
 
 // Get the list of sensors.
 // Need to do this first thing to avoid spamming stuff.
-// downloadError = await updateSensorCache();
 await updateSensorCache();
 
 // if (devMode) {
@@ -35,30 +34,72 @@ await updateSensorCache();
 // 	);
 // }
 
+// Every 2 minutes remove zombie websocket connections
+// Every 15 seconds update the in-memory sensor cache
+setInterval(() => {
+	//Update cache
+	log.info("Clearing zombie WebSockets");
+
+	for (const [, { webSocketClients }] of ipToSensorMap) {
+		for (const client of webSocketClients) {
+			if (
+				client.readyState === WebSocket.OPEN ||
+				client.readyState === WebSocket.CONNECTING
+			)
+				continue;
+
+			const index = webSocketClients.indexOf(client);
+			if (index !== -1) {
+				webSocketClients.splice(index, 1);
+			}
+		}
+	}
+}, 2 * 60 * 1000);
+
+// Every 15 seconds update the in-memory sensor cache
+setInterval(async () => {
+	//Update cache
+	await updateSensorCache();
+}, 15 * 1000);
+
 // Every minute, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
 setInterval(
 	async () => {
-		// First re-download sensor list
-		log.info("About to download sensor list from interval");
-		// downloadError = await updateSensorCache();
-		await updateSensorCache();
+		const sql = await getDB();
 
 		// Then go through map
-		log.info("About to update sensor statuses from interval");
+		let nowOnline = 0;
+		let nowOffline = 0;
 		for (const sensor of ipToSensorMap.values()) {
-			// If no messages in the last  2 minutes, set it as offline
+			// If no messages in the last 3 minutes, set it as offline
 			if (
 				Date.now() - (sensor.lastMessageTimestamp || 0) >
-				5 * 60 * 1000 // 5 minutes
+				3 * 60 * 1000 // 3 minutes
 			) {
-				updateSensorOnlineStatus({ sensorID: sensor.id, online: false });
+				if (
+					await updateSensorOnlineStatus({ sensorID: sensor.id, online: false })
+				)
+					nowOffline++;
 			} else {
-				updateSensorOnlineStatus({ sensorID: sensor.id, online: true });
+				if (
+					await updateSensorOnlineStatus({ sensorID: sensor.id, online: true })
+				)
+					nowOnline++;
 			}
 		}
+		const online = (
+			await sql`SELECT count(online) FROM sensors WHERE online IS TRUE`
+		)?.[0]?.["count"];
+		const offline = (
+			await sql`SELECT count(online) FROM sensors WHERE online IS FALSE`
+		)?.[0]?.["count"];
+
+		log.info(`Updated sensor connection statuses
+Online:  ${online} (${nowOnline >= 0 ? "+" : ""}${nowOnline})
+Offline: ${offline} (${nowOffline >= 0 ? "+" : ""}${nowOffline})`);
 	},
-	10 * 60 * 1000 // Every 10 minutes to avoid hammering infra
+	60 * 1000 // Every minute
 );
 
 function getSensorFromCacheByID(
@@ -83,19 +124,20 @@ function getSensorFromCacheByID(
 }
 
 // Update the sensor state in both the the online set and the API
+// Returns a boolean of weather the status changed
 async function updateSensorOnlineStatus({
 	sensorID,
 	online,
 }: {
 	sensorID: number;
 	online: boolean;
-}) {
+}): Promise<boolean> {
 	const sensor = getSensorFromCacheByID(sensorID);
 
-	if (!sensor) return;
+	if (!sensor) return false;
 
 	// Avoid spamming the API by not updating things if they haven't changed.
-	if (sensor.meta.online === online) return;
+	if (sensor.meta.online === online) return false;
 
 	try {
 		const sql = await getDB();
@@ -108,8 +150,10 @@ async function updateSensorOnlineStatus({
 		sensor.meta.online = online;
 
 		log.info(`Sensor #${sensor.id} now ${online ? "online" : "offline"}`);
+		return true;
 	} catch (err) {
 		log.warn(`Error setting state for sensor #${sensor.id}:`, err);
+		return false;
 	}
 }
 
@@ -131,7 +175,7 @@ async function updateSensorCache() {
 		};
 		ipToSensorMap.set(meta.ip, sensor);
 	}
-	log.info(`Cached sensor list (${ipToSensorMap.size} sensors)`);
+	log.info(`Updated cached sensor list (${ipToSensorMap.size} sensors)`);
 }
 
 // Called when a sensor sends a UDP packet. Data is then forwarded to the connected websockets
@@ -170,35 +214,26 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 			...values,
 		];
 
-		// TODO: Change this to just send to all, and run the filtering separately
-		// Send the message to all clients, and filter out the ones that have disconnected
-		sensor.webSocketClients = (sensor.webSocketClients || []).filter(
-			(client) => {
-				try {
-					// Handle race condition where a datagram is received
-					// after a socket is started but before it fully opens
-					if (client.readyState == WebSocket.OPEN)
-						client.send(
-							pack({
-								type: "datagram",
-								data: parsedData,
-							})
-						);
-					else if (client.readyState == WebSocket.CONNECTING) {
-						// Just drop this packet, but keep client in the list
-						return true;
-					} else return false;
-
-					return true;
-				} catch (err) {
-					Sentry.captureException(err);
-					log.error("Error sending packet: ", err);
-					return false;
-				}
-			}
-		);
-
+		// Saving the data is important and fast since it's on another thread
 		dataWritingWorker.postMessage({ sensorID: sensor.id, parsedData });
+
+		// Send the message to all clients, and filter out the ones that have disconnected
+		for (const client of sensor.webSocketClients) {
+			try {
+				// Handle race condition where a datagram is received
+				// after a socket is started but before it fully opens
+				if (client.readyState == WebSocket.OPEN)
+					client.send(
+						pack({
+							type: "datagram",
+							data: parsedData,
+						})
+					);
+			} catch (err) {
+				Sentry.captureException(err);
+				log.error("Error sending packet: ", err);
+			}
+		}
 	} catch (err) {
 		Sentry.captureException(err);
 		log.warn(
