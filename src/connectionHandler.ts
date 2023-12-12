@@ -28,10 +28,6 @@ log.info("Dev mode: ", devMode);
 // downloadError = await updateSensorCache();
 await updateSensorCache();
 
-export function downloadErrorMiddleware() {
-	// if (downloadError) return new Response(downloadError, { status: 500 });
-}
-
 // if (devMode) {
 // 	ipToSensorMap.set(
 // 		"192.168.1.3",
@@ -65,7 +61,7 @@ setInterval(
 	10 * 60 * 1000 // Every 10 minutes to avoid hammering infra
 );
 
-export function getSensorFromCacheByID(
+function getSensorFromCacheByID(
 	_sensorID: number | string
 ): ServerSensor | undefined {
 	let sensorID = _sensorID;
@@ -95,10 +91,11 @@ async function updateSensorOnlineStatus({
 	online: boolean;
 }) {
 	const sensor = getSensorFromCacheByID(sensorID);
+
 	if (!sensor) return;
 
 	// Avoid spamming the API by not updating things if they haven't changed.
-	if (sensor.meta?.online === online) return;
+	if (sensor.meta.online === online) return;
 
 	try {
 		const sql = await getDB();
@@ -117,7 +114,7 @@ async function updateSensorOnlineStatus({
 }
 
 // Update in-memory cache of sensors
-export async function updateSensorCache() {
+async function updateSensorCache() {
 	const sql = await getDB();
 	const sensors = await sql<
 		WithRequired<PrivateSensorMeta, "ip">[]

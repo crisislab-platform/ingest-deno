@@ -1,17 +1,16 @@
 import { IRequest } from "itty-router";
-import { getSensorFromCacheByID } from "../../connectionHandler.ts";
-import { getDB, log } from "../../utils.ts";
+import { getDB, getSensor, log } from "../../utils.ts";
 import { serialiseToMiniSEEDUint8Array, startTimeFromDate } from "miniseed";
 
 export async function dataBulkExport(req: IRequest) {
-	const sensorID = req.query["sensor_id"] as string;
+	const _sensorID = req.query["sensor_id"] as string;
 
 	const format = (req.query["format"] as string)?.toLowerCase();
 	const _channels = req.query["channels"] as string;
 	const _from = req.query["from"] as string;
 	const _to = req.query["to"] as string;
 
-	if (!sensorID)
+	if (!_sensorID)
 		return new Response("Specify a sensor to export from", {
 			status: 400,
 		});
@@ -54,7 +53,16 @@ export async function dataBulkExport(req: IRequest) {
 		});
 	}
 
-	const sensor = getSensorFromCacheByID(sensorID);
+	let sensorID: number;
+	try {
+		sensorID = parseInt(_sensorID);
+	} catch {
+		return new Response("Please a valid sensor ID number", {
+			status: 400,
+		});
+	}
+
+	const sensor = await getSensor(sensorID);
 
 	if (!sensor)
 		return new Response("Couldn't find a sensor with that ID", {
@@ -149,8 +157,8 @@ export async function dataBulkExport(req: IRequest) {
 					CRISiSLab: {
 						data_channel: channel,
 						sensor_website_id: sensor.id,
-						sensor_rs_station_id: sensor.meta.secondary_id,
-						sensor_type: sensor.meta.type,
+						sensor_rs_station_id: sensor.secondary_id,
+						sensor_type: sensor.type,
 					},
 				},
 				sampleRatePeriod: 100,

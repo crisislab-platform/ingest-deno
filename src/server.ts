@@ -4,11 +4,7 @@ import {
 	serveFile,
 } from "https://deno.land/std@0.204.0/http/file_server.ts";
 import * as Sentry from "sentry";
-import {
-	sensorHandler,
-	downloadErrorMiddleware,
-	handleWebSockets,
-} from "./connectionHandler.ts";
+import { sensorHandler, handleWebSockets } from "./connectionHandler.ts";
 import { log } from "./utils.ts";
 import { IRequest, Router } from "itty-router";
 import { handleAPI } from "./api/api.ts";
@@ -32,14 +28,12 @@ Sentry.init({
 const router = Router<IRequest & { sensorID?: number }>();
 router
 	.all("/api/v2/*", handleAPI)
-	.get("/consume/:id/live", downloadErrorMiddleware, handleWebSockets)
+	.get("/consume/:id/live", handleWebSockets)
 	.all("/assets/*", (req) =>
 		serveDir(req, { fsRoot: "live-data-graphs/dist/assets", urlRoot: "assets" })
 	)
-	.get("/", downloadErrorMiddleware, (req) =>
-		serveFile(req, "live-data-graphs/dist/index.html")
-	)
-	.get("/consume/*", downloadErrorMiddleware, (req) =>
+	.get("/", (req) => serveFile(req, "live-data-graphs/dist/index.html"))
+	.get("/consume/*", (req) =>
 		serveFile(req, "live-data-graphs/dist/index.html")
 	);
 
