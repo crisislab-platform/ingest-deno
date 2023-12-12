@@ -26,7 +26,7 @@ export default async function usernameAndPassword(request: IRequest) {
 
 	const hash = (
 		await sql<{ hash: string }[]>`SELECT hash FROM users WHERE email=${email}`
-	)?.[0]?.hash;
+	)?.[0]?.["hash"];
 
 	if (hash === null) {
 		return new Response("Invalid username/password", { status: 401 });

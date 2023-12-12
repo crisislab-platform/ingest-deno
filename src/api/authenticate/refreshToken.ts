@@ -25,7 +25,7 @@ export async function refreshToken(req: IRequest) {
 		await sql<
 			{ refresh: string }[]
 		>`SELECT refresh FROM users WHERE email=${email}`
-	)?.[0]?.refresh;
+	)?.[0]?.["refresh"];
 
 	if (actualRefreshToken !== suppliedRefreshToken)
 		return new Response("Unauthorised", { status: 401 });
