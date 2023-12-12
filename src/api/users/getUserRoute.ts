@@ -1,6 +1,5 @@
 import { IRequest, json } from "itty-router";
-import { validateEmail } from "./utils.ts";
-import { getUserByEmail } from "../apiUtils.ts";
+import { getUserByEmail, validateEmail } from "../../utils.ts";
 
 export async function getUserRoute({ params }: IRequest) {
 	const email = params.email.toLowerCase();

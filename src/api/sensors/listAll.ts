@@ -1,7 +1,6 @@
 import { IRequest, json } from "itty-router";
 import { authMiddleware } from "../auth.ts";
-import { getSensors } from "../apiUtils.ts";
-import { log } from "../../utils.ts";
+import { getSensors, log } from "../../utils.ts";
 
 export default async function listSensors(request: IRequest) {
 	const hasSensorsRead =

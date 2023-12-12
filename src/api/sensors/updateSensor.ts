@@ -1,9 +1,5 @@
-import { getDB, log } from "../../utils.ts";
-import {
-	randomizeLocation,
-	getSensor,
-	PrivateSensorMeta,
-} from "../apiUtils.ts";
+import { PrivateSensorMeta } from "../../types.ts";
+import { randomizeLocation, getSensor, getDB, log } from "../../utils.ts";
 import { IRequest, json } from "itty-router";
 
 export default async function updateSensor(request: IRequest) {

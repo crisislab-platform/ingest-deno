@@ -1,10 +1,6 @@
 import { IRequest, json } from "itty-router";
-import {
-	getSensor,
-	randomizeLocation,
-	PrivateSensorMeta,
-} from "../apiUtils.ts";
-import { getDB } from "../../utils.ts";
+import { getDB, randomizeLocation } from "../../utils.ts";
+import { PrivateSensorMeta } from "../../types.ts";
 
 /**
  * This function creates a sensor with the given data.

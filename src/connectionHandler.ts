@@ -1,11 +1,10 @@
 import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
 import * as Sentry from "sentry";
-import "./types.d.ts";
+import "./types.ts";
 import { pack } from "msgpackr";
 import { getDB, log } from "./utils.ts";
 import { IRequest } from "itty-router";
-import { PrivateSensorMeta } from "./api/apiUtils.ts";
-import { ServerSensor, WithRequired } from "./types.d.ts";
+import { ServerSensor, WithRequired, PrivateSensorMeta } from "./types.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });

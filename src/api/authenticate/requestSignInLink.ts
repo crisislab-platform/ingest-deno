@@ -6,7 +6,7 @@ import {
 	generateSignIn,
 	generateWelcome,
 } from "../emails/index.ts";
-import { getUserByEmail } from "../apiUtils.ts";
+import { getUserByEmail } from "../../utils.ts";
 
 const emails = {
 	welcome: {

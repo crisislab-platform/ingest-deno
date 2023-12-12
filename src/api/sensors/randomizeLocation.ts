@@ -1,5 +1,5 @@
 import { IRequest, json } from "itty-router";
-import { randomizeLocation } from "../apiUtils.ts";
+import { randomizeLocation } from "../../utils.ts";
 import { getDB } from "../../utils.ts";
 
 export default async function randomizeSensors(req: IRequest) {

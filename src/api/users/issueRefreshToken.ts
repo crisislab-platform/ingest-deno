@@ -1,6 +1,5 @@
 import { IRequest, json } from "itty-router";
-import { toSecureToken, validateEmail } from "./utils.ts";
-import { getDB } from "../../utils.ts";
+import { getDB, toSecureToken, validateEmail } from "../../utils.ts";
 
 // Issues a refresh token that can be used instead of a username and password to get new tokens
 export async function issueRefreshToken({ params }: IRequest) {

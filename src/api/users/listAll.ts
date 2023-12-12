@@ -1,5 +1,5 @@
 import { json } from "itty-router";
-import { User } from "../apiUtils.ts";
+import { User } from "../../types.ts";
 import { getDB } from "../../utils.ts";
 
 export default async function listUsers() {

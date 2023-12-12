@@ -1,7 +1,6 @@
 import { IRequest, error, json } from "itty-router";
-import { validateEmail } from "./utils.ts";
-import { getDB, log } from "../../utils.ts";
-import { User, getUserByEmail } from "../apiUtils.ts";
+import { getDB, log, validateEmail, getUserByEmail } from "../../utils.ts";
+import { User } from "../../types.ts";
 
 export async function updateUser(request: IRequest) {
 	const email = request.params.email;

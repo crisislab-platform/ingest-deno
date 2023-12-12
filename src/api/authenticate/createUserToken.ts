@@ -1,4 +1,4 @@
-import { getUserByEmail } from "../apiUtils.ts";
+import { getUserByEmail } from "../../utils.ts";
 import { getToken } from "../jwt.ts";
 
 /**
