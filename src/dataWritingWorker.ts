@@ -20,7 +20,6 @@ let dbBuffer: {
 }[] = [];
 
 async function flushBuffer() {
-	log.info(`Flushing ${dbBuffer.length} packets to DB...`);
 	const dbBufferCopy = dbBuffer;
 	dbBuffer = [];
 
@@ -48,7 +47,7 @@ async function flushBuffer() {
 			"data_values"
 		)};`;
 	}
-	log.info(`Wrote ${dbBufferCopy.length} packets to DB`);
+	log.info(`Flushed ${dbBufferCopy.length} packets to DB`);
 }
 
 self.addEventListener("message", (event: MessageEvent) => {
