@@ -130,6 +130,26 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 
 	return user;
 }
+
+function parsePoint(point: string): [number, number] {
+	return JSON.parse(point.replaceAll("(", "[").replaceAll(")", "]"));
+}
+
+/**
+ * Fixes some of the weirdness from the database
+ */
+function normaliseSensor(sensor: PublicSensorMeta | PrivateSensorMeta) {
+	// The database returns `point` types as strings like '(x, y)'.
+	if ("location" in sensor && sensor.location) {
+		sensor.location = parsePoint(sensor.location as unknown as string);
+	}
+	if (sensor.public_location) {
+		sensor.public_location = parsePoint(
+			sensor.public_location as unknown as string
+		);
+	}
+}
+
 /**
  * Get a user from an ID. Returns null if no user was found.
  */
@@ -177,6 +197,7 @@ export async function getSensor(
 		const sensor = (
 			await sql<PrivateSensorMeta[]>`SELECT * FROM sensors WHERE id=${id}`
 		)[0];
+		normaliseSensor(sensor);
 		return sensor;
 	} else {
 		const sensor = (
@@ -184,6 +205,7 @@ export async function getSensor(
 				PublicSensorMeta[]
 			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id}`
 		)[0];
+		normaliseSensor(sensor);
 		return sensor;
 	}
 }
@@ -217,7 +239,14 @@ export async function getSensors(
 		sensors =
 			await sql`SELECT id, type, online, status_change_timestamp, secondary_id, public_location FROM sensors;`;
 	}
-	return Object.fromEntries(sensors.map((sensor) => [sensor.id, sensor]));
+	return Object.fromEntries(
+		sensors
+			.map((sensor) => {
+				normaliseSensor(sensor as PrivateSensorMeta);
+				return sensor;
+			})
+			.map((sensor) => [sensor.id, sensor])
+	);
 }
 
 export const validateEmail = (email: string): boolean => {
