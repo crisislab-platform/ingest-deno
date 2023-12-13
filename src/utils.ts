@@ -35,8 +35,8 @@ async function setupTables(sql: postgres.Sql) {
 	// Users
 	await sql`
 	CREATE TABLE IF NOT EXISTS users (
-		"id" serial NOT NULL UNIQUE,
-		"email" text NOT NULL UNIQUE,
+		"id" serial NOT NULL,
+		"email" text NOT NULL,
 		"name" text NOT NULL,
 		"roles" text[] NOT NULL,
 		"hash" text,
@@ -109,7 +109,7 @@ export async function getDB(): Promise<postgres.Sql> {
 		if (parseInt(Deno.env.get("SHOULD_STORE") || "0")) {
 			// Only kill the process if we want to store data
 			log.info("Exiting due to no database connection");
-			throw Deno.exit(1);
+			throw exit(1);
 		}
 	}
 	throw "We should never get here";
@@ -185,7 +185,12 @@ export async function getSensor(
 			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id}`
 		)[0];
 		return sensor;
-	}
+	}  
+}
+
+export async function exit(code?: number) {
+	await dbConn?.end();
+	Deno.exit(code);
 }
 
 export async function getSensors(

@@ -14,6 +14,7 @@ import {
 	chartsContainer,
 	formatTime,
 	round,
+	showMessage,
 } from "./ui";
 import { SensorVariety } from "./main";
 
@@ -33,18 +34,28 @@ const aliases = {
 };
 let start;
 const maxDataLength = 1300;
-const pointGap = 10;
 
-let initCount = 0;
+const firstPackets: Record<string, Datagram> = {};
 
 export function handleData(packet: Datagram) {
 	const [channel, timestampSeconds, ...measurements] = packet;
 
-	if (initCount < 5 && channel !== "EHZ") {
-		initCount++;
+	if (!firstPackets[channel]) {
+		firstPackets[channel] = packet;
+		showMessage("Waiting for second sample...");
 		return;
-	} else {
-		initCount = 10;
+	} else if (!window.CRISiSLab.sampleGaps[channel]) {
+		showMessage("Calculating sampling rate...");
+
+		const firstPacket = firstPackets[channel]!;
+		const [, firstTimestampSeconds, ...firstMeasurements] = firstPacket;
+
+		const timeGapSeconds = timestampSeconds - firstTimestampSeconds;
+		const samplingRate = firstMeasurements.length / timeGapSeconds;
+		window.CRISiSLab.sampleGaps[channel] = 1000 / samplingRate;
+
+		// Do the first packet, then keep doing this one
+		handleData(firstPacket);
 	}
 
 	const timestamp = timestampSeconds * 1000;
@@ -109,7 +120,7 @@ export function handleData(packet: Datagram) {
 			x: timestamp + current[channel],
 			y: value,
 		});
-		current[channel] += pointGap;
+		current[channel] += window.CRISiSLab.sampleGaps[channel]!;
 
 		if (window.CRISiSLab.data[channel].length > maxDataLength) {
 			window.CRISiSLab.data[channel].shift();
