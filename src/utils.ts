@@ -215,7 +215,7 @@ export async function getSensors(
 		sensors = await sql`SELECT * FROM sensors;`;
 	} else {
 		sensors =
-			await sql`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors;`;
+			await sql`SELECT id, type, online, status_change_timestamp, secondary_id, public_location FROM sensors;`;
 	}
 	return Object.fromEntries(sensors.map((sensor) => [sensor.id, sensor]));
 }
