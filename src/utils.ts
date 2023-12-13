@@ -195,7 +195,7 @@ export async function getSensor(
 
 	if (unfiltered) {
 		const sensor = (
-			await sql<PrivateSensorMeta[]>`SELECT * FROM sensors WHERE id=${id}`
+			await sql<PrivateSensorMeta[]>`SELECT * FROM sensors WHERE id=${id};`
 		)[0];
 		normaliseSensor(sensor);
 		return sensor;
@@ -203,7 +203,7 @@ export async function getSensor(
 		const sensor = (
 			await sql<
 				PublicSensorMeta[]
-			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id}`
+			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id};`
 		)[0];
 		normaliseSensor(sensor);
 		return sensor;
