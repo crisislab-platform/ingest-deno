@@ -8,6 +8,7 @@
         "msgpackr": "npm:msgpackr@1.9.9",
         "sentry": "npm:@sentry/node",
         "js-base64": "npm:js-base64@3.7.5",
-        "miniseed": "npm:miniseed@0.2.1"
+        "miniseed": "npm:miniseed@0.2.1",
+        "postgresjs": "https://deno.land/x/postgresjs@v3.4.3/mod.js"
     }
 }

@@ -1,4 +1,4 @@
-import postgres from "https://deno.land/x/postgresjs@v3.4.3/mod.js";
+import postgres from "postgresjs";
 import { PrivateSensorMeta, PublicSensorMeta, User } from "./types.ts";
 import * as Sentry from "sentry";
 
