@@ -5,7 +5,7 @@ import { authMiddleware } from "./auth.ts";
 import usersRouter from "./users/index.ts";
 import { sensorsRouter } from "./sensors/index.ts";
 
-function setCORSHeaders(req: IRequest, res: Response) {
+function setCORSHeaders(req: IRequest, res: Response = new Response()) {
 	// itty-router's built-in cors is broken
 	res.headers.set(
 		"Access-Control-Allow-Methods",
