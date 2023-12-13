@@ -47,7 +47,7 @@ async function setupTables(sql: postgres.Sql) {
 	// Sensors
 	await sql`
 	CREATE TABLE IF NOT EXISTS sensor_types (
-		"name" text NOT NULL
+		"name" text NOT NULL,
 		PRIMARY KEY ("name")
 	);`;
 	await sql`
@@ -185,7 +185,7 @@ export async function getSensor(
 			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id}`
 		)[0];
 		return sensor;
-	}  
+	}
 }
 
 export async function exit(code?: number) {
