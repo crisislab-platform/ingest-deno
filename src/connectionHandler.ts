@@ -19,7 +19,6 @@ const dataWritingWorker = new Worker(
 );
 
 const ipToSensorMap = new Map<string, ServerSensor>();
-// let downloadError: string | undefined;
 
 log.info("Dev mode: ", devMode);
 
