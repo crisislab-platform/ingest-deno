@@ -1,5 +1,6 @@
 import postgres from "https://deno.land/x/postgresjs@v3.4.3/mod.js";
 import { PrivateSensorMeta, PublicSensorMeta, User } from "./types.ts";
+import * as Sentry from "sentry";
 
 function loggerTimeAndInfo(): string {
 	return `[${new Date().toISOString()}]`;
@@ -82,7 +83,7 @@ async function setupTables(sql: postgres.Sql) {
 		await sql`ALTER TABLE sensor_data_4 SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_id');`;
 		await sql`SELECT add_compression_policy('sensor_data_4', INTERVAL '2 days', if_not_exists => TRUE);`;
 	} catch (err) {
-		log.error(`Error setting up table: ${err}`);
+		log.warn(`Error setting up table: ${err}`);
 	}
 }
 
@@ -105,6 +106,7 @@ export async function getDB(): Promise<postgres.Sql> {
 		dbConn = sql;
 		return sql;
 	} catch (err) {
+		Sentry.captureException(err);
 		log.error("Failed to connect to database: ", err);
 		if (parseInt(Deno.env.get("SHOULD_STORE") || "0")) {
 			// Only kill the process if we want to store data

@@ -151,6 +151,7 @@ async function updateSensorOnlineStatus({
 		log.info(`Sensor #${sensor.id} now ${online ? "online" : "offline"}`);
 		return true;
 	} catch (err) {
+		Sentry.captureException(err);
 		log.warn(`Error setting state for sensor #${sensor.id}:`, err);
 		return false;
 	}

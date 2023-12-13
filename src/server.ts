@@ -60,6 +60,7 @@ Deno.serve(
 
 			return res;
 		} catch (err) {
+			Sentry.captureException(err);
 			log.error(`Error handling HTTP: `, err);
 			return new Response("Internal error", { status: 500 });
 		}

@@ -1,6 +1,7 @@
 import { IRequest } from "itty-router";
 import { getDB, getSensor, log } from "../../utils.ts";
 import { serialiseToMiniSEEDUint8Array, startTimeFromDate } from "miniseed";
+import * as Sentry from "sentry";
 
 export async function dataBulkExport(req: IRequest) {
 	const _sensorID = req.query["sensor_id"] as string;
@@ -97,6 +98,7 @@ export async function dataBulkExport(req: IRequest) {
 							controller.close();
 						})
 						.catch((err) => {
+							Sentry.captureException(err);
 							log.warn("Error streaming response: ", err);
 							controller.error(err);
 						});

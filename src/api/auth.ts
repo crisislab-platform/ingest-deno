@@ -17,7 +17,7 @@ export const authMiddleware = (role?: string) => async (request: IRequest) => {
 	try {
 		payload = await verifyToken(token);
 	} catch (error) {
-		console.error(error);
+		log.error(error);
 		return new Response("Unauthorized", { status: 401 });
 	}
 

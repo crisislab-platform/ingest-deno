@@ -56,7 +56,7 @@ self.addEventListener("message", (event: MessageEvent) => {
 	try {
 		if (dbBuffer.length >= 2500) flushBuffer();
 	} catch (err) {
-		log.warn("Error flushing buffer to DB: ", err);
 		Sentry.captureException(err);
+		log.warn("Error flushing buffer to DB: ", err);
 	}
 });
