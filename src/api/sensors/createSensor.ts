@@ -1,6 +1,7 @@
 import { IRequest, json } from "itty-router";
-import { getDB, randomizeLocation } from "../../utils.ts";
+import { getDB, log, randomizeLocation } from "../../utils.ts";
 import { PrivateSensorMeta } from "../../types.ts";
+import postgres from "https://deno.land/x/postgresjs@v3.4.3/types/index.js";
 
 /**
  * This function creates a sensor with the given data.
@@ -31,7 +32,10 @@ export default async function createSensor(request: IRequest) {
 		data.public_location = randomizeLocation(data.location);
 	}
 
-	await sql`INSERT INTO sensors ${sql(data)};`;
+	const id = (await sql`INSERT INTO sensors ${sql(data)} RETURNING id;`)?.[0]?.[
+		"id"
+	];
+	log.info("Created sensor #" + id);
 
 	return json({ status: "ok" });
 }
