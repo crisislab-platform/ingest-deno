@@ -11,7 +11,7 @@ function setCORSHeaders(req: IRequest, res: Response = new Response()) {
 		"Access-Control-Allow-Methods",
 		"GET, POST, PUT, PATCH, OPTIONS, DELETE"
 	);
-	res.headers.set("Access-Control-Allow-Headers", "*");
+	res.headers.set("Access-Control-Allow-Headers", "Authorization");
 	res.headers.set("Access-Control-Expose-Headers", "X-Number-Of-Records");
 	res.headers.set(
 		"Access-Control-Allow-Origin",
