@@ -47,14 +47,13 @@ async function setupTables(sql: postgres.Sql) {
 	// Sensors
 	await sql`
 	CREATE TABLE IF NOT EXISTS sensor_types (
-		"name" text NOT NULL,
-		"sample_delta" int4 NOT NULL, 
+		"name" text NOT NULL
 		PRIMARY KEY ("name")
 	);`;
 	await sql`
 	CREATE TABLE IF NOT EXISTS sensors (
         "id" serial NOT NULL UNIQUE,
-		"type" text NOT NULL,
+		"type" text,
         "ip" text,
         "online" bool,
         "location" point,
@@ -63,8 +62,7 @@ async function setupTables(sql: postgres.Sql) {
         "secondary_id" text,
         "status_change_timestamp" timestamptz,
         "contact_email" text,
-        PRIMARY KEY ("id"),
-		CONSTRAINT fk_sensor_type FOREIGN KEY(type) REFERENCES sensor_types(name)
+        PRIMARY KEY ("id")
     );
 	`;
 	// Sensor data (timescale)
