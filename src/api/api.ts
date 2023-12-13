@@ -5,7 +5,7 @@ import { authMiddleware } from "./auth.ts";
 import usersRouter from "./users/index.ts";
 import { sensorsRouter } from "./sensors/index.ts";
 
-function setCORSHeaders(req: IRequest, res: Response = new Response()) {
+function setCORSHeaders(req: IRequest, res: Response) {
 	// itty-router's built-in cors is broken
 	res.headers.set(
 		"Access-Control-Allow-Methods",
@@ -15,7 +15,7 @@ function setCORSHeaders(req: IRequest, res: Response = new Response()) {
 	res.headers.set("Access-Control-Expose-Headers", "X-Number-Of-Records");
 	res.headers.set(
 		"Access-Control-Allow-Origin",
-		req.headers.get("origin") || "*"
+		req.headers.get("Origin") || "*"
 	);
 }
 
@@ -45,7 +45,7 @@ apiRouter
 	.get("*", () => new Response("API route not found", { status: 404 }));
 
 export const handleAPI = async (req: IRequest) => {
-	const res: Response = await apiRouter.handle(req);
+	const res: Response = (await apiRouter.handle(req)) ?? new Response();
 	setCORSHeaders(req, res);
 	return res;
 };
