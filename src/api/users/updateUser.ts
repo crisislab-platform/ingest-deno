@@ -17,7 +17,7 @@ export async function updateUser(request: IRequest) {
 	log.info("oldData", oldData, "data", data);
 
 	if (oldData === data) {
-		console.info("oldData is the same as new data");
+		log.info("oldData is the same as new data");
 		return new Response("Nothing changed", { status: 400 });
 	}
 

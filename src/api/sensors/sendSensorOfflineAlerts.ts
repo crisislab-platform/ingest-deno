@@ -27,7 +27,7 @@ export async function sendSensorOfflineAlerts() {
 	// 		timeZone: "Pacific/Auckland",
 	// 	});
 
-	// 	console.info("Generating offline alert summary emails...");
+	// 	log.info("Generating offline alert summary emails...");
 
 	// 	for (const sensor of Object.values(sensors)) {
 	// 		if (sensor.online) continue;
@@ -111,9 +111,9 @@ export async function sendSensorOfflineAlerts() {
 	// 			});
 	// 			const m = await res.text();
 	// 			if (res.ok) {
-	// 				console.info(`Sent offline alert summary email to ${email}`);
+	// 				log.info(`Sent offline alert summary email to ${email}`);
 	// 			} else {
-	// 				console.warn("Failed to send offline alert summary email:", email);
+	// 				log.warn("Failed to send offline alert summary email:", email);
 	// 				log.info(m, res);
 	// 			}
 
@@ -123,7 +123,7 @@ export async function sendSensorOfflineAlerts() {
 	// 			// 	indexes: [email],
 	// 			// });
 	// 		} catch (err) {
-	// 			console.warn("Failed to send email: ", err);
+	// 			log.warn("Failed to send email: ", err);
 	// 		}
 	// 	}
 }

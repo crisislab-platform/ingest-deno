@@ -25,7 +25,7 @@ export default async function setOnline(request: Request): Promise<Response> {
 		return new Response("Bad request", { status: 400 });
 	}
 
-	console.info(
+	log.info(
 		`Updating online status for sensor #${id}: now ${
 			online === undefined ? "unknown" : online ? "online" : "offline"
 		}`
@@ -38,7 +38,7 @@ export default async function setOnline(request: Request): Promise<Response> {
 	)[0];
 
 	if (oldSensor.online === online) {
-		console.info(
+		log.info(
 			"Nothing changed - old online status and new online status are equal"
 		);
 		return new Response("Nothing changed", { status: 400 });
