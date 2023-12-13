@@ -1,4 +1,6 @@
-import postgres from "https://deno.land/x/postgresjs@v3.3.5/mod.js";
+import postgres from "postgresjs";
+import { PrivateSensorMeta, PublicSensorMeta, User } from "./types.ts";
+import * as Sentry from "sentry";
 
 function loggerTimeAndInfo(): string {
 	return `[${new Date().toISOString()}]`;
@@ -27,16 +29,8 @@ export const log = {
  * Simplify setup by autogenerate tables
  */
 async function setupTables(sql: postgres.Sql) {
-	// Sensor data (timescale)
-	await sql`
-CREATE TABLE IF NOT EXISTS sensor_data_3 (
-	sensor_website_id int NOT NULL,
-	data_timestamp timestamptz NOT NULL,
-	data_channel char(3) NOT NULL,
-	data_values FLOAT[] NOT NULL
-);`;
+	// Setup timescale first so we fail fast if it isn't here
 	await sql`CREATE EXTENSION IF NOT EXISTS timescaledb;`;
-	await sql`SELECT create_hypertable('sensor_data_3','data_timestamp', if_not_exists => TRUE);`;
 
 	// Users
 	await sql`
@@ -47,9 +41,48 @@ CREATE TABLE IF NOT EXISTS sensor_data_3 (
 		"roles" text[] NOT NULL,
 		"hash" text,
 		"refresh" text,
-		PRIMARY KEY ("id")
+		PRIMARY KEY ("id", "email")
 	);
 	`;
+	// Sensors
+	await sql`
+	CREATE TABLE IF NOT EXISTS sensor_types (
+		"name" text NOT NULL
+		PRIMARY KEY ("name")
+	);`;
+	await sql`
+	CREATE TABLE IF NOT EXISTS sensors (
+        "id" serial NOT NULL UNIQUE,
+		"type" text,
+        "ip" text,
+        "online" bool,
+        "location" point,
+		"public_location" point,
+        "name" text,
+        "secondary_id" text,
+        "status_change_timestamp" timestamptz,
+        "contact_email" text,
+        PRIMARY KEY ("id")
+    );
+	`;
+	// Sensor data (timescale)
+	await sql`
+	CREATE TABLE IF NOT EXISTS sensor_data_4 (
+		sensor_id int NOT NULL,
+		data_timestamp timestamptz NOT NULL,
+		data_channel char(3) NOT NULL,
+		data_values FLOAT[] NOT NULL,
+		CONSTRAINT fk_sensor_id FOREIGN KEY(sensor_id) REFERENCES sensors(id)
+	);
+	`;
+	await sql`SELECT create_hypertable('sensor_data_4','data_timestamp', if_not_exists => TRUE);`;
+	try {
+		// These sometimes throw because timescale is being silly
+		await sql`ALTER TABLE sensor_data_4 SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_id');`;
+		await sql`SELECT add_compression_policy('sensor_data_4', INTERVAL '2 days', if_not_exists => TRUE);`;
+	} catch (err) {
+		log.warn(`Error setting up table: ${err}`);
+	}
 }
 
 let dbConn: postgres.Sql | null = null;
@@ -71,6 +104,7 @@ export async function getDB(): Promise<postgres.Sql> {
 		dbConn = sql;
 		return sql;
 	} catch (err) {
+		Sentry.captureException(err);
 		log.error("Failed to connect to database: ", err);
 		if (parseInt(Deno.env.get("SHOULD_STORE") || "0")) {
 			// Only kill the process if we want to store data
@@ -81,40 +115,127 @@ export async function getDB(): Promise<postgres.Sql> {
 	throw "We should never get here";
 }
 
+/**
+ * Get a user from an email address. Returns null if no user was found.
+ */
+export async function getUserByEmail(email: string): Promise<User | null> {
+	const sql = await getDB();
+
+	const user: User | null =
+		(
+			await sql<
+				User[]
+			>`SELECT id, name, email, roles FROM users WHERE email=${email}`
+		)?.[0] ?? null;
+
+	return user;
+}
+/**
+ * Get a user from an ID. Returns null if no user was found.
+ */
+export async function getUserByID(id: number): Promise<User | null> {
+	const sql = await getDB();
+
+	const user: User | null =
+		(
+			await sql<User[]>`SELECT id, name, email, roles FROM users WHERE id=${id}`
+		)?.[0] ?? null;
+
+	return user;
+}
+
+export function randomizeLocation(
+	location: [number, number]
+): [number, number] {
+	const lng = location[0] + (Math.random() - 0.5) * 0.002;
+	const lat = location[1] + (Math.random() - 0.5) * 0.002;
+	return [Math.round(lng * 100000) / 100000, Math.round(lat * 100000) / 100000];
+}
+
+export async function getSensor(
+	id: number,
+	unfiltered?: true | undefined
+): Promise<PrivateSensorMeta>;
+export async function getSensor(
+	id: number,
+	unfiltered: false
+): Promise<PublicSensorMeta>;
+// I should not have to re-define the implementation signature
+export async function getSensor(
+	id: number,
+	unfiltered?: boolean
+): Promise<PublicSensorMeta | PrivateSensorMeta>;
+export async function getSensor(
+	id: number,
+	unfiltered?: boolean
+): Promise<PublicSensorMeta | PrivateSensorMeta> {
+	unfiltered ??= true;
+
+	const sql = await getDB();
+
+	if (unfiltered) {
+		const sensor = (
+			await sql<PrivateSensorMeta[]>`SELECT * FROM sensors WHERE id=${id}`
+		)[0];
+		return sensor;
+	} else {
+		const sensor = (
+			await sql<
+				PublicSensorMeta[]
+			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id}`
+		)[0];
+		return sensor;
+	}  
+}
+
 export async function exit(code?: number) {
 	await dbConn?.end();
 	Deno.exit(code);
 }
 
-let apiToken: string | null = null;
+export async function getSensors(
+	unfiltered?: true | undefined
+): Promise<Record<string, PrivateSensorMeta>>;
+export async function getSensors(
+	unfiltered: false
+): Promise<Record<string, PublicSensorMeta>>;
+// I should not have to re-define the implementation signature
+export async function getSensors(
+	unfiltered?: boolean
+): Promise<Record<string, PublicSensorMeta | PrivateSensorMeta>>;
+export async function getSensors(
+	unfiltered?: boolean
+): Promise<Record<string, PublicSensorMeta | PrivateSensorMeta>> {
+	unfiltered ??= true;
 
-// Helper function to fetch from the API
-export function fetchAPI(path: string, options: RequestInit = {}) {
-	return fetch(Deno.env.get("API_ENDPOINT") + path, {
-		...options,
-		headers: {
-			authorization: `Bearer ${apiToken}`,
-			...options.headers,
-		},
-	});
+	const sql = await getDB();
+
+	let sensors;
+	if (unfiltered) {
+		sensors = await sql`SELECT * FROM sensors;`;
+	} else {
+		sensors =
+			await sql`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors;`;
+	}
+	return Object.fromEntries(sensors.map((sensor) => [sensor.id, sensor]));
 }
 
-export async function getNewTokenWithRefreshToken(): Promise<boolean> {
-	log.info("Attempting to get new token with refresh token...");
-	const response = await fetchAPI("auth/refresh", {
-		method: "POST",
-		body: JSON.stringify({
-			email: Deno.env.get("API_EMAIL"),
-			refreshToken: Deno.env.get("API_REFRESH_TOKEN"),
-		}),
-	});
-	const data = await response.json();
-	const token = data.token;
-	if (token) {
-		apiToken = token;
-		return true;
-	} else {
-		log.warn("No token found when refreshing!");
-	}
-	return false;
+export const validateEmail = (email: string): boolean => {
+	return !!String(email)
+		.toLowerCase()
+		.match(
+			/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+		);
+};
+
+// Secure token generator 9000 copyright 2023 Zade Viggers
+// I wasn't sure how if what I was doing was secure enough, so I just made it really hard for people to figure out what I'm doing
+export function toSecureToken(base: string): string {
+	return btoa(
+		crypto.randomUUID() +
+			base +
+			Number.EPSILON +
+			(Math.random() * Math.random() + 3) * Math.PI +
+			Math.random() * 69420
+	);
 }

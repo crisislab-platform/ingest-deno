@@ -3,14 +3,10 @@ import {
 	serveDir,
 	serveFile,
 } from "https://deno.land/std@0.204.0/http/file_server.ts";
-import * as Sentry from "npm:@sentry/node";
-import {
-	sensorHandler,
-	downloadErrorMiddleware,
-	handleWebSockets,
-} from "./connectionHandler.ts";
+import * as Sentry from "sentry";
+import { sensorHandler, handleWebSockets } from "./connectionHandler.ts";
 import { log } from "./utils.ts";
-import { IRequest, Router } from "npm:itty-router@4.0.23";
+import { IRequest, Router } from "itty-router";
 import { handleAPI } from "./api/api.ts";
 
 // Load .env file. This needs to happen before other files run
@@ -31,15 +27,13 @@ Sentry.init({
 // HTTP request handler
 const router = Router<IRequest & { sensorID?: number }>();
 router
-	.all("/api/v1/*", handleAPI)
-	.get("/consume/:id/live", downloadErrorMiddleware, handleWebSockets)
+	.all("/api/v2/*", handleAPI)
+	.get("/consume/:id/live", handleWebSockets)
 	.all("/assets/*", (req) =>
 		serveDir(req, { fsRoot: "live-data-graphs/dist/assets", urlRoot: "assets" })
 	)
-	.get("/", downloadErrorMiddleware, (req) =>
-		serveFile(req, "live-data-graphs/dist/index.html")
-	)
-	.get("/consume/*", downloadErrorMiddleware, (req) =>
+	.get("/", (req) => serveFile(req, "live-data-graphs/dist/index.html"))
+	.get("/consume/*", (req) =>
 		serveFile(req, "live-data-graphs/dist/index.html")
 	);
 
@@ -66,6 +60,7 @@ Deno.serve(
 
 			return res;
 		} catch (err) {
+			Sentry.captureException(err);
 			log.error(`Error handling HTTP: `, err);
 			return new Response("Internal error", { status: 500 });
 		}

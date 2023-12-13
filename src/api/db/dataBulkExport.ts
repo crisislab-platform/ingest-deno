@@ -1,20 +1,17 @@
-import { IRequest } from "npm:itty-router@4.0.23/Router";
-import { getSensor } from "../connectionHandler.ts";
-import { getDB, log } from "../utils.ts";
-import {
-	serialiseToMiniSEEDUint8Array,
-	startTimeFromDate,
-} from "npm:miniseed@0.2.1";
+import { IRequest } from "itty-router";
+import { getDB, getSensor, log } from "../../utils.ts";
+import { serialiseToMiniSEEDUint8Array, startTimeFromDate } from "miniseed";
+import * as Sentry from "sentry";
 
 export async function dataBulkExport(req: IRequest) {
-	const sensorID = req.query["sensor_id"] as string;
+	const _sensorID = req.query["sensor_id"] as string;
 
 	const format = (req.query["format"] as string)?.toLowerCase();
 	const _channels = req.query["channels"] as string;
 	const _from = req.query["from"] as string;
 	const _to = req.query["to"] as string;
 
-	if (!sensorID)
+	if (!_sensorID)
 		return new Response("Specify a sensor to export from", {
 			status: 400,
 		});
@@ -57,7 +54,16 @@ export async function dataBulkExport(req: IRequest) {
 		});
 	}
 
-	const sensor = getSensor(sensorID);
+	let sensorID: number;
+	try {
+		sensorID = parseInt(_sensorID);
+	} catch {
+		return new Response("Please a valid sensor ID number", {
+			status: 400,
+		});
+	}
+
+	const sensor = await getSensor(sensorID);
 
 	if (!sensor)
 		return new Response("Couldn't find a sensor with that ID", {
@@ -69,7 +75,7 @@ export async function dataBulkExport(req: IRequest) {
 	switch (format) {
 		case "tsv1": {
 			const channelsQuerySegment = sql(channels);
-			const query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, data_values FROM sensor_data_3 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+			const query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 			const body = new ReadableStream({
 				start(controller) {
 					controller.enqueue(
@@ -92,6 +98,7 @@ export async function dataBulkExport(req: IRequest) {
 							controller.close();
 						})
 						.catch((err) => {
+							Sentry.captureException(err);
 							log.warn("Error streaming response: ", err);
 							controller.error(err);
 						});
@@ -101,7 +108,7 @@ export async function dataBulkExport(req: IRequest) {
 			// This is for the progress bar
 			const count = parseInt(
 				(
-					await sql`SELECT count(sensor_website_id) FROM sensor_data_3 WHERE sensor_website_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
+					await sql`SELECT count(*) FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
 				)[0]["count"]
 			);
 
@@ -129,7 +136,7 @@ export async function dataBulkExport(req: IRequest) {
 			const channel = channels[0];
 			// TODO: Limit time range
 
-			const query = sql`SELECT data_timestamp, data_values FROM sensor_data_3 WHERE sensor_website_id=${sensor.id} AND data_channel=${channel} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+			const query = sql`SELECT data_timestamp, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel=${channel} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 
 			const rows = await query.execute();
 
@@ -152,8 +159,8 @@ export async function dataBulkExport(req: IRequest) {
 					CRISiSLab: {
 						data_channel: channel,
 						sensor_website_id: sensor.id,
-						sensor_rs_station_id: sensor.meta.secondary_id,
-						sensor_type: sensor.meta.type,
+						sensor_rs_station_id: sensor.secondary_id,
+						sensor_type: sensor.type,
 					},
 				},
 				sampleRatePeriod: 100,

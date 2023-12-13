@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { getDB, log } from "./utils.ts";
 const shouldStore = Boolean(parseInt(Deno.env.get("SHOULD_STORE") || "0"));
-import * as Sentry from "npm:@sentry/node";
+import * as Sentry from "sentry";
 
 if (!shouldStore) {
 	log.info("SHOULD_STORE is false, exiting data writing worker");
@@ -26,23 +26,23 @@ async function flushBuffer() {
 
 	const toInsert = [];
 	for (const { sensorID, parsedData } of dbBufferCopy) {
-		const channel = parsedData[0];
-		const timestamp = parsedData[1];
+		const data_channel = parsedData[0];
+		const data_timestamp = parsedData[1];
 
-		const rawDataValues = parsedData.slice(2) as number[];
+		const data_values = parsedData.slice(2) as number[];
 
 		toInsert.push({
-			sensor_website_id: sensorID,
-			data_timestamp: timestamp,
-			data_channel: channel,
-			data_values: rawDataValues,
+			sensor_id: sensorID,
+			data_timestamp,
+			data_channel,
+			data_values,
 		});
 	}
 
 	if (toInsert.length > 0) {
-		await sql`INSERT INTO sensor_data_3 ${sql(
+		await sql`INSERT INTO sensor_data_4 ${sql(
 			toInsert,
-			"sensor_website_id",
+			"sensor_id",
 			"data_timestamp",
 			"data_channel",
 			"data_values"
@@ -56,15 +56,7 @@ self.addEventListener("message", (event: MessageEvent) => {
 	try {
 		if (dbBuffer.length >= 2500) flushBuffer();
 	} catch (err) {
-		log.warn("Error flushing buffer to DB: ", err);
 		Sentry.captureException(err);
+		log.warn("Error flushing buffer to DB: ", err);
 	}
 });
-
-try {
-	// These sometimes throw because timescale is being silly
-	await sql`ALTER TABLE sensor_data_3 SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_website_id');`;
-	await sql`SELECT add_compression_policy('sensor_data_3', INTERVAL '2 days', if_not_exists => TRUE);`;
-} catch (err) {
-	log.error(`Error setting up table: ${err}`);
-}
