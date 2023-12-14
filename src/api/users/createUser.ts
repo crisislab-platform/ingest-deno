@@ -19,7 +19,7 @@ export async function createUser(request: IRequest) {
 	const emailUsed =
 		(
 			await sql`SELECT count(*) FROM users WHERE email=${userData.email};`
-		)?.[0] ?? null;
+		)?.[0]?.["count"] ?? null;
 
 	if (emailUsed) return new Response("Email in use", { status: 400 });
 
