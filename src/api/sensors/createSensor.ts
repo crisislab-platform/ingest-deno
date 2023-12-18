@@ -36,5 +36,5 @@ export default async function createSensor(request: IRequest) {
 	];
 	log.info("Created sensor #" + id);
 
-	return json({ status: "ok" });
+	return json({ id });
 }
