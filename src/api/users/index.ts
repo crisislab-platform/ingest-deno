@@ -14,7 +14,7 @@ usersRouter
 	.get("/", authMiddleware("users:read"), listAll)
 	.post("/", authMiddleware("users:write"), createUser)
 	.get("/:email", authMiddleware("users:read"), getUserRoute)
-	.patch("/:email", authMiddleware("users:write"), updateUser)
+	.patch("/:id", authMiddleware("users:write"), updateUser)
 	.delete("/:email", authMiddleware("users:write"), deleteUser)
 	.get(
 		"/get-refresh-token/:email",

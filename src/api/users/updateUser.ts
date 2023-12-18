@@ -1,17 +1,21 @@
 import { IRequest, error, json } from "itty-router";
-import { getDB, log, validateEmail, getUserByEmail } from "../../utils.ts";
+import {
+	getDB,
+	log,
+	validateEmail,
+	getUserByEmail,
+	getUserByID,
+} from "../../utils.ts";
 import { User } from "../../types.ts";
 
 export async function updateUser(request: IRequest) {
-	const email = request.params.email;
+	const id = Number(request.params.id);
 	const data = (await request.json()) as Partial<User>;
 
-	if (!validateEmail(email)) return error(400, "Invalid email");
-
-	const oldData = await getUserByEmail(email);
+	const oldData = await getUserByID(id);
 
 	if (!oldData) {
-		return error(404, `User with email ${email} not found`);
+		return error(404, `User with id ${id} not found`);
 	}
 
 	log.info("oldData", oldData, "data", data);
@@ -20,6 +24,9 @@ export async function updateUser(request: IRequest) {
 		log.info("oldData is the same as new data");
 		return new Response("Nothing changed", { status: 400 });
 	}
+
+	if (data.email && !validateEmail(data.email))
+		return error(400, "Invalid email");
 
 	// Can't let them change the id
 	delete data["id"];
