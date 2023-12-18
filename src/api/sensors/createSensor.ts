@@ -9,7 +9,7 @@ import { PrivateSensorMeta } from "../../types.ts";
  */
 export default async function createSensor(request: IRequest) {
 	const data: PrivateSensorMeta = await request.json();
-
+	console.log(data);
 	if (!data.id || typeof data.id !== "number") {
 		return new Response("ID is required", {
 			status: 400,
