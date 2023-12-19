@@ -13,7 +13,17 @@ curl -fsSL https://deno.land/x/install/install.sh | sh
 > Deno v1.39.0 has been tested, no grantees for other versions
 
 Modify the .env file to have an API refresh token & the email associated with it, and the desired ports.
-Then run:
+
+Compile the graphing website:
+(this requires NodeJS 20+)
+
+```bash
+cd live-data-graphs
+npm install
+npm run build
+```
+
+To start the server
 
 ```bash
 deno run --allow-ffi --allow-net --allow-read --allow-env --allow-run --allow-sys src/server.ts
@@ -22,18 +32,11 @@ deno run --allow-ffi --allow-net --allow-read --allow-env --allow-run --allow-sy
 You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:
 
 ```bash
+git clone https://github.com/rs-Web-Interface-CRISiSLab/ingest-deno.git
 sudo cp ingest-deno.service /etc/systemd/system/ingest-deno.service
 sudo systemctl daemon-reload
 sudo systemctl enable ingest-deno.service
 sudo systemctl start ingest-deno.service
-```
-
-If you want to host the viewer as well, you need to build it:
-
-```bash
-cd live-data-graphs
-npm install
-npm run build
 ```
 
 You may need to install Node.js and npm first.
