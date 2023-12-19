@@ -10,22 +10,8 @@ import { PrivateSensorMeta } from "../../types.ts";
 export default async function createSensor(request: IRequest) {
 	const data: PrivateSensorMeta = await request.json();
 	console.log(data);
-	if (!data.id || typeof data.id !== "number") {
-		return new Response("ID is required", {
-			status: 400,
-		});
-	}
 
 	const sql = await getDB();
-
-	const exists =
-		(await sql`SELECT count(*) FROM sensors WHERE id=${data.id};`).length > 0;
-
-	if (exists) {
-		return new Response(`Sensor with id ${data.id} already exists`, {
-			status: 409,
-		});
-	}
 
 	if (data.location) {
 		data.public_location = randomizeLocation(data.location);
