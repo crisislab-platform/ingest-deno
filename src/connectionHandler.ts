@@ -2,7 +2,7 @@ import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
 import * as Sentry from "sentry";
 import "./types.ts";
 import { pack } from "msgpackr";
-import { getDB, log } from "./utils.ts";
+import { getDB, getDBSize, log } from "./utils.ts";
 import { IRequest } from "itty-router";
 import { ServerSensor, WithRequired, PrivateSensorMeta } from "./types.ts";
 
@@ -101,6 +101,13 @@ Offline: ${offline} (${nowOffline >= 0 ? "+" : ""}${nowOffline})`);
 	},
 	60 * 1000 // Every minute
 );
+
+// Every hour, save the DB size
+setInterval(async () => {
+	const sql = await getDB();
+	const size = await getDBSize();
+	await sql`INSERT INTO db_size ${sql({ size, timestamp: new Date() })}`;
+}, 60 * 60 * 1000);
 
 function getSensorFromCacheByID(
 	_sensorID: number | string

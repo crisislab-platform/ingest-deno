@@ -83,6 +83,20 @@ async function setupTables(sql: postgres.Sql) {
 	} catch (err) {
 		log.warn(`Error setting up table: ${err}`);
 	}
+	await sql`
+	CREATE TABLE IF NOT EXISTS db_size (
+		timestamp timestamptz NOT NULL,
+		size bigint NOT NULL
+	);
+	`;
+	await sql`SELECT create_hypertable('db_size','timestamp', if_not_exists => TRUE);`;
+	try {
+		// These sometimes throw because timescale is being silly
+		await sql`ALTER TABLE db_size SET (timescaledb.compress);`;
+		await sql`SELECT add_compression_policy('db_size', INTERVAL '2 days', if_not_exists => TRUE);`;
+	} catch (err) {
+		log.warn(`Error setting up table: ${err}`);
+	}
 }
 
 let dbConn: postgres.Sql | null = null;
@@ -162,6 +176,16 @@ export async function getUserByID(id: number): Promise<User | null> {
 		)?.[0] ?? null;
 
 	return user;
+}
+
+export async function getDBSize(): Promise<number> {
+	const sql = await getDB();
+
+	const size = Number(
+		(await sql`SELECT pg_database_size('sensor_data');`)[0].pg_database_size
+	);
+
+	return size;
 }
 
 export function randomizeLocation(
