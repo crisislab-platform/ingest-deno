@@ -10,11 +10,11 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
-		"@crisislab/timeline": "^0.8.2",
-		"msgpackr": "^1.9.9"
+		"@crisislab/timeline": "^0.8.3",
+		"msgpackr": "^1.10.1"
 	},
 	"devDependencies": {
-		"typescript": "^5.2.2",
-		"vite": "^5.0.0"
+		"typescript": "^5.3.3",
+		"vite": "^5.0.11"
 	}
 }
