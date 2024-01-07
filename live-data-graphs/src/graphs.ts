@@ -31,6 +31,9 @@ const aliases = {
 	ENN: "Y axis acceleration (m/s²)",
 	ENE: "X axis acceleration (m/s²)",
 	ENZ: "Z axis acceleration (m/s²)",
+	CLX: "X axis acceleration (m/s²)",
+	CLY: "Y axis acceleration (m/s²)",
+	CLZ: "Z axis acceleration (m/s²)",
 };
 let start;
 const maxDataLength = 1300;
