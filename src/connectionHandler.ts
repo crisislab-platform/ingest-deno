@@ -35,8 +35,7 @@ await updateSensorCache();
 // }
 
 // Every 2 minutes remove zombie websocket connections
-// Every 15 seconds update the in-memory sensor cache
-setInterval(() => {
+Deno.cron("Clear zombie websockets", "0 */2 * * * *", () => {
 	//Update cache
 	log.info("Clearing zombie WebSockets");
 
@@ -54,53 +53,48 @@ setInterval(() => {
 			}
 		}
 	}
-}, 2 * 60 * 1000);
+});
 
 // Every 15 seconds update the in-memory sensor cache
-setInterval(async () => {
+Deno.cron("Update in-memory cache", "*/15 * * * * *", async () => {
 	//Update cache
 	await updateSensorCache();
-}, 15 * 1000);
+});
 
 // Every minute, check all sensors to see if they've sent message in the last 10 seconds.
 // If not, set the sensor to offline
-setInterval(
-	async () => {
-		const sql = await getDB();
+Deno.cron("Check for offline sensors", "0 */1 * * * *", async () => {
+	const sql = await getDB();
 
-		// Then go through map
-		let nowOnline = 0;
-		let nowOffline = 0;
-		for (const sensor of ipToSensorMap.values()) {
-			// If no messages in the last 3 minutes, set it as offline
+	// Then go through map
+	let nowOnline = 0;
+	let nowOffline = 0;
+	for (const sensor of ipToSensorMap.values()) {
+		// If no messages in the last 3 minutes, set it as offline
+		if (
+			Date.now() - (sensor.lastMessageTimestamp || 0) >
+			3 * 60 * 1000 // 3 minutes
+		) {
 			if (
-				Date.now() - (sensor.lastMessageTimestamp || 0) >
-				3 * 60 * 1000 // 3 minutes
-			) {
-				if (
-					await updateSensorOnlineStatus({ sensorID: sensor.id, online: false })
-				)
-					nowOffline++;
-			} else {
-				if (
-					await updateSensorOnlineStatus({ sensorID: sensor.id, online: true })
-				)
-					nowOnline++;
-			}
+				await updateSensorOnlineStatus({ sensorID: sensor.id, online: false })
+			)
+				nowOffline++;
+		} else {
+			if (await updateSensorOnlineStatus({ sensorID: sensor.id, online: true }))
+				nowOnline++;
 		}
-		const online = (
-			await sql`SELECT count(online) FROM sensors WHERE online IS TRUE`
-		)?.[0]?.["count"];
-		const offline = (
-			await sql`SELECT count(online) FROM sensors WHERE online IS FALSE`
-		)?.[0]?.["count"];
+	}
+	const online = (
+		await sql`SELECT count(online) FROM sensors WHERE online IS TRUE`
+	)?.[0]?.["count"];
+	const offline = (
+		await sql`SELECT count(online) FROM sensors WHERE online IS FALSE`
+	)?.[0]?.["count"];
 
-		log.info(`Updated sensor connection statuses
+	log.info(`Updated sensor connection statuses
 Online:  ${online} (${nowOnline >= 0 ? "+" : ""}${nowOnline})
 Offline: ${offline} (${nowOffline >= 0 ? "+" : ""}${nowOffline})`);
-	},
-	60 * 1000 // Every minute
-);
+});
 
 function getSensorFromCacheByID(
 	_sensorID: number | string
