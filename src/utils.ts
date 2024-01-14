@@ -1,9 +1,16 @@
 import postgres from "postgresjs";
+import chalk from "chalk";
 import { PrivateSensorMeta, PublicSensorMeta, User } from "./types.ts";
 import * as Sentry from "sentry";
 
 function loggerTimeAndInfo(): string {
-	return `[${new Date().toISOString()}]`;
+	const inWorker =
+		typeof WorkerGlobalScope !== "undefined" &&
+		self instanceof WorkerGlobalScope;
+
+	return `[${chalk.cyan(new Date().toISOString())}] [${
+		inWorker ? chalk.magenta(self?.name ?? "WORKER") : chalk.yellow("MAIN")
+	}]`;
 }
 
 export const log = {

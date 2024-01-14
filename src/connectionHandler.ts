@@ -15,7 +15,7 @@ const dataWritingWorker = new Worker(
 	new URL("./dataWritingWorker.ts", import.meta.url).href,
 	{
 		type: "module",
-		name: "Data writing worker",
+		name: "DB Buff&Flush",
 	}
 );
 
