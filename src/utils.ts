@@ -98,6 +98,8 @@ export async function getDB(): Promise<postgres.Sql> {
 			database: "sensor_data",
 			hostname: "localhost",
 			port: 5432,
+			onnotice: (notice) =>
+				log.info("PostgreSQL notice:", notice?.message ?? notice),
 		});
 		log.info("Connected to database!");
 		await setupTables(sql);
