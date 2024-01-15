@@ -92,10 +92,9 @@ async function setupTables(sql: postgres.Sql) {
 			// These sometimes throw because timescale is being silly
 			await sql`ALTER TABLE sensor_data_4 SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_id');`;
 			await sql`SELECT add_compression_policy('sensor_data_4', INTERVAL '2 days', if_not_exists => TRUE);`;
-		} else
-			log.info(
-				"Compression already enabled on sensor_data_4. Skipping step..."
-			);
+		} else {
+			log.info("Compression already enabled on sensor_data_4.");
+		}
 	} catch (err) {
 		log.warn(`Error setting up table: ${err}`);
 	}
@@ -119,6 +118,7 @@ export async function getDB(): Promise<postgres.Sql> {
 		});
 		log.info("Connected to database!");
 		await setupTables(sql);
+		log.info("Set up tables!");
 		dbConn = sql;
 		return sql;
 	} catch (err) {
