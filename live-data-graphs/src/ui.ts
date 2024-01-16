@@ -82,3 +82,29 @@ export function formatTime(time: number, long = false): string {
 export function round(n: number): number {
 	return Math.round((n + Number.EPSILON) * 10000) / 10000;
 }
+
+export function sortChannels() {
+	if (!["id", "display"].includes(window.CRISiSLab.sortChannels ?? ""))
+		return;
+
+	// DOM sorting based on https://stackoverflow.com/a/50127768
+
+	// Typescript wasn't happy with me using spread syntax ([...thingy]) here
+	(Array.from(chartsContainer.children) as HTMLElement[])
+		.sort((a, b) => {
+			if (window.CRISiSLab.sortChannels === "id") {
+				return (a.getAttribute("data-channel-id") ?? "") >
+					(b.getAttribute("data-channel-id") ?? "")
+					? 1
+					: -1;
+			} else if (window.CRISiSLab.sortChannels === "display") {
+				return (a.getAttribute("data-channel-display") ?? "") >
+					(b.getAttribute("data-channel-display") ?? "")
+					? 1
+					: -1;
+			}
+			return 0;
+		})
+		// When an child element is re-appended to a parent, it is moved instead: https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild#description
+		.forEach((node) => chartsContainer.appendChild(node));
+}

@@ -21,6 +21,7 @@ declare global {
 			connected: boolean;
 			haveRenderedPacket: boolean;
 			hideHoverInspector: boolean;
+			sortChannels: string | null;
 			wsURL: string | null;
 			sensorID: string | null;
 			connectionAttempts: number;
@@ -50,6 +51,7 @@ window.CRISiSLab = {
 	hideHoverInspector:
 		new URLSearchParams(location.search).get("hide-hover-inspector") ===
 		"yes",
+	sortChannels: new URLSearchParams(location.search).get("sort-channels"),
 	// For debugging in console
 	unpack,
 	charts: {},

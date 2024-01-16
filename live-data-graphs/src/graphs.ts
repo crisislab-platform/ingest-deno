@@ -15,6 +15,7 @@ import {
 	formatTime,
 	round,
 	showMessage,
+	sortChannels,
 } from "./ui";
 import { SensorVariety } from "./main";
 
@@ -75,6 +76,10 @@ export function handleData(packet: Datagram) {
 
 		const yLabel = aliases[channel as keyof typeof aliases] || channel;
 
+		// For sorting
+		container.setAttribute("data-channel-id", channel);
+		container.setAttribute("data-channel-display", yLabel);
+
 		const chart = new TimeLine({
 			container,
 			data: window.CRISiSLab.data[channel],
@@ -106,6 +111,8 @@ export function handleData(packet: Datagram) {
 		window.CRISiSLab.charts[channel] = chart;
 
 		container.style.opacity = "1";
+
+		sortChannels();
 	}
 
 	for (const i of measurements) {
