@@ -87,10 +87,19 @@ export function handleData(packet: Datagram) {
 			xLabel: "Time",
 			yLabel,
 			plugins: [
-				xAxisPlugin(formatTime),
-				yAxisPlugin((y) => round(y) + ""),
+				xAxisPlugin(formatTime, 5),
+				yAxisPlugin(
+					(y) => round(y) + "",
+					5,
+					window.CRISiSLab.yAxisSide,
+				),
 				doubleClickCopyPlugin("closest-x"),
-				axisLabelPlugin(false, true),
+				axisLabelPlugin(
+					false,
+					true,
+					"bottom",
+					window.CRISiSLab.yAxisSide,
+				),
 				!window.CRISiSLab.hideHoverInspector &&
 					pointerCrosshairPlugin(),
 				!window.CRISiSLab.hideHoverInspector &&

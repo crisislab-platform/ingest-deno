@@ -26,6 +26,7 @@ declare global {
 			sensorID: string | null;
 			connectionAttempts: number;
 			sampleGaps: Record<string, number>;
+			yAxisSide: "left" | "right";
 			sensorMeta: null | {
 				online?: boolean;
 				type?: string;
@@ -52,6 +53,10 @@ window.CRISiSLab = {
 		new URLSearchParams(location.search).get("hide-hover-inspector") ===
 		"yes",
 	sortChannels: new URLSearchParams(location.search).get("sort-channels"),
+	yAxisSide:
+		(new URLSearchParams(location.search).get("y-axis-side") as
+			| "left"
+			| "right") ?? "left",
 	// For debugging in console
 	unpack,
 	charts: {},
