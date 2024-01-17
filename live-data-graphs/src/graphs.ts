@@ -112,7 +112,7 @@ export function handleData(packet: Datagram) {
 					),
 				{
 					construct(chart) {
-						chart.padding.left += 20;
+						chart.padding[window.CRISiSLab.yAxisSide] += 20;
 					},
 				},
 			],
