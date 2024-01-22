@@ -136,7 +136,9 @@ export async function dataBulkExport(req: IRequest) {
 			const channel = channels[0];
 			// TODO: Limit time range
 
-			const query = sql`SELECT data_timestamp, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel=${channel} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+			const query = sql<
+				{ data_timestamp: Date; data_values: number[] }[]
+			>`SELECT data_timestamp, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel=${channel} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 
 			const rows = await query.execute();
 
@@ -147,7 +149,17 @@ export async function dataBulkExport(req: IRequest) {
 
 			const startTime: Date = rows[0].data_timestamp;
 
-			// TODO: Check for gaps
+			// Filling gaps
+
+			const firstTimeGap =
+				rows[1].data_timestamp.getTime() - rows[0].data_timestamp.getTime();
+
+			log.info("First time gap:", firstTimeGap);
+
+			let prevTime: Date = rows[1].data_timestamp;
+
+			for (let i = 1; i < rows.length; i++) {}
+
 			const data = rows.flatMap((row) => row.data_values);
 
 			// TODO: Change to a proper FDSN network code when we have a station ID
