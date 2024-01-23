@@ -35,7 +35,8 @@ router
 	.get("/", (req) => serveFile(req, "live-data-graphs/dist/index.html"))
 	.get("/consume/*", (req) =>
 		serveFile(req, "live-data-graphs/dist/index.html")
-	);
+	)
+	.get("/status", () => new Response("HTTP works at least"));
 
 const httpPort = Number(Deno.env.get("HTTP_PORT") || 8080);
 // The .unref() is important so that we can also run a datagram listener
