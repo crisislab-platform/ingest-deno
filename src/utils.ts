@@ -2,6 +2,7 @@ import postgres from "postgresjs";
 import chalk from "chalk";
 import { PrivateSensorMeta, PublicSensorMeta, User } from "./types.ts";
 import * as Sentry from "sentry";
+import process from "https://deno.land/std@0.132.0/node/process.ts";
 
 function loggerTimeAndInfo(): string {
 	const inWorker =
@@ -100,9 +101,10 @@ async function setupTables(sql: postgres.Sql) {
 	}
 }
 
-let dbConn: postgres.Sql | null = null;
+let conOpen = false;
+let dbCon: postgres.Sql | null = null;
 export async function getDB(): Promise<postgres.Sql> {
-	if (dbConn !== null) return dbConn;
+	if (dbCon !== null && conOpen) return dbCon;
 
 	try {
 		log.info("Connecting to database...");
@@ -117,9 +119,14 @@ export async function getDB(): Promise<postgres.Sql> {
 				log.info("PostgreSQL notice:", notice?.message ?? notice),
 		});
 		log.info("Connected to database!");
+		conOpen = true;
 		await setupTables(sql);
 		log.info("Set up tables!");
-		dbConn = sql;
+		dbCon = sql;
+		process.on("exit", async () => {
+			await dbCon?.end();
+			conOpen = false;
+		});
 		return sql;
 	} catch (err) {
 		Sentry.captureException(err);
@@ -229,7 +236,8 @@ export async function getSensor(
 }
 
 export async function exit(code?: number) {
-	await dbConn?.end();
+	await dbCon?.end();
+	conOpen = false;
 	Deno.exit(code);
 }
 
