@@ -3,7 +3,7 @@ import "./graphs";
 import { pauseButton, showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
 import { handleData } from "./graphs";
-import type { TimeLine } from "@crisislab/timeline";
+import type { TimeLine, TimeLineDataPoint } from "@crisislab/timeline";
 
 export enum SensorVariety {
 	Unknown,
@@ -34,7 +34,7 @@ declare global {
 			};
 			sensorVariety: SensorVariety;
 			charts: Record<string, TimeLine>;
-			data: Record<string, Array<{ x: number; y: number }>>;
+			data: Record<string, Array<TimeLineDataPoint>>;
 		};
 	}
 }

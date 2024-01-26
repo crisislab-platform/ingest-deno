@@ -1,7 +1,7 @@
 import {
 	TimeLine,
-	xAxisPlugin,
-	yAxisPlugin,
+	timeAxisPlugin,
+	valueAxisPlugin,
 	axisLabelPlugin,
 	doubleClickCopyPlugin,
 	pointerCrosshairPlugin,
@@ -37,7 +37,8 @@ const aliases = {
 	// CLZ: "Z axis acceleration (m/s²)",
 };
 let start;
-const maxDataLength = 1300;
+const maxDataLength = 5000;
+const timeWindow = 30 * 1000; // 30 seconds
 
 const firstPackets: Record<string, Datagram> = {};
 
@@ -74,21 +75,22 @@ export function handleData(packet: Datagram) {
 		container.id = channel;
 		chartsContainer.appendChild(container);
 
-		const yLabel = aliases[channel as keyof typeof aliases] || channel;
+		const valueAxisLabel =
+			aliases[channel as keyof typeof aliases] || channel;
 
 		// For sorting
 		container.setAttribute("data-channel-id", channel);
-		container.setAttribute("data-channel-display", yLabel);
+		container.setAttribute("data-channel-display", valueAxisLabel);
 
 		const chart = new TimeLine({
 			container,
 			data: window.CRISiSLab.data[channel],
-			maxPoints: maxDataLength,
-			xLabel: "Time",
-			yLabel,
+			timeWindow,
+			timeAxisLabel: "Time",
+			valueAxisLabel,
 			plugins: [
-				xAxisPlugin(formatTime, 5),
-				yAxisPlugin(
+				timeAxisPlugin(formatTime, 5),
+				valueAxisPlugin(
 					(y) => round(y) + "",
 					5,
 					window.CRISiSLab.yAxisSide,
@@ -136,8 +138,8 @@ export function handleData(packet: Datagram) {
 			value = value / 3.845e5;
 		}
 		window.CRISiSLab.data[channel].push({
-			x: timestamp + current[channel],
-			y: value,
+			time: timestamp + current[channel],
+			value,
 		});
 		current[channel] += window.CRISiSLab.sampleGaps[channel]!;
 
