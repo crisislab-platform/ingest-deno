@@ -36,7 +36,11 @@ export const log = {
 /**
  * Simplify setup by autogenerate tables
  */
-async function setupTables(sql: postgres.Sql) {
+export async function setupTables() {
+	log.info("Setting up tables...");
+	await using sql = getDB();
+
+
 	// Setup timescale first so we fail fast if it isn't here
 	await sql`CREATE EXTENSION IF NOT EXISTS timescaledb;`;
 
@@ -106,15 +110,15 @@ async function setupTables(sql: postgres.Sql) {
         "timestamp" timestamptz
     );
 	`;
+
+	log.info("Set up tables!");
 }
 
-let conOpen = false;
-let dbCon: postgres.Sql | null = null;
-export async function getDB(): Promise<postgres.Sql> {
-	if (dbCon !== null && conOpen) return dbCon;
-
+export type DisposableSQL = postgres.Sql & { [Symbol.asyncDispose]: () => Promise<void> };
+const dbConns: DisposableSQL[] = [];
+let firstCon = true;
+export function getDB(): DisposableSQL {
 	try {
-		log.info("Connecting to database...");
 		// Connect with credentials from env
 		const sql = postgres({
 			user: Deno.env.get("DATABASE_USERNAME"),
@@ -124,16 +128,22 @@ export async function getDB(): Promise<postgres.Sql> {
 			port: 5432,
 			onnotice: (notice) =>
 				log.info("PostgreSQL notice:", notice?.message ?? notice),
-		});
-		log.info("Connected to database!");
-		conOpen = true;
-		await setupTables(sql);
-		log.info("Set up tables!");
-		dbCon = sql;
+		}) as DisposableSQL;
+		sql[Symbol.asyncDispose] = async () => {
+			log.info("Closing database connection...")
+			await sql?.end();
+		};
+		dbConns.push(sql);
+
 		process.on("exit", async () => {
-			await dbCon?.end();
-			conOpen = false;
+			await sql?.end();
 		});
+
+		if (firstCon) {
+			firstCon = false;
+			setupTables();
+		}
+
 		return sql;
 	} catch (err) {
 		Sentry.captureException(err);
@@ -151,7 +161,7 @@ export async function getDB(): Promise<postgres.Sql> {
  * Get a user from an email address. Returns null if no user was found.
  */
 export async function getUserByEmail(email: string): Promise<User | null> {
-	const sql = await getDB();
+	await using sql = getDB();
 
 	const user: User | null =
 		(
@@ -186,7 +196,7 @@ function normaliseSensor(sensor: PublicSensorMeta | PrivateSensorMeta) {
  * Get a user from an ID. Returns null if no user was found.
  */
 export async function getUserByID(id: number): Promise<User | null> {
-	const sql = await getDB();
+	await using sql = getDB();
 
 	const user: User | null =
 		(
@@ -223,7 +233,7 @@ export async function getSensor(
 ): Promise<PublicSensorMeta | PrivateSensorMeta> {
 	unfiltered ??= true;
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	if (unfiltered) {
 		const sensor = (
@@ -243,8 +253,7 @@ export async function getSensor(
 }
 
 export async function exit(code?: number) {
-	await dbCon?.end();
-	conOpen = false;
+	await Promise.allSettled(dbConns.map((conn) => conn?.end()));
 	Deno.exit(code);
 }
 
@@ -263,7 +272,7 @@ export async function getSensors(
 ): Promise<Record<string, PublicSensorMeta | PrivateSensorMeta>> {
 	unfiltered ??= true;
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	let sensors;
 	if (unfiltered) {

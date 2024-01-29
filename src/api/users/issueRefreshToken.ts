@@ -10,7 +10,7 @@ export async function issueRefreshToken({ params }: IRequest) {
 		return new Response("Invalid email", { status: 404 });
 	}
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	// Generate a token
 	const tokenValues = new Int32Array(128);

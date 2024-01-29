@@ -30,7 +30,7 @@ export default async function updateSensor(request: IRequest) {
 		data.public_location = randomizeLocation(data.location);
 	}
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	await sql`UPDATE sensors SET ${sql(data)} WHERE id=${id};`;
 

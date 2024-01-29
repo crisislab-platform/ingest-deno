@@ -5,7 +5,7 @@ import { getDB } from "../../utils.ts";
 export default async function randomizeSensors(req: IRequest) {
 	const randomizeAll = req.query.all === "true";
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	let sensorLocations: { location: [number, number]; id: number }[];
 	if (randomizeAll) {

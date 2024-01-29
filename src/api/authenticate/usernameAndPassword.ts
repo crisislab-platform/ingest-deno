@@ -22,7 +22,7 @@ export default async function usernameAndPassword(request: IRequest) {
 		return new Response("Bad request", { status: 400 });
 	}
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	const hash = (
 		await sql<{ hash: string }[]>`SELECT hash FROM users WHERE email=${email}`

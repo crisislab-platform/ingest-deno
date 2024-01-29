@@ -19,7 +19,7 @@ export async function refreshToken(req: IRequest) {
 	if (suppliedRefreshToken.length + email.length === 0)
 		return new Response("Bad request", { status: 400 });
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	const actualRefreshToken = (
 		await sql<

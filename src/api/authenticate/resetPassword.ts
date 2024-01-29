@@ -8,7 +8,7 @@ import { getDB } from "../../utils.ts";
 export default async function resetPassword(request: IRequest) {
 	const { password } = await request.json();
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	const email = request.user.email;
 

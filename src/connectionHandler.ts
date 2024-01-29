@@ -66,7 +66,7 @@ setInterval(async () => {
 // If not, set the sensor to offline
 setInterval(
 	async () => {
-		const sql = await getDB();
+		await using sql = getDB();
 
 		// Then go through map
 		let nowOnline = 0;
@@ -140,7 +140,7 @@ async function updateSensorOnlineStatus({
 	if (sensor.meta.online === online) return false;
 
 	try {
-		const sql = await getDB();
+		await using sql = getDB();
 
 		await sql`UPDATE sensors SET ${sql({
 			status_change_timestamp: sensor.lastMessageTimestamp ?? Date.now(),
@@ -160,7 +160,9 @@ async function updateSensorOnlineStatus({
 
 // Update in-memory cache of sensors
 async function updateSensorCache() {
-	const sql = await getDB();
+
+	await using sql = getDB();
+
 	const sensors = await sql<
 		WithRequired<PrivateSensorMeta, "ip">[]
 	>`SELECT DISTINCT ON (ip) * FROM sensors WHERE ip IS NOT NULL;`;

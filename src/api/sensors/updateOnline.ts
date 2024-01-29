@@ -31,7 +31,7 @@ export default async function setOnline(request: Request): Promise<Response> {
 		}`
 	);
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	const oldSensor = (
 		await sql<{ online?: boolean }[]>`SELECT online FROM sensors WHERE id=${id}`

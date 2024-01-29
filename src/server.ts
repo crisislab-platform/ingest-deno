@@ -25,7 +25,7 @@ Sentry.init({
 // At 9am and 9pm every day,
 // save DB size
 Deno.cron("Save DB size", "0 9,21 * * *", async () => {
-	const sql = await getDB();
+	await using sql = getDB();
 	try {
 		const dbSize = (await sql`SELECT pg_database_size('sensor_data');`)[0]
 			.pg_database_size as number;

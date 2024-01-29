@@ -11,7 +11,7 @@ export default async function createSensor(request: IRequest) {
 	const data: PrivateSensorMeta = await request.json();
 	console.log(data);
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	if (data.location) {
 		data.public_location = randomizeLocation(data.location);

@@ -70,7 +70,7 @@ export async function dataBulkExport(req: IRequest) {
 			status: 404,
 		});
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	switch (format) {
 		case "tsv1": {

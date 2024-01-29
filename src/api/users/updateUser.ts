@@ -31,7 +31,7 @@ export async function updateUser(request: IRequest) {
 	// Can't let them change the id
 	delete data["id"];
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	await sql`UPDATE users SET ${sql(data)} WHERE id=${oldData["id"]};`;
 

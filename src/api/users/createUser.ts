@@ -14,7 +14,7 @@ export async function createUser(request: IRequest) {
 		return new Response("Invalid", { status: 404 });
 	}
 
-	const sql = await getDB();
+	await using sql = getDB();
 
 	const emailUsed =
 		(

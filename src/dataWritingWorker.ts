@@ -10,7 +10,7 @@ if (!shouldStore) {
 
 log.info("SHOULD_STORE is true, setting up database");
 
-const sql = await getDB();
+await using sql = getDB();
 
 // log.info("Database connected: ", dbClient.connected);
 
