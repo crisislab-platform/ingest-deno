@@ -89,9 +89,14 @@ export function handleData(packet: Datagram) {
 			timeAxisLabel: "Time",
 			valueAxisLabel,
 			plugins: [
-				timeAxisPlugin(formatTime, 5),
+				timeAxisPlugin(undefined, 5),
 				valueAxisPlugin(
-					(y) => round(y) + "",
+					(y) => {
+						const rounded = round(y);
+						const fixed = rounded.toFixed(2);
+						if (fixed.length > 3) return rounded + "";
+						return fixed;
+					},
 					5,
 					window.CRISiSLab.yAxisSide,
 				),
