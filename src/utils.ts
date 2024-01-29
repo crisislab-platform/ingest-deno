@@ -92,7 +92,7 @@ async function setupTables(sql: postgres.Sql) {
 		) {
 			// These sometimes throw because timescale is being silly
 			await sql`ALTER TABLE sensor_data_4 SET (timescaledb.compress, timescaledb.compress_segmentby = 'sensor_id');`;
-			await sql`SELECT add_compression_policy('sensor_data_4', INTERVAL '2 days', if_not_exists => TRUE);`;
+			await sql`SELECT add_compression_policy('sensor_data_4', INTERVAL '12 hours', if_not_exists => TRUE);`;
 		} else {
 			log.info("Compression already enabled on sensor_data_4.");
 		}
