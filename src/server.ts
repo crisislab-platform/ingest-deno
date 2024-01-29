@@ -5,7 +5,7 @@ import {
 } from "https://deno.land/std@0.204.0/http/file_server.ts";
 import * as Sentry from "sentry";
 import { sensorHandler, handleWebSockets } from "./connectionHandler.ts";
-import { log } from "./utils.ts";
+import { getDB, log } from "./utils.ts";
 import { IRequest, Router } from "itty-router";
 import { handleAPI } from "./api/api.ts";
 
@@ -20,6 +20,26 @@ Sentry.init({
 	tracesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
 	debug: devMode,
 	environment: devMode ? "dev" : "prod",
+});
+
+// At 9am and 9pm every day,
+// save DB size
+Deno.cron("Save DB size", "0 9,21 * * *", async () => {
+	const sql = await getDB();
+	try {
+		const dbSize = (await sql`SELECT pg_database_size('sensor_data');`)[0]
+			.pg_database_size as number;
+
+		await sql`INSERT INTO db_size_history ${sql({
+			size: dbSize,
+			timestamp: new Date(),
+		})};`;
+		log.info("Saved DB size:", dbSize);
+	} catch (err) {
+		log.error("Error saving DB size:", err);
+	} finally {
+		await sql.end();
+	}
 });
 
 // Imports

@@ -99,6 +99,13 @@ async function setupTables(sql: postgres.Sql) {
 	} catch (err) {
 		log.warn(`Error setting up table: ${err}`);
 	}
+	// Stats for graphing db size over time
+	await sql`
+	CREATE TABLE IF NOT EXISTS db_size_history (
+        "size" bigint,
+        "timestamp" timestamptz
+    );
+	`;
 }
 
 let conOpen = false;
