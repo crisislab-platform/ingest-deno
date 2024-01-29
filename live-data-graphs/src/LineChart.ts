@@ -16,7 +16,7 @@ export class LineChart {
 		container.style.margin = "0";
 		container.style.boxSizing = "border-box";
 		container.style.whiteSpace = "nowrap";
-		container.style.overflow = "scroll";
+		container.style.overflow = "auto";
 
 		container.classList.add("linefont");
 
