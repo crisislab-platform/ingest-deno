@@ -2,8 +2,7 @@ import { unpack } from "msgpackr";
 import "./graphs";
 import { pauseButton, showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
-import { handleData } from "./graphs";
-import type { TimeLine, TimeLineDataPoint } from "@crisislab/timeline";
+import { handleData, LineChart } from "./graphs";
 
 export enum SensorVariety {
 	Unknown,
@@ -33,8 +32,8 @@ declare global {
 				[key: string]: any;
 			};
 			sensorVariety: SensorVariety;
-			charts: Record<string, TimeLine>;
-			data: Record<string, Array<TimeLineDataPoint>>;
+			charts: Record<string, LineChart>;
+			data: Record<string, Array<{ time: number; value: number }>>;
 		};
 	}
 }
@@ -91,11 +90,3 @@ else {
 	}
 	connectSocket(handleData);
 }
-
-function draw() {
-	requestAnimationFrame(draw);
-	for (const chart of Object.values(window.CRISiSLab.charts)) {
-		chart.draw();
-	}
-}
-draw();

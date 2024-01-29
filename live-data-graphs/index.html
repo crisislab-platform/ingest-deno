@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-NZ">
+<html lang="en-NZ" dir="rtl">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -87,11 +87,25 @@
 				font-size: 10px !important;
 				height: max-content;
 			}
+
+			@font-face {
+				font-family: linefont;
+				font-display: block;
+				src: url(/Linefont[wdth\,wght].woff2) format("woff2");
+			}
+			.linefont {
+				--wght: 100;
+				--wdth: 50;
+				font-family: linefont;
+				font-variation-settings: "wght" var(--wght), "wdth" var(--wdth);
+				font-size: 50pt;
+				color: black;
+			}
 		</style>
 	</head>
 
-	<body>
-		<div id="charts-container"></div>
+	<body width="100%">
+		<div id="charts-container" width="100%"></div>
 		<h1 id="status">Connecting...</h1>
 		<div id="controls">
 			<button id="pause" disabled>Pause</button>

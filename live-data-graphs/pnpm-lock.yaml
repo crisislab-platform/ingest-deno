@@ -5,9 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
-  '@crisislab/timeline':
-    specifier: ^0.9.0
-    version: 0.9.0
   msgpackr:
     specifier: ^1.10.1
     version: 1.10.1
@@ -21,10 +18,6 @@ devDependencies:
     version: 5.0.12
 
 packages:
-
-  /@crisislab/timeline@0.9.0:
-    resolution: {integrity: sha512-3aey15Wy9rtfvmOQzneN4+IgIikMTnUubEbF/LZXceKBW+uMzr8ZNH3SOzZnFd+oWRGFmcJAlWHNRvaL5L/zHA==}
-    dev: false
 
   /@esbuild/aix-ppc64@0.19.11:
     resolution: {integrity: sha512-FnzU0LyE3ySQk7UntJO4+qIiQgI7KoODnZg5xzXIrFJlKd2P2gwHsHY4927xj9y5PJmJSzULiUCWmv7iWnNa7g==}

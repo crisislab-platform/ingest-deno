@@ -1,14 +1,4 @@
 import {
-	TimeLine,
-	timeAxisPlugin,
-	valueAxisPlugin,
-	axisLabelPlugin,
-	doubleClickCopyPlugin,
-	pointerCrosshairPlugin,
-	nearestPointInfoPopupPlugin,
-	highlightNearestPointPlugin,
-} from "@crisislab/timeline";
-import {
 	hideMessages,
 	reloadButton,
 	chartsContainer,
@@ -18,7 +8,7 @@ import {
 	sortChannels,
 } from "./ui";
 import { SensorVariety } from "./main";
-
+import { LineChart } from "./LineChart";
 export type Datagram = [string, number, ...number[]];
 
 // Graphs
@@ -38,7 +28,6 @@ const aliases = {
 };
 let start;
 const maxDataLength = 5000;
-const timeWindow = 30 * 1000; // 30 seconds
 
 const firstPackets: Record<string, Datagram> = {};
 
@@ -81,44 +70,9 @@ export function handleData(packet: Datagram) {
 		// For sorting
 		container.setAttribute("data-channel-id", channel);
 		container.setAttribute("data-channel-display", valueAxisLabel);
+		container.setAttribute("class", "linefont");
 
-		const chart = new TimeLine({
-			container,
-			data: window.CRISiSLab.data[channel],
-			timeWindow,
-			timeAxisLabel: "Time",
-			valueAxisLabel,
-			plugins: [
-				timeAxisPlugin(formatTime, 5),
-				valueAxisPlugin(
-					(y) => round(y) + "",
-					5,
-					window.CRISiSLab.yAxisSide,
-				),
-				doubleClickCopyPlugin("closest-x"),
-				axisLabelPlugin(
-					false,
-					true,
-					"bottom",
-					window.CRISiSLab.yAxisSide,
-				),
-				!window.CRISiSLab.hideHoverInspector &&
-					pointerCrosshairPlugin(),
-				!window.CRISiSLab.hideHoverInspector &&
-					highlightNearestPointPlugin("closest-x"),
-				!window.CRISiSLab.hideHoverInspector &&
-					nearestPointInfoPopupPlugin(
-						formatTime,
-						(y) => round(y) + "",
-						"closest-x",
-					),
-				{
-					construct(chart) {
-						chart.padding[window.CRISiSLab.yAxisSide] += 20;
-					},
-				},
-			],
-		});
+		const chart = new LineChart(container, window.CRISiSLab.data[channel]);
 		window.CRISiSLab.charts[channel] = chart;
 
 		container.style.opacity = "1";
