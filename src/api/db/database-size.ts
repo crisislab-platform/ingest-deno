@@ -1,4 +1,5 @@
 import { getDB } from "../../utils.ts";
+import { json } from "itty-router";
 
 export async function databaseSize() {
 	const sql = await getDB();
@@ -15,7 +16,7 @@ export async function databaseSizeHistory() {
 		{ size: number; timestamp: Date }[]
 	>`SELECT size, timestamp FROM db_size_history;`;
 
-	return new Response(
-		sizes.map((s) => `${s.timestamp.toISOString()}	${s.size}`).join("\n")
+	return json(
+		sizes.map((s) => ({ time: s.timestamp.toISOString(), size: s.size }))
 	);
 }
