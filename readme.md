@@ -26,7 +26,7 @@ npm run build
 To start the server
 
 ```bash
-deno run --allow-ffi --allow-net --allow-read --allow-env --allow-run --allow-sys src/server.ts
+deno run --allow-ffi --allow-net --allow-read --allow-env --allow-run --allow-sys --unstable-cron src/server.ts
 ```
 
 You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:
