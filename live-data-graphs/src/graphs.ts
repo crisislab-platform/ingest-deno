@@ -133,15 +133,20 @@ export function handleData(packet: Datagram) {
 
 	for (const i of measurements) {
 		let value = i;
+
+		// If we have a formula, use it to convert that sensor's counts into m/s²
 		if (
-			// If the sensor is a raspberry shake
 			window.CRISiSLab.sensorVariety === SensorVariety.RaspberryShake &&
-			// and the channel is an accelerometer
 			channel.startsWith("EN")
 		) {
 			// Magic number to convert from counts to m/s^2
 			value = value / 3.845e5;
 		}
+
+		if (window.CRISiSLab.sensorVariety === SensorVariety.CRISiSLab) {
+			value = (value - 900) / 40.9;
+		}
+
 		window.CRISiSLab.data[channel].push({
 			time: timestamp + current[channel],
 			value,
