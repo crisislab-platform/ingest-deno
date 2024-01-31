@@ -97,7 +97,7 @@ async function setupTables(sql: postgres.Sql) {
 			log.info("Compression already enabled on sensor_data_4.");
 		}
 	} catch (err) {
-		log.warn(`Error setting up table: ${err}`);
+		log.warn(`Error setting up sensor_data_4: ${err}`);
 	}
 	// Stats for graphing db size over time
 	await sql`

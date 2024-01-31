@@ -22,9 +22,8 @@ Sentry.init({
 	environment: devMode ? "dev" : "prod",
 });
 
-// At 9am and 9pm every day,
-// save DB size
-Deno.cron("Save DB size", "0 9,21 * * *", async () => {
+// Every hour, save DB size
+Deno.cron("Save DB size", "0 */1 * * *", async () => {
 	const sql = await getDB();
 	try {
 		await sql`WITH subquery AS (SELECT pg_database_size('sensor_data') as size, NOW() as timestamp) INSERT INTO db_size_history (size, timestamp) SELECT * FROM subquery;`;
