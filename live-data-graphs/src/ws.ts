@@ -75,12 +75,15 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 		} else if (parsed?.type === "sensor-meta") {
 			window.CRISiSLab.sensorMeta = parsed?.data;
 
-			if (
-				window.CRISiSLab.sensorMeta?.type
-					?.toLowerCase()
-					?.includes("raspberry")
-			) {
+			const sensorType =
+				window.CRISiSLab.sensorMeta?.type?.toLowerCase()?.trim() ?? "";
+
+			if (sensorType.includes("raspberry")) {
 				window.CRISiSLab.sensorVariety = SensorVariety.RaspberryShake;
+			}
+
+			if (sensorType.includes("crisislab")) {
+				window.CRISiSLab.sensorVariety = SensorVariety.CRISiSLab;
 			}
 
 			if (window.CRISiSLab.sensorMeta?.online !== true) {

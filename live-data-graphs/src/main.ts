@@ -6,10 +6,9 @@ import { handleData } from "./graphs";
 import type { TimeLine, TimeLineDataPoint } from "@crisislab/timeline";
 
 export enum SensorVariety {
-	Unknown,
+	Other,
 	RaspberryShake,
-	Palert,
-	CSI,
+	CRISiSLab,
 }
 
 declare global {
@@ -48,7 +47,7 @@ window.CRISiSLab = {
 	connectionAttempts: 0,
 	sampleGaps: {},
 	sensorMeta: null,
-	sensorVariety: SensorVariety.Unknown,
+	sensorVariety: SensorVariety.Other,
 	hideHoverInspector:
 		new URLSearchParams(location.search).get("hide-hover-inspector") ===
 		"yes",
