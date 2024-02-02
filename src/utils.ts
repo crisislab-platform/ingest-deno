@@ -2,6 +2,7 @@ import postgres from "postgresjs";
 import chalk from "chalk";
 import { loadSync as loadENV } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
 import { PrivateSensorMeta, PublicSensorMeta, User } from "./types.ts";
+import process from "https://deno.land/std@0.132.0/node/process.ts";
 
 loadENV({ export: true });
 
@@ -33,6 +34,10 @@ export const log = {
 		console.error(loggerTimeAndInfo(), ...data);
 	},
 };
+
+process.on("exit", (code) => {
+	log.warn("Exiting with code ", code);
+});
 
 /**
  * Simplify setup by autogenerate tables
