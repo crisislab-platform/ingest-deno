@@ -8,6 +8,8 @@ import { sensorHandler, handleWebSockets } from "./connectionHandler.ts";
 import { getDB, log } from "./utils.ts";
 import { IRequest, Router } from "itty-router";
 import { handleAPI } from "./api/api.ts";
+
+// Load .env file. This needs to happen before other files run
 loadENV({ export: true });
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 
