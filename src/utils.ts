@@ -37,9 +37,7 @@ export const log = {
 /**
  * Simplify setup by autogenerate tables
  */
-async function setupTables() {
-	const sql = await getDB();
-
+async function setupTables(sql: postgres.Sql) {
 	// Setup timescale first so we fail fast if it isn't here
 	await sql`CREATE EXTENSION IF NOT EXISTS timescaledb;`;
 
@@ -125,7 +123,7 @@ let setup = false;
 export async function getDB(): Promise<postgres.Sql> {
 	if (!setup) {
 		log.info("Setting up database tables...");
-		await setupTables();
+		await setupTables(sql);
 		setup = true;
 	}
 	return sql;
