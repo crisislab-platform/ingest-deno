@@ -121,8 +121,13 @@ const sql = postgres({
 	onnotice: (notice) =>
 		log.info("PostgreSQL notice:", notice?.message ?? notice),
 });
-await setupTables();
+let setup = false;
 export async function getDB(): Promise<postgres.Sql> {
+	if (!setup) {
+		log.info("Setting up database tables...");
+		await setupTables();
+		setup = true;
+	}
 	return sql;
 }
 
