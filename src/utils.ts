@@ -110,6 +110,7 @@ async function setupTables() {
 	`;
 }
 
+// Postgres.js manages connection pooling for us
 const sql = postgres({
 	user: Deno.env.get("DATABASE_USERNAME"),
 	password: Deno.env.get("DATABASE_PASSWORD"),
