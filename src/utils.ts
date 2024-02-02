@@ -36,9 +36,7 @@ export const log = {
 /**
  * Simplify setup by autogenerate tables
  */
-async function setupTables() {
-	const sql = await getDB();
-
+async function setupTables(sql: postgres.Sql) {
 	// Setup timescale first so we fail fast if it isn't here
 	await sql`CREATE EXTENSION IF NOT EXISTS timescaledb;`;
 
@@ -110,18 +108,49 @@ async function setupTables() {
 	`;
 }
 
-const sql = postgres({
-	user: Deno.env.get("DATABASE_USERNAME"),
-	password: Deno.env.get("DATABASE_PASSWORD"),
-	database: "sensor_data",
-	hostname: "localhost",
-	port: 5432,
-	onnotice: (notice) =>
-		log.info("PostgreSQL notice:", notice?.message ?? notice),
-});
-await setupTables();
+let conOpen = false;
+let dbCon: postgres.Sql | null = null;
 export async function getDB(): Promise<postgres.Sql> {
-	return sql;
+	if (dbCon !== null && conOpen) return dbCon;
+
+	try {
+		log.info("Connecting to database...");
+		// Connect with credentials from env
+		const sql = postgres({
+			user: Deno.env.get("DATABASE_USERNAME"),
+			password: Deno.env.get("DATABASE_PASSWORD"),
+			database: "sensor_data",
+			hostname: "localhost",
+			port: 5432,
+			onnotice: (notice) =>
+				log.info("PostgreSQL notice:", notice?.message ?? notice),
+		});
+		const end = sql.end;
+		sql.end = () => {
+			log.info("DB connection closed");
+			conOpen = false;
+			return end();
+		};
+		log.info("Connected to database!");
+		conOpen = true;
+		await setupTables(sql);
+		log.info("Set up tables!");
+		dbCon = sql;
+		process.on("exit", async () => {
+			await dbCon?.end();
+			conOpen = false;
+		});
+		return sql;
+	} catch (err) {
+		Sentry.captureException(err);
+		log.error("Failed to connect to database: ", err);
+		if (parseInt(Deno.env.get("SHOULD_STORE") || "0")) {
+			// Only kill the process if we want to store data
+			log.info("Exiting due to no database connection");
+			throw exit(1);
+		}
+	}
+	throw "We should never get here";
 }
 
 /**
@@ -220,6 +249,8 @@ export async function getSensor(
 }
 
 export async function exit(code?: number) {
+	await dbCon?.end();
+	conOpen = false;
 	Deno.exit(code);
 }
 
