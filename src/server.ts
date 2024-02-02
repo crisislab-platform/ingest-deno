@@ -1,4 +1,4 @@
-import { loadSync as loadENV } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
+import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
 import {
 	serveDir,
 	serveFile,
@@ -10,7 +10,7 @@ import { IRequest, Router } from "itty-router";
 import { handleAPI } from "./api/api.ts";
 
 // Load .env file. This needs to happen before other files run
-loadENV({ export: true });
+loadSync({ export: true });
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 
 Sentry.init({

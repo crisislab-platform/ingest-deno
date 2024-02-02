@@ -1,9 +1,8 @@
 import postgres from "postgresjs";
 import chalk from "chalk";
-import { loadSync as loadENV } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
 import { PrivateSensorMeta, PublicSensorMeta, User } from "./types.ts";
-
-loadENV({ export: true });
+import * as Sentry from "sentry";
+import process from "https://deno.land/std@0.132.0/node/process.ts";
 
 function loggerTimeAndInfo(): string {
 	const inWorker =
