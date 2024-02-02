@@ -30,7 +30,6 @@ Deno.cron("Save DB size", "0 */1 * * *", async () => {
 	} catch (err) {
 		log.error("Error saving DB size:", err);
 	} finally {
-		await sql.end();
 		log.info("Saved DB size");
 	}
 });
