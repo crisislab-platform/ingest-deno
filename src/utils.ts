@@ -125,12 +125,6 @@ export async function getDB(): Promise<postgres.Sql> {
 			onnotice: (notice) =>
 				log.info("PostgreSQL notice:", notice?.message ?? notice),
 		});
-		const end = sql.end;
-		sql.end = () => {
-			log.info("DB connection closed");
-			conOpen = false;
-			return end();
-		};
 		log.info("Connected to database!");
 		conOpen = true;
 		await setupTables(sql);
