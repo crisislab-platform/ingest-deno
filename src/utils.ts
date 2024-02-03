@@ -43,6 +43,8 @@ process.on("exit", (code) => {
  * Simplify setup by autogenerate tables
  */
 async function setupTables(sql: postgres.Sql) {
+	log.info("Setting up tables... PostgreSQL will cause lots of logging.");
+
 	// Setup timescale first so we fail fast if it isn't here
 	await sql`CREATE EXTENSION IF NOT EXISTS timescaledb;`;
 
@@ -112,6 +114,8 @@ async function setupTables(sql: postgres.Sql) {
         "timestamp" timestamptz
     );
 	`;
+
+	log.info("Done setting up tables");
 }
 
 // Postgres.js manages connection pooling for us
@@ -127,9 +131,14 @@ const sql = postgres({
 let setup = false;
 export async function getDB(): Promise<postgres.Sql> {
 	if (!setup) {
-		log.info("Setting up database tables...");
-		await setupTables(sql);
-		setup = true;
+		try {
+			await setupTables(sql);
+			setup = true;
+		} catch (err) {
+			log.error("Error setting up tables:", err);
+			log.warn("Exiting...");
+			exit(1);
+		}
 	}
 	return sql;
 }
