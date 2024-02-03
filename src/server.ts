@@ -21,16 +21,16 @@ Sentry.init({
 });
 
 // Every hour, save DB size
-Deno.cron("Save DB size", "0 */1 * * *", async () => {
-	const sql = await getDB();
-	try {
-		await sql`WITH subquery AS (SELECT pg_database_size('sensor_data') as size, NOW() as timestamp) INSERT INTO db_size_history (size, timestamp) SELECT * FROM subquery;`;
-	} catch (err) {
-		log.error("Error saving DB size:", err);
-	} finally {
-		log.info("Saved DB size");
-	}
-});
+// Deno.cron("Save DB size", "0 */1 * * *", async () => {
+// 	const sql = await getDB();
+// 	try {
+// 		await sql`WITH subquery AS (SELECT pg_database_size('sensor_data') as size, NOW() as timestamp) INSERT INTO db_size_history (size, timestamp) SELECT * FROM subquery;`;
+// 	} catch (err) {
+// 		log.error("Error saving DB size:", err);
+// 	} finally {
+// 		log.info("Saved DB size");
+// 	}
+// });
 
 // Imports
 
