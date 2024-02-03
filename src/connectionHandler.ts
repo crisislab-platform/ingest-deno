@@ -95,9 +95,13 @@ setInterval(
 			await sql`SELECT count(online) FROM sensors WHERE online IS FALSE`
 		)?.[0]?.["count"];
 
-		log.info(`Updated sensor connection statuses
-Online:  ${online} (${nowOnline >= 0 ? "+" : ""}${nowOnline})
-Offline: ${offline} (${nowOffline >= 0 ? "+" : ""}${nowOffline})`);
+		log.info(
+			`Updated sensor connection statuses. Online: ${online} (${
+				nowOnline >= 0 ? "+" : ""
+			}${nowOnline}); Offline: ${offline} (${
+				nowOffline >= 0 ? "+" : ""
+			}${nowOffline})`
+		);
 	},
 	60 * 1000 // Every minute
 );
