@@ -116,28 +116,36 @@ async function setupTables(sql: postgres.Sql) {
 }
 
 // Postgres.js manages connection pooling for us
-const sql = postgres({
-	user: Deno.env.get("DATABASE_USERNAME"),
-	password: Deno.env.get("DATABASE_PASSWORD"),
-	database: "sensor_data",
-	hostname: "localhost",
-	port: 5432,
-	onnotice: (notice) =>
-		log.info("PostgreSQL notice:", notice?.message ?? notice),
-});
-let setup = false;
+let sql: postgres.Sql | null = null;
 export async function getDB(): Promise<postgres.Sql> {
-	if (!setup) {
+	if (!sql) {
 		try {
+			if (
+				!Deno.env.get("DATABASE_USERNAME") ||
+				!Deno.env.get("DATABASE_PASSWORD")
+			) {
+				log.error(
+					"DATABASE_USERNAME or DATABASE_PASSWORD not set in environment"
+				);
+				await exit(1);
+			}
+			sql = postgres({
+				user: Deno.env.get("DATABASE_USERNAME"),
+				password: Deno.env.get("DATABASE_PASSWORD"),
+				database: "sensor_data",
+				hostname: "localhost",
+				port: 5432,
+				onnotice: (notice) =>
+					log.info("PostgreSQL notice:", notice?.message ?? notice),
+			});
 			await setupTables(sql);
-			setup = true;
 		} catch (err) {
 			log.error("Error setting up tables:", err);
 			log.warn("Exiting...");
-			exit(1);
+			await exit(1);
 		}
 	}
-	return sql;
+	return sql!;
 }
 
 /**
@@ -236,6 +244,7 @@ export async function getSensor(
 }
 
 export async function exit(code?: number) {
+	await sql?.end();
 	Deno.exit(code);
 }
 
