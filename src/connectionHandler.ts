@@ -160,6 +160,7 @@ async function updateSensorOnlineStatus({
 
 // Update in-memory cache of sensors
 async function updateSensorCache() {
+	log.info("Updating sensor cache...");
 	const sql = await getDB();
 	const sensors = await sql<
 		WithRequired<PrivateSensorMeta, "ip">[]
