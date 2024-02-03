@@ -162,9 +162,17 @@ async function updateSensorOnlineStatus({
 async function updateSensorCache() {
 	log.info("Updating sensor cache...");
 	const sql = await getDB();
-	const sensors = await sql<
+	const sensorsQuery = sql<
 		WithRequired<PrivateSensorMeta, "ip">[]
-	>`SELECT DISTINCT ON (ip) * FROM sensors WHERE ip IS NOT NULL;`;
+	>`SELECT DISTINCT ON (ip) * FROM sensors WHERE ip IS NOT NULL;`.execute();
+
+	setTimeout(() => {
+		// Cancel the query if it's taking too long.
+		// This indicates a bigger issue
+		sensorsQuery.cancel();
+	}, 5000);
+
+	const sensors = await sensorsQuery;
 
 	// Clear the Maps to prevent issues with the sensor being a duplicate of itself
 	for (const meta of sensors) {
