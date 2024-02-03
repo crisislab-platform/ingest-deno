@@ -1,3 +1,5 @@
+// deno-lint-ignore-file
+
 import { formatDistance, formatRelative } from "date-fns";
 // FIXME: date-fns locale stuff
 import enNZ from "date-fns/locale/en-NZ/index.js";

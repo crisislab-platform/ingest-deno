@@ -1,11 +1,5 @@
 import { IRequest, error, json } from "itty-router";
-import {
-	getDB,
-	log,
-	validateEmail,
-	getUserByEmail,
-	getUserByID,
-} from "../../utils.ts";
+import { getDB, log, validateEmail, getUserByID } from "../../utils.ts";
 import { User } from "../../types.ts";
 
 export async function updateUser(request: IRequest) {

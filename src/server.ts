@@ -5,7 +5,7 @@ import {
 } from "https://deno.land/std@0.204.0/http/file_server.ts";
 import * as Sentry from "sentry";
 import { sensorHandler, handleWebSockets } from "./connectionHandler.ts";
-import { getDB, log } from "./utils.ts";
+import { log } from "./utils.ts";
 import { IRequest, Router } from "itty-router";
 import { handleAPI } from "./api/api.ts";
 loadENV({ export: true });

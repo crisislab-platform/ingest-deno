@@ -1,4 +1,4 @@
-import { IRequest, json } from "itty-router";
+import { IRequest } from "itty-router";
 import { getDB, log, randomizeLocation } from "../../utils.ts";
 import { PrivateSensorMeta } from "../../types.ts";
 

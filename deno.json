@@ -2,6 +2,11 @@
     "unstable": [
         "net"
     ],
+    "lint": {
+        "exclude": [
+            "live-data-graphs/**/*"
+        ]
+    },
     "imports": {
         "itty-router": "npm:itty-router@4.0.23",
         "date-fns": "npm:date-fns@2.30.0",

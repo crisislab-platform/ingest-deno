@@ -1,3 +1,5 @@
+// deno-lint-ignore-file
+
 import { IRequest, error } from "itty-router";
 import createUserToken from "./createUserToken.ts";
 

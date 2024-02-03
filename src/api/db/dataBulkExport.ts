@@ -156,9 +156,9 @@ export async function dataBulkExport(req: IRequest) {
 
 			log.info("First time gap:", firstTimeGap);
 
-			let prevTime: Date = rows[1].data_timestamp;
+			// let prevTime: Date = rows[1].data_timestamp;
 
-			for (let i = 1; i < rows.length; i++) {}
+			// for (let i = 1; i < rows.length; i++) {}
 
 			const data = rows.flatMap((row) => row.data_values);
 
