@@ -180,9 +180,9 @@ async function updateSensorCache() {
 
 	const mapCopy = new Map(ipToSensorMap);
 
+	// Clear the Maps to prevent issues with the sensor being a duplicate of itself
 	ipToSensorMap.clear();
 
-	// Clear the Maps to prevent issues with the sensor being a duplicate of itself
 	for (const meta of sensors) {
 		const sensorClients = mapCopy.get(meta.ip)?.webSocketClients || [];
 
@@ -287,7 +287,6 @@ export function handleWebSockets(request: IRequest): Response {
 	// otherwise the client can't understand it.
 	if (!sensor) {
 		log.info(`Couldn't find requested sensor #${sensorID}`);
-		log.log(Array.from(ipToSensorMap.values()).map((v) => v.id));
 		client.addEventListener("open", () => {
 			client.close(4404, `Couldn't find a sensor with that id (#${sensorID})`);
 		});
