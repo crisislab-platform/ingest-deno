@@ -112,7 +112,7 @@ function getSensorFromCacheByID(
 	let sensorID = _sensorID;
 	if (typeof _sensorID === "string") {
 		try {
-			sensorID = Number.parseInt(_sensorID);
+			sensorID = Number.parseInt(_sensorID.trim());
 		} catch (err) {
 			log.warn("Failed to parse sensor ID: ", err);
 			return undefined;
@@ -282,6 +282,8 @@ export function handleWebSockets(request: IRequest): Response {
 	// we have to send a custom close message over the websocket,
 	// otherwise the client can't understand it.
 	if (!sensor) {
+		log.info(`Couldn't find requested sensor #${sensorID}`);
+		log.log(Array.from(ipToSensorMap.values()).map((v) => v.id));
 		client.addEventListener("open", () => {
 			client.close(4404, `Couldn't find a sensor with that id (#${sensorID})`);
 		});
