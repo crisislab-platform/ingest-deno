@@ -178,9 +178,13 @@ async function updateSensorCache() {
 
 	const sensors = await sensorsQuery;
 
+	const mapCopy = new Map(ipToSensorMap);
+
+	ipToSensorMap.clear();
+
 	// Clear the Maps to prevent issues with the sensor being a duplicate of itself
 	for (const meta of sensors) {
-		const sensorClients = ipToSensorMap.get(meta.ip)?.webSocketClients || [];
+		const sensorClients = mapCopy.get(meta.ip)?.webSocketClients || [];
 
 		const sensor = {
 			id: meta.id,
