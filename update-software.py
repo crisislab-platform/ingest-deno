@@ -25,9 +25,6 @@ with open("rs4d-sensor-ips.csv") as f:
             print(f"Connecting to {ip} via SSH...")
             ssh.connect(ip, username=USERNAME, password=PASSWORD, timeout=15, disabled_algorithms={'keys': ['rsa-sha2-256', 'rsa-sha2-512']})
             print(f"Connected, running install...")
-            
-             # Start an interactive shell
-            channel = ssh.invoke_shell()
 
             # Send the sudo command and password
             # channel.send(f'echo {PASSWORD} | sudo -S apt update\n')
@@ -97,13 +94,6 @@ with open("rs4d-sensor-ips.csv") as f:
             lines = "\n".join(std_out.readlines())
             total_out += lines
             print(lines)
-
-
-            while not channel.active():
-                time.sleep(0.1)
-
-            output = channel.recv(1024)
-            print(output.decode())
 
             print("Install done. Testing...")
             
