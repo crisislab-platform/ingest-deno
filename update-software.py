@@ -49,7 +49,7 @@ with open("rs4d-sensor-ips.csv") as f:
             lines = "\n".join(std_out.readlines())
             total_out += lines
             print(lines)
-            _, std_out, __ =   ssh.exec_command(f'sudo apt install -y python3-pip -y')
+            _, std_out, __ =   ssh.exec_command(f'sudo apt install -y python3-pip')
             std_out.channel.set_combine_stderr(True)
             lines = "\n".join(std_out.readlines())
             total_out += lines
@@ -148,7 +148,7 @@ s = data.decode('UTF-8').strip("'{}").split(', ')  # clean and listify the dat
 print("received data:" , s)
 EOF`
 python3 -c "$c"
-""")
+""",timeout=30)
             print("\n".join(test_ssh_stdout.readlines()))
             errors = "\n".join(test_ssh_stderr.readlines()).strip()
             print(errors)
