@@ -41,6 +41,8 @@ async function flushBuffer() {
 	}
 
 	if (toInsert.length > 0) {
+		log.info(`Inserting ${toInsert.length} records into to DB...`);
+
 		await sql`INSERT INTO sensor_data_4 ${sql(
 			toInsert,
 			"sensor_id",
