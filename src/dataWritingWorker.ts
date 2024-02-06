@@ -20,6 +20,8 @@ let dbBuffer: {
 }[] = [];
 
 async function flushBuffer() {
+	log.info(`Flushing ${dbBuffer.length} packets to DB..`);
+
 	const dbBufferCopy = dbBuffer;
 	dbBuffer = [];
 
