@@ -35,13 +35,21 @@ async function flushBuffer() {
 	if (toInsert.length > 0) {
 		log.info(`Inserting ${toInsert.length} records into to DB...`);
 
-		await sql`INSERT INTO sensor_data_4 ${sql(
-			toInsert,
-			"sensor_id",
-			"data_timestamp",
-			"data_channel",
-			"data_values"
-		)};`;
+		try {
+			const query = sql`INSERT INTO sensor_data_4 ${sql(
+				toInsert,
+				"sensor_id",
+				"data_timestamp",
+				"data_channel",
+				"data_values"
+			)};`;
+
+			log.info(query.describe());
+
+			await query.execute();
+		} catch (err) {
+			log.error("Error inserting data! ", err);
+		}
 	}
 	log.info(`Flushed ${dbBufferCopy.length} packets to DB`);
 }
