@@ -44,8 +44,6 @@ async function flushBuffer() {
 				"data_values"
 			)};`;
 
-			log.info(query.describe());
-
 			await query.execute();
 		} catch (err) {
 			log.error("Error inserting data! ", err);
