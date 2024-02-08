@@ -1,0 +1,13 @@
+sudo apt update -y;
+sudo apt install python3-pip -y;
+python3 -m pip install --upgrade pip setuptools wheel;
+python3 -m pip install numpy;
+python3 -m pip install obspy;
+# python3 -m pip install --upgrade --force-reinstall scipy;
+sudo apt-get install libatlas-base-dev -y;
+sudo apt remove gpsd -y;
+sudo dpkg --configure -a;
+python3 -m pip install dpkg;
+sudo apt install libwebp6 libtiff5 libjbig0 liblcms2-2 libwebpmux3 libopenjp2-7 libzstd1 libwebpdemux2 -y;
+sudo apt-get install libxslt-dev -y;
+sudo apt autoremove -y;

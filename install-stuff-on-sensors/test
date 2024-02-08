@@ -1,0 +1,31 @@
+c=`cat <<EOF
+import socket as s
+from obspy.core import read
+from collections import deque
+import numpy as np
+import os
+from datetime import datetime
+
+print("Script ran at: ", datetime.now())
+################################IP address and the Port number of the sensor ###############################
+host = ''
+port = 50333
+
+
+###############################################################################
+
+
+
+
+# UDP socket connection
+sock = s.socket(s.AF_INET, s.SOCK_DGRAM)
+sock.setsockopt(s.SOL_SOCKET, s.SO_REUSEADDR, 1)
+sock.bind((host, port))
+
+
+
+data, addr = sock.recvfrom(1024)  # wait to receive data
+s = data.decode('UTF-8').strip("'{}").split(', ')  # clean and listify the dat
+print("received data:" , s)
+EOF`
+python3 -c "$c"
