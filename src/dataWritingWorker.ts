@@ -27,18 +27,10 @@ async function flushBuffer() {
 
 	const toInsert = dbBufferCopy.map(({ sensorID, parsedData }) => ({
 		sensor_id: sensorID,
-		data_timestamp: parsedData[1],
+		data_timestamp: parsedData[1] * 1000,
 		data_channel: parsedData[0],
 		data_values: parsedData.slice(2) as number[],
 	}));
-
-	log.log(
-		"timestamp",
-		toInsert[0].data_timestamp,
-		new Date(toInsert[0].data_timestamp),
-		toInsert[0].data_timestamp * 1000,
-		new Date(toInsert[0].data_timestamp * 1000)
-	);
 
 	if (toInsert.length > 0) {
 		log.info(`Inserting ${toInsert.length} records into to DB...`);
