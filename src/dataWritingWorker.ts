@@ -27,6 +27,9 @@ async function flushBuffer() {
 
 	const toInsert = dbBufferCopy.map(({ sensorID, parsedData }) => ({
 		sensor_id: sensorID,
+		// NOTE: DO NOT FUCK THIS UP IN THE FUTURE
+		// DOUBLE CHECK ALL THE DATES IN A TESTING DB FIRST
+		// UPDATING 2 BILLION DATES IS NOT FUN
 		data_timestamp: parsedData[1] * 1000,
 		data_channel: parsedData[0],
 		data_values: parsedData.slice(2) as number[],
