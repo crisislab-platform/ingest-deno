@@ -32,6 +32,14 @@ async function flushBuffer() {
 		data_values: parsedData.slice(2) as number[],
 	}));
 
+	log.log(
+		"timestamp",
+		toInsert[0].data_timestamp,
+		new Date(toInsert[0].data_timestamp),
+		toInsert[0].data_timestamp * 1000,
+		new Date(toInsert[0].data_timestamp * 1000)
+	);
+
 	if (toInsert.length > 0) {
 		log.info(`Inserting ${toInsert.length} records into to DB...`);
 
