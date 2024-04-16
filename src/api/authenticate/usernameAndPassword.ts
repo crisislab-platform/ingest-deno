@@ -25,7 +25,7 @@ export default async function usernameAndPassword(request: IRequest) {
 	const sql = await getDB();
 
 	const hash = (
-		await sql<{ hash: string }[]>`SELECT hash FROM users WHERE email=${email}`
+		await sql<{ hash: string }[]>`SELECT hash FROM users WHERE email=${email};`
 	)?.[0]?.["hash"];
 
 	if (hash === null) {

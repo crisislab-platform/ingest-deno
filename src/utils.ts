@@ -79,6 +79,7 @@ async function setupTables(sql: postgres.Sql) {
         PRIMARY KEY ("id")
     );
 	`;
+
 	// Sensor data (timescale)
 	await sql`
 	CREATE TABLE IF NOT EXISTS sensor_data_4 (
@@ -192,7 +193,9 @@ export async function getUserByID(id: number): Promise<User | null> {
 
 	const user: User | null =
 		(
-			await sql<User[]>`SELECT id, name, email, roles FROM users WHERE id=${id}`
+			await sql<
+				User[]
+			>`SELECT id, name, email, roles FROM users WHERE id=${id};`
 		)?.[0] ?? null;
 
 	return user;
@@ -206,6 +209,7 @@ export function randomizeLocation(
 	return [Math.round(lng * 100000) / 100000, Math.round(lat * 100000) / 100000];
 }
 
+// Please ignore the Typescript shenanigans here. It works, trust me. Just don't touch it.
 export async function getSensor(
 	id: number,
 	unfiltered?: true | undefined

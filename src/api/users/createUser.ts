@@ -24,7 +24,9 @@ export async function createUser(request: IRequest) {
 	if (emailUsed) return new Response("Email in use", { status: 400 });
 
 	const id = (
-		await sql<{ id: number }[]>`INSERT INTO users ${sql(userData)} RETURNING id`
+		await sql<{ id: number }[]>`INSERT INTO users ${sql(
+			userData
+		)} RETURNING id;`
 	)[0].id;
 
 	return json({ ...userData, id }, { status: 201 });
