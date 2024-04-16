@@ -173,6 +173,7 @@ async function updateSensorCache() {
 	setTimeout(() => {
 		// Cancel the query if it's taking too long.
 		// This indicates a bigger issue
+		log.warn("Cancelling slow query! This indicates a bigger issue!");
 		sensorsQuery.cancel();
 	}, 5000);
 
