@@ -89,10 +89,10 @@ setInterval(
 			}
 		}
 		const online = (
-			await sql`SELECT count(online) FROM sensors WHERE online IS TRUE`
+			await sql`SELECT count(online) FROM sensors WHERE online IS TRUE AND removed IS NOT TRUE;`
 		)?.[0]?.["count"];
 		const offline = (
-			await sql`SELECT count(online) FROM sensors WHERE online IS FALSE`
+			await sql`SELECT count(online) FROM sensors WHERE online IS FALSE AND removed IS NOT TRUE;`
 		)?.[0]?.["count"];
 
 		log.info(
@@ -168,7 +168,7 @@ async function updateSensorCache() {
 	const sql = await getDB();
 	const sensorsQuery = sql<
 		WithRequired<PrivateSensorMeta, "ip">[]
-	>`SELECT DISTINCT ON (ip) * FROM sensors WHERE ip IS NOT NULL;`.execute();
+	>`SELECT DISTINCT ON (ip) * FROM sensors WHERE ip IS NOT NULL AND removed IS NOT TRUE;`.execute();
 
 	setTimeout(() => {
 		// Cancel the query if it's taking too long.

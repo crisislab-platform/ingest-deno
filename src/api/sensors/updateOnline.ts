@@ -34,7 +34,9 @@ export default async function setOnline(request: Request): Promise<Response> {
 	const sql = await getDB();
 
 	const oldSensor = (
-		await sql<{ online?: boolean }[]>`SELECT online FROM sensors WHERE id=${id}`
+		await sql<
+			{ online?: boolean }[]
+		>`SELECT online FROM sensors WHERE id=${id} AND removed IS NOT TRUE;`
 	)[0];
 
 	if (oldSensor.online === online) {

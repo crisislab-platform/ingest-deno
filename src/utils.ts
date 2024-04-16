@@ -75,6 +75,7 @@ async function setupTables(sql: postgres.Sql) {
         "secondary_id" text,
         "status_change_timestamp" timestamptz,
         "contact_email" text,
+		"removed" boolean,
         PRIMARY KEY ("id")
     );
 	`;
@@ -228,7 +229,9 @@ export async function getSensor(
 
 	if (unfiltered) {
 		const sensor = (
-			await sql<PrivateSensorMeta[]>`SELECT * FROM sensors WHERE id=${id};`
+			await sql<
+				PrivateSensorMeta[]
+			>`SELECT * FROM sensors WHERE id=${id} AND removed IS NOT TRUE;`
 		)[0];
 		normaliseSensor(sensor);
 		return sensor;
@@ -236,7 +239,7 @@ export async function getSensor(
 		const sensor = (
 			await sql<
 				PublicSensorMeta[]
-			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id};`
+			>`SELECT id, type, online, timestamp, secondary_id, public_location FROM sensors WHERE id=${id} AND removed IS NOT TRUE;`
 		)[0];
 		normaliseSensor(sensor);
 		return sensor;
@@ -267,10 +270,10 @@ export async function getSensors(
 
 	let sensors;
 	if (unfiltered) {
-		sensors = await sql`SELECT * FROM sensors;`;
+		sensors = await sql`SELECT * FROM sensors WHERE removed IS NOT TRUE;`;
 	} else {
 		sensors =
-			await sql`SELECT id, type, online, status_change_timestamp, secondary_id, public_location FROM sensors;`;
+			await sql`SELECT id, type, online, status_change_timestamp, secondary_id, public_location FROM sensors WHERE removed IS NOT TRUE;`;
 	}
 	return Object.fromEntries(
 		sensors
