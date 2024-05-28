@@ -170,7 +170,8 @@ async function updateSensorCache() {
 		WithRequired<PrivateSensorMeta, "ip">[]
 	>`SELECT DISTINCT ON (ip) * FROM sensors WHERE ip IS NOT NULL AND removed IS NOT TRUE;`.execute();
 
-	setTimeout(() => {
+	const timeout = setTimeout(() => {
+		sensorsQuery;
 		// Cancel the query if it's taking too long.
 		// This indicates a bigger issue
 		log.warn("Cancelling slow query! This indicates a bigger issue!");
@@ -178,6 +179,7 @@ async function updateSensorCache() {
 	}, 5000);
 
 	const sensors = await sensorsQuery;
+	clearTimeout(timeout);
 
 	const mapCopy = new Map(ipToSensorMap);
 
