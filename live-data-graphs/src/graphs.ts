@@ -19,6 +19,26 @@ import {
 } from "./ui";
 import { SensorVariety } from "./main";
 
+// Based on MIT-licensed https://github.com/compute-io/quantile/blob/24c66ea5bb6fdfbafeebb878481c5b9635559109/lib/index.js#L66
+function quartile(sortedData: number[], p: number): number {
+	if (p === 0.0) {
+		return sortedData[0];
+	}
+	// [1] 100th percentile is the maximum value...
+	if (p === 1.0) {
+		return sortedData[sortedData.length - 1];
+	}
+
+	const index = sortedData.length * p - 1;
+
+	// If index is integer
+	if (index === Math.floor(index)) {
+		return (sortedData[index] + sortedData[index + 1]) / 2.0;
+	}
+
+	return sortedData[Math.ceil(index)];
+}
+
 const CSI_RECALCULATE_SAMPLE_RATE_PACKET_COUNT = 10;
 
 export type Datagram = [string, number, ...number[]];
@@ -147,7 +167,33 @@ export function handleData(packet: Datagram) {
 		sortChannels();
 	}
 
-	for (const i of measurements) {
+	const outlierCleanedMeasurements = measurements;
+	// CSI sensors sometimes send data values that are huge outliers,
+	// even compared to the rest of the packet
+	const sorted = measurements.toSorted();
+	if (
+		window.CRISiSLab.sensorVariety === SensorVariety.CSI &&
+		// For some reason, the HNX channel becomes square - it just has too much variance
+		channel !== "HNX"
+	) {
+		const lowerQuartile = quartile(sorted, 0.25);
+		const median = quartile(sorted, 0.5);
+		const upperQuartile = quartile(sorted, 0.75);
+		const iqr = upperQuartile - lowerQuartile;
+		const range = 1.5 * iqr;
+		const lowerWhisker = lowerQuartile - range;
+		const upperWhisker = upperQuartile + range;
+
+		for (let i = 0; i < measurements.length; i++) {
+			const point = measurements[i];
+			// If this point is an outlier, replace it with the median
+			if (point < lowerWhisker || point > upperWhisker) {
+				outlierCleanedMeasurements[i] = median;
+			}
+		}
+	}
+
+	for (const i of outlierCleanedMeasurements) {
 		let value = i;
 		if (
 			// If the sensor is a raspberry shake
@@ -169,8 +215,8 @@ export function handleData(packet: Datagram) {
 		}
 	}
 
-	// CSI sensors sometimes send data out-of order!
 	if (window.CRISiSLab.sensorVariety === SensorVariety.CSI) {
+		// CSI sensors sometimes send data out-of order!
 		window.CRISiSLab.data[channel].sort(
 			(a, b) => (a.time as number) - (b.time as number),
 		);
