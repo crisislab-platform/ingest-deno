@@ -8,7 +8,19 @@ function loggerTimeAndInfo(): string {
 		typeof WorkerGlobalScope !== "undefined" &&
 		self instanceof WorkerGlobalScope;
 
-	return `[${chalk.cyan(new Date().toISOString())}] [${
+	return `[${chalk.cyan(
+		new Date().toLocaleString("nz", {
+			timeZoneName: "short",
+			month: "long",
+			day: "numeric",
+			hour: "numeric",
+			minute: "numeric",
+			second: "numeric",
+			hourCycle: "h12",
+			weekday: "short",
+			fractionalSecondDigits: 3,
+		})
+	)}] [${
 		inWorker ? chalk.magenta(self?.name ?? "WORKER") : chalk.yellow("MAIN")
 	}]`;
 }
