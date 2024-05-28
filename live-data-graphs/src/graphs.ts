@@ -117,11 +117,6 @@ export function handleData(packet: Datagram) {
 						(y) => round(y) + "",
 						"closest-x",
 					),
-				{
-					construct(chart) {
-						chart.padding[window.CRISiSLab.yAxisSide] += 20;
-					},
-				},
 			],
 		});
 		window.CRISiSLab.charts[channel] = chart;
