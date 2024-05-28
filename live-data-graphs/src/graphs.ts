@@ -166,6 +166,14 @@ export function handleData(packet: Datagram) {
 			window.CRISiSLab.data[channel].shift();
 		}
 	}
+
+	// CSI sensors sometimes are naughty and send data out-of order!
+	if (window.CRISiSLab.sensorVariety === SensorVariety.CSI) {
+		window.CRISiSLab.data[channel].sort(
+			(a, b) => (a.time as number) - (b.time as number),
+		);
+	}
+
 	current[channel] = 0;
 
 	window.CRISiSLab.charts[channel].recompute();
