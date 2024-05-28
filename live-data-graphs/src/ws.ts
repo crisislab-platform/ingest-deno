@@ -81,6 +81,12 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 					?.includes("raspberry")
 			) {
 				window.CRISiSLab.sensorVariety = SensorVariety.RaspberryShake;
+			} else if (
+				window.CRISiSLab.sensorMeta?.type
+					?.toLowerCase()
+					?.includes("csi")
+			) {
+				window.CRISiSLab.sensorVariety = SensorVariety.CSI;
 			}
 
 			if (window.CRISiSLab.sensorMeta?.online !== true) {
