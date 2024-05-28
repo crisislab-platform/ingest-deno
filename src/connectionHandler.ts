@@ -199,6 +199,8 @@ async function updateSensorCache() {
 	log.info(`Updated cached sensor list (${ipToSensorMap.size} sensors)`);
 }
 
+let counter = 0;
+
 // Called when a sensor sends a UDP packet. Data is then forwarded to the connected websockets
 export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 	// First get the sensor id from the ip address
@@ -210,6 +212,12 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 				`Packet received from unknown sensor IP address: ${addr.hostname}`
 			);
 		return;
+	}
+
+	counter++;
+	if (counter > 1000) {
+		log.log("Latest 1000th packet received came from " + addr.hostname);
+		counter = 0;
 	}
 
 	try {
