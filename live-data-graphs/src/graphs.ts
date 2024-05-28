@@ -67,6 +67,7 @@ export function handleData(packet: Datagram) {
 		handleData(firstPacket);
 	}
 
+	// Handle CSI not sending their data at a constant rate sometimes
 	if (window.CRISiSLab.sensorVariety === SensorVariety.CSI) {
 		receivedPackets[channel] ??= 0;
 		receivedPackets[channel]++;
@@ -81,6 +82,7 @@ export function handleData(packet: Datagram) {
 			return;
 		}
 	}
+
 	const timestamp = timestampSeconds * 1000;
 
 	start ||= timestamp;
@@ -167,7 +169,7 @@ export function handleData(packet: Datagram) {
 		}
 	}
 
-	// CSI sensors sometimes are naughty and send data out-of order!
+	// CSI sensors sometimes send data out-of order!
 	if (window.CRISiSLab.sensorVariety === SensorVariety.CSI) {
 		window.CRISiSLab.data[channel].sort(
 			(a, b) => (a.time as number) - (b.time as number),
