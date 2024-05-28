@@ -89,5 +89,7 @@ log.info(`UDP listening on ${socketAddr.hostname}:${socketAddr.port}`);
 
 // Handle incoming UDP packets
 for await (const [data, addr] of socket) {
+	log.log("Got data");
+
 	sensorHandler(addr as Deno.NetAddr, data);
 }
