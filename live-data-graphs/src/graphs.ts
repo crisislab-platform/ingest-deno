@@ -19,6 +19,8 @@ import {
 } from "./ui";
 import { SensorVariety } from "./main";
 
+const CSI_RECALCULATE_SAMPLE_RATE_PACKET_COUNT = 10;
+
 export type Datagram = [string, number, ...number[]];
 
 // Graphs
@@ -42,6 +44,8 @@ const timeWindow = 30 * 1000; // 30 seconds
 
 const firstPackets: Record<string, Datagram> = {};
 
+let receivedPackets: Record<string, number> = {};
+
 export function handleData(packet: Datagram) {
 	const [channel, timestampSeconds, ...measurements] = packet;
 
@@ -63,6 +67,20 @@ export function handleData(packet: Datagram) {
 		handleData(firstPacket);
 	}
 
+	if (window.CRISiSLab.sensorVariety === SensorVariety.CSI) {
+		receivedPackets[channel] ??= 0;
+		receivedPackets[channel]++;
+
+		// After some packets, recalculate the sample rate
+		if (
+			receivedPackets[channel] > CSI_RECALCULATE_SAMPLE_RATE_PACKET_COUNT
+		) {
+			firstPackets[channel] = packet;
+			receivedPackets[channel] = 0;
+			delete window.CRISiSLab.sampleGaps[channel];
+			return;
+		}
+	}
 	const timestamp = timestampSeconds * 1000;
 
 	start ||= timestamp;
