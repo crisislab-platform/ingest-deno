@@ -21,6 +21,7 @@ declare global {
 			connected: boolean;
 			haveRenderedPacket: boolean;
 			hideHoverInspector: boolean;
+			showRawChannelNames: boolean;
 			sortChannels: string | null;
 			wsURL: string | null;
 			sensorID: string | null;
@@ -53,6 +54,9 @@ window.CRISiSLab = {
 		new URLSearchParams(location.search).get("hide-hover-inspector") ===
 		"yes",
 	sortChannels: new URLSearchParams(location.search).get("sort-channels"),
+	showRawChannelNames:
+		new URLSearchParams(location.search).get("show-raw-channel-names") ===
+		"yes",
 	yAxisSide:
 		(new URLSearchParams(location.search).get("y-axis-side") as
 			| "left"
@@ -62,6 +66,11 @@ window.CRISiSLab = {
 	charts: {},
 	data: {},
 };
+
+if (new URLSearchParams(location.search).get("hide-pause-button") === "yes") {
+	const reloadButton = document.getElementById("reload");
+	if (reloadButton) reloadButton.style.display = "none";
+}
 
 if (!location.pathname.includes("/consume/")) showNoSensorFound();
 else {

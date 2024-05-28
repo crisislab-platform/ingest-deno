@@ -24,14 +24,14 @@ export type Datagram = [string, number, ...number[]];
 // Graphs
 const current: Record<string, number> = {};
 const aliases = {
-	EH3: "Vertical Geophone (counts)",
-	EN3: "Y axis acceleration (m/s²)",
-	EN1: "X axis acceleration (m/s²)",
-	EN2: "Z axis acceleration (m/s²)",
-	EHZ: "Vertical Geophone (counts)",
-	ENN: "Y axis acceleration (m/s²)",
-	ENE: "X axis acceleration (m/s²)",
-	ENZ: "Z axis acceleration (m/s²)",
+	EH3: "Geophone (counts)",
+	EN3: "Y acceleration (m/s²)",
+	EN1: "X acceleration (m/s²)",
+	EN2: "Z acceleration (m/s²)",
+	EHZ: "Geophone (counts)",
+	ENN: "Y acceleration (m/s²)",
+	ENE: "X acceleration (m/s²)",
+	ENZ: "Z acceleration (m/s²)",
 	// CLX: "X axis acceleration (m/s²)",
 	// CLY: "Y axis acceleration (m/s²)",
 	// CLZ: "Z axis acceleration (m/s²)",
@@ -75,8 +75,9 @@ export function handleData(packet: Datagram) {
 		container.id = channel;
 		chartsContainer.appendChild(container);
 
-		const valueAxisLabel =
-			aliases[channel as keyof typeof aliases] || channel;
+		const valueAxisLabel = window.CRISiSLab.showRawChannelNames
+			? channel
+			: aliases[channel as keyof typeof aliases] ?? channel;
 
 		// For sorting
 		container.setAttribute("data-channel-id", channel);
