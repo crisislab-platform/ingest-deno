@@ -59,20 +59,45 @@ Deno.serve(
 	},
 	async (req, connectionInfo) => {
 		try {
+			const origin = req.headers.get("Origin");
+
 			log.info(
-				`HTTP ${req.method} ${req.url} from ${connectionInfo.remoteAddr.hostname}`
+				`HTTP ${req.method} ${req.url} from ${
+					connectionInfo.remoteAddr.hostname
+				}${origin ? `(${origin})` : ""}`
 			);
 
-			const res = await router.handle(req);
+			const res = (await router.handle(req)) as Response | null | undefined;
 
 			// Deno.serve is weak - if you don't return something the
 			// whole server crashes.
-			if (!res) return new Response("Not found", { status: 404 });
+			if (!res) {
+				log.info(
+					`Sending non-fatal top-level 404 response for HTTP ${req.method} ${
+						req.url
+					} from ${connectionInfo.remoteAddr.hostname}${
+						origin ? `(${origin})` : ""
+					}`
+				);
+				return new Response("Not found", { status: 404 });
+			}
 
+			log.info(
+				`Sending non-fatal ${res.status} response for HTTP ${req.method} ${
+					req.url
+				} from ${connectionInfo.remoteAddr.hostname}${
+					origin ? `(${origin})` : ""
+				}`
+			);
 			return res;
 		} catch (err) {
 			Sentry.captureException(err);
-			log.error(`Error handling HTTP: `, err);
+			log.error(
+				`Error handling HTTP  ${req.method} ${req.url} from ${
+					connectionInfo.remoteAddr.hostname
+				}${origin ? `(${origin})` : ""}: `,
+				err
+			);
 			return new Response("Internal error", { status: 500 });
 		}
 	}
