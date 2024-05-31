@@ -19,7 +19,8 @@ import {
 } from "./ui";
 import { SensorVariety } from "./main";
 
-const CSI_RECALCULATE_SAMPLE_RATE_PACKET_COUNT = 10;
+// CSI sensors all sample at 200Hz
+const CSI_SAMPLING_RATE = 200;
 
 export type Datagram = [string, number, ...number[]];
 
@@ -49,37 +50,26 @@ let receivedPackets: Record<string, number> = {};
 export function handleData(packet: Datagram) {
 	const [channel, timestampSeconds, ...measurements] = packet;
 
-	if (!firstPackets[channel]) {
-		firstPackets[channel] = packet;
-		showMessage("Waiting for second sample...");
-		return;
-	} else if (!window.CRISiSLab.sampleGaps[channel]) {
-		showMessage("Calculating sampling rate...");
-
-		const firstPacket = firstPackets[channel]!;
-		const [, firstTimestampSeconds, ...firstMeasurements] = firstPacket;
-
-		const timeGapSeconds = timestampSeconds - firstTimestampSeconds;
-		const samplingRate = firstMeasurements.length / timeGapSeconds;
-		window.CRISiSLab.sampleGaps[channel] = 1000 / samplingRate;
-
-		// Do the first packet, then keep doing this one
-		handleData(firstPacket);
-	}
-
-	// Handle CSI not sending their data at a constant rate sometimes
 	if (window.CRISiSLab.sensorVariety === SensorVariety.CSI) {
-		receivedPackets[channel] ??= 0;
-		receivedPackets[channel]++;
-
-		// After some packets, recalculate the sample rate
-		if (
-			receivedPackets[channel] > CSI_RECALCULATE_SAMPLE_RATE_PACKET_COUNT
-		) {
+		// CSI sensors all sample at 200Hz
+		window.CRISiSLab.sampleGaps[channel] = 1000 / CSI_SAMPLING_RATE;
+	} else {
+		if (!firstPackets[channel]) {
 			firstPackets[channel] = packet;
-			receivedPackets[channel] = 0;
-			delete window.CRISiSLab.sampleGaps[channel];
+			showMessage("Waiting for second sample...");
 			return;
+		} else if (!window.CRISiSLab.sampleGaps[channel]) {
+			showMessage("Calculating sampling rate...");
+
+			const firstPacket = firstPackets[channel]!;
+			const [, firstTimestampSeconds, ...firstMeasurements] = firstPacket;
+
+			const timeGapSeconds = timestampSeconds - firstTimestampSeconds;
+			const samplingRate = firstMeasurements.length / timeGapSeconds;
+			window.CRISiSLab.sampleGaps[channel] = 1000 / samplingRate;
+
+			// Do the first packet, then keep doing this one
+			handleData(firstPacket);
 		}
 	}
 
