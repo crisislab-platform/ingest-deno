@@ -51,8 +51,10 @@ export function handleData(packet: Datagram) {
 	const [channel, timestampSeconds, ...measurements] = packet;
 
 	if (window.CRISiSLab.sensorVariety === SensorVariety.CSI) {
-		// CSI sensors all sample at 200Hz
-		window.CRISiSLab.sampleGaps[channel] = 1000 / CSI_SAMPLING_RATE;
+		if (typeof window.CRISiSLab.sampleGaps[channel] !== "number") {
+			// CSI sensors all sample at 200Hz
+			window.CRISiSLab.sampleGaps[channel] = 1000 / CSI_SAMPLING_RATE;
+		}
 	} else {
 		if (!firstPackets[channel]) {
 			firstPackets[channel] = packet;
