@@ -21,7 +21,7 @@ npm install
 npm run build
 ```
 
-You need to Install and setup [PostgreSQL](https://www.postgresql.org/download/) and [TimescaleDB](https://docs.timescale.com/self-hosted/latest/install/). You also need to create a database called sensor-data. The server will create any tables it needs. If you want compression, you will need to enable that yourself on the tables after the server has created them. 
+You need to Install and setup [PostgreSQL](https://www.postgresql.org/download/) and [TimescaleDB](https://docs.timescale.com/self-hosted/latest/install/). You also need to create a database called sensor-data. The server will create any tables it needs. If you want compression, you will need to enable that yourself on the tables after the server has created them.
 
 To start the server
 
@@ -80,3 +80,6 @@ This could be an issue with WebSockets being blocked by the Massey reverse proxy
 
 Make sure you're using the correct API token, and that it's not expired. The API endpoint is also configurable in the .env file.
 
+## Network overview
+
+See this doc: https://docs.google.com/document/d/1PnOvAFujeliayv_FOyj-ooBgS3bKITYmaEFsyHCt90c/edit#heading=h.6xyuzekua218
