@@ -10,7 +10,7 @@ To run the server, first install Deno:
 curl -fsSL https://deno.land/x/install/install.sh | sh
 ```
 
-> Deno v1.39.0 has been tested, no grantees for other versions
+> Deno v1.44.4 has been tested, no grantees for other versions
 
 Compile the graphing website:
 (this requires NodeJS 20+)
@@ -26,7 +26,7 @@ You need to Install and setup [PostgreSQL](https://www.postgresql.org/download/)
 To start the server
 
 ```bash
-deno run --allow-ffi --allow-net --allow-read --allow-env --allow-run --allow-sys --unstable-cron src/server.ts
+deno run --allow-ffi --allow-net --allow-read --allow-env --allow-run --allow-sys --unstable-cron --unstable-net src/server.ts
 ```
 
 You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:

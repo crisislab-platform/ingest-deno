@@ -7,7 +7,7 @@ Type=simple
 Restart=always
 RestartSec=1
 WorkingDirectory=/ingest-deno
-ExecStart=/bin/sh -c '/ingest-deno/deno-bin/deno run --allow-ffi --allow-net --allow-read --allow-env --allow-run --allow-sys --unstable-cron /ingest-deno/src/server.ts >> /ingest-deno/logs 2>&1'
+ExecStart=/bin/sh -c '/ingest-deno/deno-bin/deno run --allow-ffi --allow-net --allow-read --allow-env --allow-run --allow-sys --unstable-cron --unstable-net /ingest-deno/src/server.ts >> /ingest-deno/logs 2>&1'
 
 [Install]
 WantedBy=multi-user.target
