@@ -18,6 +18,9 @@ export default async function createSensor(request: IRequest) {
 	}
 
 	// Make the server autogenerate the ID
+	// If an error is getting thrown about the ID being
+	// already in use, that means the sequence is out-of-sync.
+	// Run `SELECT setval('sensors_id_seq', max(id)) FROM sensors;` to fix it.
 	if (data.id) {
 		delete data.id;
 	}
