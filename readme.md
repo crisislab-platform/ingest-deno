@@ -21,7 +21,10 @@ npm install
 npm run build
 ```
 
-You need to Install and setup [PostgreSQL](https://www.postgresql.org/download/) and [TimescaleDB](https://docs.timescale.com/self-hosted/latest/install/). You also need to create a database called sensor-data. The server will create any tables it needs. If you want compression, you will need to enable that yourself on the tables after the server has created them.
+- Install and setup [PostgreSQL](https://www.postgresql.org/download/) and [TimescaleDB](https://docs.timescale.com/self-hosted/latest/install/).
+- Create a database called `sensor_data`.
+
+The server will automatically create any tables it needs. If you want compression, you will need to [enable compression](https://docs.timescale.com/use-timescale/latest/compression/compression-policy/#enabling-compression) yourself on the tables after the server has created them.
 
 To start the server
 
