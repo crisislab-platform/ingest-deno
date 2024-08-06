@@ -35,23 +35,23 @@ await updateSensorCache();
 // }
 
 // Every 2 minutes remove zombie websocket connections
-// Every 15 seconds update the in-memory sensor cache
 setInterval(() => {
-	//Update cache
 	log.info("Clearing zombie WebSockets");
 
 	for (const [, { webSocketClients }] of ipToSensorMap) {
-		for (const client of webSocketClients) {
+		// Loop backwards so we can remove items whilst iterating
+		for (let i = webSocketClients.length - 1; i >= 0; i--) {
+			const client = webSocketClients[i];
+			// If the socket is in use, skip past it
 			if (
-				client.readyState === WebSocket.OPEN ||
-				client.readyState === WebSocket.CONNECTING
-			)
+				client.ws.readyState === WebSocket.OPEN ||
+				client.ws.readyState === WebSocket.CONNECTING
+			) {
 				continue;
-
-			const index = webSocketClients.indexOf(client);
-			if (index !== -1) {
-				webSocketClients.splice(index, 1);
 			}
+
+			// Otherwise remove it
+			webSocketClients.splice(i, 1);
 		}
 	}
 }, 2 * 60 * 1000);
@@ -243,13 +243,21 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 			try {
 				// Handle race condition where a datagram is received
 				// after a socket is started but before it fully opens
-				if (client.readyState == WebSocket.OPEN)
-					client.send(
-						pack({
-							type: "datagram",
-							data: parsedData,
-						})
-					);
+				if (client.ws.readyState == WebSocket.OPEN) {
+					const data = {
+						type: "datagram",
+						data: parsedData,
+					};
+
+					let serialisedData;
+					if (client.plain) {
+						serialisedData = JSON.stringify(data);
+					} else {
+						serialisedData = pack(data);
+					}
+
+					client.ws.send(serialisedData);
+				}
 			} catch (err) {
 				Sentry.captureException(err);
 				log.error("Error sending packet: ", err);
@@ -269,6 +277,10 @@ export function handleWebSockets(request: IRequest): Response {
 	if (request.headers.get("Upgrade") !== "websocket") {
 		return new Response("Needs websocket Upgrade header", { status: 400 });
 	}
+
+	// Plain means we shouldn't compress the data over the socket
+	let plain = false;
+	if ("plain" in request.query) plain = true;
 
 	let sensorID: number;
 	try {
@@ -296,27 +308,37 @@ export function handleWebSockets(request: IRequest): Response {
 		return response;
 	}
 
-	sensor.webSocketClients.push(client);
+	sensor.webSocketClients.push({ ws: client, plain });
 
 	client.addEventListener("open", () => {
 		log.info(`Connected websocket for sensor #${sensorID}`);
 
-		client.send(
-			pack({
-				type: "sensor-meta",
-				data: {
-					// Doing this manually to avoid sending sensitive data
-					id: sensor.id,
-					secondary_id: sensor.meta?.secondary_id,
-					type: sensor.meta?.type,
-					online: sensor.meta?.online,
-				},
-			})
-		);
+		const data = {
+			type: "sensor-meta",
+			data: {
+				// Doing this manually to avoid sending sensitive data
+				id: sensor.id,
+				secondary_id: sensor.meta?.secondary_id,
+				type: sensor.meta?.type,
+				online: sensor.meta?.online,
+			},
+		};
+
+		let serialisedData;
+		if (plain) {
+			serialisedData = JSON.stringify(data);
+		} else {
+			serialisedData = pack(data);
+		}
+
+		client.send(serialisedData);
 	});
 
 	client.addEventListener("close", () => {
-		sensor.webSocketClients.splice(sensor.webSocketClients.indexOf(client), 1);
+		// Remove socket from list when it's closed
+		sensor.webSocketClients = sensor.webSocketClients.filter(
+			({ ws }) => ws === client
+		);
 	});
 
 	return response;

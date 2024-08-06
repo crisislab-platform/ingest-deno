@@ -26,7 +26,7 @@ export interface User {
 
 export interface ServerSensor {
 	id: number;
-	webSocketClients: WebSocket[];
+	webSocketClients: { ws: WebSocket; plain: boolean }[];
 	isDuplicateOf?: number;
 	lastMessageTimestamp?: number;
 	meta: PrivateSensorMeta;

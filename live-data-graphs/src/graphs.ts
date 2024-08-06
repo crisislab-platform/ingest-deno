@@ -7,6 +7,7 @@ import {
 	pointerCrosshairPlugin,
 	nearestPointInfoPopupPlugin,
 	highlightNearestPointPlugin,
+	TimeLineDataPoint,
 } from "@crisislab/timeline";
 import {
 	hideMessages,
@@ -44,8 +45,6 @@ const maxDataLength = 5000;
 const timeWindow = 30 * 1000; // 30 seconds
 
 const firstPackets: Record<string, Datagram> = {};
-
-let receivedPackets: Record<string, number> = {};
 
 export function handleData(packet: Datagram) {
 	const [channel, timestampSeconds, ...measurements] = packet;
@@ -139,6 +138,30 @@ export function handleData(packet: Datagram) {
 		sortChannels();
 	}
 
+	// Sometimes data gets sent out-of order! We check if this packet
+	// is older than the newest data, and if it is, loop backwards
+	// over the saved data and find out where this data should be inserted
+	let insertAfter: number | null = null;
+	if (
+		timeOrDateToNumber(window.CRISiSLab.data[channel].at(-1)!.time) >
+		timestamp
+	) {
+		// Cursed way to loop backwards: loop forwards then take the inverse
+		// of the index.
+		for (let i = window.CRISiSLab.data[channel].length - 1; i >= 0; i++) {
+			const prev = window.CRISiSLab.data[channel][i];
+			// Saved data is older than new data!
+			if (
+				(typeof prev.time == "number"
+					? prev.time
+					: prev.time.getTime()) < timestamp
+			) {
+				insertAfter = i;
+			}
+		}
+	}
+
+	const adjustedMeasurements: TimeLineDataPoint[] = [];
 	for (const i of measurements) {
 		let value = i;
 		if (
@@ -150,21 +173,21 @@ export function handleData(packet: Datagram) {
 			// Magic number to convert from counts to m/s^2
 			value = value / 3.845e5;
 		}
-		window.CRISiSLab.data[channel].push({
+		adjustedMeasurements.push({
 			time: timestamp + current[channel],
 			value,
 		});
 		current[channel] += window.CRISiSLab.sampleGaps[channel]!;
-
-		if (window.CRISiSLab.data[channel].length > maxDataLength) {
-			window.CRISiSLab.data[channel].shift();
-		}
 	}
 
-	// CSI sensors sometimes send data out-of order!
-	if (window.CRISiSLab.sensorVariety === SensorVariety.CSI) {
-		window.CRISiSLab.data[channel].sort(
-			(a, b) => (a.time as number) - (b.time as number),
+	if (insertAfter == null) {
+		window.CRISiSLab.data[channel].push(...adjustedMeasurements);
+	} else {
+		// Array#splice(i, 0, ..data) inserts at i, pushing everything else down
+		window.CRISiSLab.data[channel].splice(
+			insertAfter + 1,
+			0,
+			...adjustedMeasurements,
 		);
 	}
 
@@ -177,4 +200,8 @@ export function handleData(packet: Datagram) {
 		window.CRISiSLab.haveRenderedPacket = true;
 		reloadButton.toggleAttribute("disabled", true);
 	}
+}
+
+function timeOrDateToNumber(t: Date | number): number {
+	return typeof t == "number" ? t : t.getTime();
 }

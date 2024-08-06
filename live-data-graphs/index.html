@@ -1,102 +1,125 @@
 <!DOCTYPE html>
 <html lang="en-NZ">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
-		<title>Sensor realtime data</title>
 
-		<style>
-			* {
-				box-sizing: border-box;
-				margin: 0;
-				padding: 0;
-				border: 0;
-				font-family: "JetBrains Mono", monospace;
-			}
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+	<title>Sensor realtime data</title>
+	<style>
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+			border: 0;
+			font-family: "JetBrains Mono", monospace;
+		}
 
-			html,
-			body,
-			#charts-container {
-				width: 100%;
-				height: 100%;
-				background-color: white;
-			}
+		html,
+		body,
+		#charts-container {
+			width: 100%;
+			height: 100%;
+			background-color: white;
+		}
 
-			.chart {
-				height: 24.8%;
-				min-height: 170px;
-				width: 100%;
-				float: right;
-				opacity: 0;
-			}
+		.chart {
+			height: 24.8%;
+			min-height: 170px;
+			width: 100%;
+			float: right;
+			opacity: 0;
+		}
 
-			button {
-				flex: 1;
-				position: relative;
-				padding: 3px;
-				padding-left: 4px;
-				padding-right: 4px;
-				line-height: 10px;
-				border-radius: 4px;
-				background-color: rgb(0, 121, 213);
-				color: #fff;
-				transition: background-color 0.2s, box-shadow 0.1s, opacity 0.2s,
-					transform ease-in-out 0.2s;
-				box-shadow: 0 1px 4px -1px #00000096;
-			}
+		button {
+			flex: 1;
+			position: relative;
+			padding: 3px;
+			padding-left: 4px;
+			padding-right: 4px;
+			line-height: 10px;
+			border-radius: 4px;
+			background-color: rgb(0, 121, 213);
+			color: #fff;
+			transition: background-color 0.2s, box-shadow 0.1s, opacity 0.2s,
+				transform ease-in-out 0.2s;
+			box-shadow: 0 1px 4px -1px #00000096;
+		}
 
-			button:hover,
-			button:focus-visible {
-				/* background-color: rgb(0, 121, 213); */
-				box-shadow: 0 3px 10px 0px #00000080;
-				filter: brightness(110%);
-			}
-			button:active {
-				filter: brightness(90%);
-			}
+		button:hover,
+		button:focus-visible {
+			/* background-color: rgb(0, 121, 213); */
+			box-shadow: 0 3px 10px 0px #00000080;
+			filter: brightness(110%);
+		}
 
-			button:disabled {
-				display: none;
-			}
+		button:active {
+			filter: brightness(90%);
+		}
 
-			#status {
-				position: absolute;
-				top: 50%;
-				left: 50%;
-				transform: translate(-50%, -50%);
-				font-weight: bold;
-				z-index: 99999;
-				text-align: center;
-				background-color: white;
-				color: black;
-				width: auto;
-			}
+		button:disabled {
+			display: none;
+		}
 
-			#controls {
-				position: fixed;
-				bottom: 2px;
-				left: 2px;
-				display: flex;
-				gap: 10px;
-			}
+		#status {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			font-weight: bold;
+			z-index: 99999;
+			text-align: center;
+			background-color: white;
+			color: black;
+			width: auto;
+		}
 
-			/* Modifying library elements */
-			.crisislab-timeline-value-axis {
-				font-size: 10px !important;
-				height: max-content;
-				font-weight: bold;
-			}
-		</style>
-	</head>
+		#controls {
+			position: fixed;
+			bottom: 2px;
+			left: 2px;
+			display: flex;
+			gap: 10px;
+		}
 
-	<body>
-		<div id="charts-container"></div>
-		<h1 id="status">Connecting...</h1>
-		<div id="controls">
-			<button id="pause" disabled>Pause</button>
-			<button id="reload" disabled>Reload</button>
-		</div>
-		<script type="module" src="/src/main.ts"></script>
-	</body>
+		/* Modifying library elements */
+		.crisislab-timeline-value-axis {
+			font-size: 10px !important;
+			height: max-content;
+			font-weight: bold;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="charts-container"></div>
+	<h1 id="status">Connecting...</h1>
+	<div id="controls">
+		<button id="pause" disabled>Pause</button>
+		<button id="reload" disabled>Reload</button>
+	</div>
+	<script type="module" src="/src/main.ts"></script>
+	<script>
+		console.info(`Hi, welcome to CRISiSLab's live sensor data streaming site.
+
+The graphs are made using our in-house graphing library TimeLine: https://github.com/crisislab-platform/TimeLine
+		
+
+Do you want to use our live data feed? We'd love to share it with you,
+for the betterment of all humanity (as long as you don't use too much bandwidth please).
+	
+By default the data is compressed using a system called msgpackr.
+
+In this JS console, you can write 'CRISiSLab.debugData = true' to see the data here as it comes in.
+
+If you want an uncompressed version of the WebSocket, we've got you! Just add ?plain to the end of the websocket URL.
+Try running this: '(new WebSocket("https://crisislab-data.massey.ac.nz/consume/"+CRISiSLab.sensorID+"/live?plain")).onmessage = console.log'
+
+The CRISiSLab object also has some other interesting stuff on it.
+
+Go forth and prosper!`)
+	</script>
+
+</body>
+
 </html>
