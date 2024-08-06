@@ -2,6 +2,10 @@
 
 This server handles all our data from sensors. It listens to udp packets from the sensor network. It also runs a web server that allows a web client (in `./live-data-graphs`) to connect via websocket to have all of the udp data from a sensor forwarded to it in a format that it can understand. It also saves all of the udp data to a PostgreSQL (+ TimeScale) database. It also hosts an API (/api/v2/\*) for managing sensor metadata, user accounts, etc.
 
+A web client for viewing live data is available at `/consume/$sensorID`. E.g. `https://crisislab-data.massey.ac.nz/consume/6`.
+
+The compressed Web Socket for live sensor data is hosted at `/consume/$sensorID/live`, and a plaintext version can also be requested: `/consume/$sensorID/live?plain`. E.g. `(new WebSocket('wss://crisislab-data.massey.ac.nz/consume/6/live?plain')).onmessage=console.log`.
+
 ## Usage
 
 To run the server, first install Deno:
