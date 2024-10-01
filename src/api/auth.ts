@@ -1,6 +1,6 @@
 import { IRequest } from "itty-router";
 import { verifyToken } from "./jwt.ts";
-import { log } from "../utils.ts";
+import { getUserByEmail, log } from "../utils.ts";
 
 // Middleware to make sure a user is logged in, and has the correct role
 export const authMiddleware = (role?: string) => async (request: IRequest) => {
@@ -33,5 +33,5 @@ export const authMiddleware = (role?: string) => async (request: IRequest) => {
 	// Set user email to lowercase
 	payload.email = payload.email.toLowerCase();
 
-	request.user = payload;
+	request.userPayload = payload;
 };
