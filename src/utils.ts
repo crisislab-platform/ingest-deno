@@ -134,20 +134,22 @@ let sql: postgres.Sql | null = null;
 export async function getDB(): Promise<postgres.Sql> {
 	if (!sql) {
 		try {
-			if (
-				!Deno.env.get("DATABASE_USERNAME") ||
-				!Deno.env.get("DATABASE_PASSWORD")
-			) {
-				log.error(
-					"DATABASE_USERNAME or DATABASE_PASSWORD not set in environment"
-				);
-				await exit(1);
+			for (const envVar of [
+				"DATABASE_USERNAME",
+				"DATABASE_PASSWORD",
+				"DATABASE_HOST",
+				"DATABASE_NAME",
+			]) {
+				if (!Deno.env.get(envVar)) {
+					log.error(envVar + " not set in environment");
+					await exit(1);
+				}
 			}
 			sql = postgres({
 				user: Deno.env.get("DATABASE_USERNAME"),
 				password: Deno.env.get("DATABASE_PASSWORD"),
-				database: "sensor_data",
-				hostname: "localhost",
+				database: Deno.env.get("DATABASE_NAME"),
+				hostname: Deno.env.get("DATABASE_HOST"),
 				port: 5432,
 				onnotice: (notice) =>
 					log.info("PostgreSQL notice:", notice?.message ?? notice),

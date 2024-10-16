@@ -6,7 +6,41 @@ A web client for viewing live data is available at `/consume/$sensorID`. E.g. `h
 
 The compressed Web Socket for live sensor data is hosted at `/consume/$sensorID/live`, and a plaintext version can also be requested: `/consume/$sensorID/live?plain`. E.g. `(new WebSocket('wss://crisislab-data.massey.ac.nz/consume/6/live?plain')).onmessage=console.log`.
 
+## Network overview
+
+See this doc: https://docs.google.com/document/d/1PnOvAFujeliayv_FOyj-ooBgS3bKITYmaEFsyHCt90c/edit#heading=h.6xyuzekua218
+
 ## Usage
+
+1. Install and setup [PostgreSQL](https://www.postgresql.org/download/) and [TimescaleDB](https://docs.timescale.com/self-hosted/latest/install/).
+2. Create a database called `sensor_data`.
+
+   > The server will automatically create any tables it needs. If you want compression, you will need to [enable compression](https://docs.timescale.com/use-timescale/latest/compression/compression-policy/#enabling-compression) yourself on the tables after the server has created them.
+
+3. Create a `.env` file and populate it with database credentials.
+   > Don't touch the ports if you're using Docker! Remap those in the command, and leave these the same.
+
+Now you can run the server, either manually using commands or systemCTL, or you can use the Docker image.
+
+### With Docker
+
+Make sure you've set up .env correctly.
+
+Update the command below to remap ports as you desire.
+
+```bash
+docker run --env-file .env -p 8080:8080 -p 2098:2098/udp ingest-deno
+```
+
+You should now be done! For the admin and graphing websites, those will run on any regular static web hosting provider. Configure them to use your new container as their backend.
+
+If it says `Unable to find image 'ingest-deno:latest' locally`, then you need ot build the image:
+
+```bash
+docker build -t ingest-deno .
+```
+
+### Manually
 
 To run the server, first install Deno:
 
@@ -24,11 +58,6 @@ cd live-data-graphs
 npm install
 npm run build
 ```
-
-- Install and setup [PostgreSQL](https://www.postgresql.org/download/) and [TimescaleDB](https://docs.timescale.com/self-hosted/latest/install/).
-- Create a database called `sensor_data`.
-
-The server will automatically create any tables it needs. If you want compression, you will need to [enable compression](https://docs.timescale.com/use-timescale/latest/compression/compression-policy/#enabling-compression) yourself on the tables after the server has created them.
 
 To start the server
 
@@ -86,7 +115,3 @@ This could be an issue with WebSockets being blocked by the Massey reverse proxy
 ### The server is not updating the sensor status
 
 Make sure you're using the correct API token, and that it's not expired. The API endpoint is also configurable in the .env file.
-
-## Network overview
-
-See this doc: https://docs.google.com/document/d/1PnOvAFujeliayv_FOyj-ooBgS3bKITYmaEFsyHCt90c/edit#heading=h.6xyuzekua218
