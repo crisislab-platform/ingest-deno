@@ -12,6 +12,11 @@ See this doc: https://docs.google.com/document/d/1PnOvAFujeliayv_FOyj-ooBgS3bKIT
 
 ## Usage
 
+> You can skip all this and just use Docker Compose now!
+> `docker-compose up -d`
+> Then go to https://admin.crisislab.org.nz/ and https://shakemap.crisislab.org.nz/, and use the cog in the bottom left of the side drawer to point them to wherever your server instance is running!
+> (If you want to self host those sites, they're at https://github.com/crisislab-platform/admin/ and https://github.com/crisislab-platform/map/)
+
 1. Install and setup [PostgreSQL](https://www.postgresql.org/download/) and [TimescaleDB](https://docs.timescale.com/self-hosted/latest/install/).
 2. Create a database called `sensor_data`.
 
@@ -24,7 +29,7 @@ Now you can run the server, either manually using commands or systemCTL, or you 
 
 ### With Docker
 
-Make sure you've set up .env correctly.
+Make sure you've set up `.env` correctly. By default it's setup to be used with docker compose, so you probably need to set `DATABASE_HOST` to `localhost`
 
 Update the command below to remap ports as you desire.
 
