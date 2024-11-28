@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    container_name: timescaledb
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+
+  ingest-deno:
+    image: ingest-deno
+    container_name: ingest-server
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+      - "2098:2098/udp"
+    depends_on:
+      - timescaledb
+
+volumes:
+  timescale_data:
