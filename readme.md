@@ -29,7 +29,7 @@ Now you can run the server, either manually using commands or systemCTL, or you 
 
 ### With Docker
 
-Make sure you've set up .env correctly.
+Make sure you've set up `.env` correctly. By default it's setup to be used with docker compose, so you probably need to set `DATABASE_HOST` to `localhost`
 
 Update the command below to remap ports as you desire.
 
