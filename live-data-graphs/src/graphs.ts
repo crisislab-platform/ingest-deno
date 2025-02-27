@@ -142,10 +142,11 @@ export function handleData(packet: Datagram) {
 					overflowBehaviour: "scale",
 				}) ||
 				undefined,
-			markers: window.CRISiSLab.channelMarkers?.[channel] ?? undefined,
 		});
 		window.CRISiSLab.charts[channel] = chart;
-
+		for (const marker of window.CRISiSLab.channelMarkers?.[channel] ?? []) {
+			chart.addMarker(marker);
+		}
 		container.style.opacity = "1";
 
 		sortChannels();

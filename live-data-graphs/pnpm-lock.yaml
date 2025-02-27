@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@crisislab/timeline':
-        specifier: ^0.12.1
-        version: 0.12.1
+        specifier: ^0.12.2
+        version: 0.12.2
       msgpackr:
         specifier: ^1.11.2
         version: 1.11.2
@@ -24,8 +24,8 @@ importers:
 
 packages:
 
-  '@crisislab/timeline@0.12.1':
-    resolution: {integrity: sha512-2OIBxSG22qy0s0Jboz4ad8klaj5VDhceB5oiFTRXiYdEGxpZ64MQkYmU8NuBntiZlFuAJTqwa+0iuTV1PnE/jw==}
+  '@crisislab/timeline@0.12.2':
+    resolution: {integrity: sha512-fCKfLU9/UMQELrdN6GyIn8Sf+Ac8VRNvTvEbilOzl8AYrnt6CV1hbFIt6q2I4/sA1/V9eUDpkzhcjYaMKV4wvA==}
 
   '@esbuild/aix-ppc64@0.25.0':
     resolution: {integrity: sha512-O7vun9Sf8DFjH2UtqK8Ku3LkquL9SZL8OLY1T5NZkA34+wG3OQF7cl4Ql8vdNzM6fzBbYfLaiRLIOZ+2FOCgBQ==}
@@ -398,7 +398,7 @@ packages:
 
 snapshots:
 
-  '@crisislab/timeline@0.12.1': {}
+  '@crisislab/timeline@0.12.2': {}
 
   '@esbuild/aix-ppc64@0.25.0':
     optional: true

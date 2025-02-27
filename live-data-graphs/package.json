@@ -10,7 +10,7 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
-		"@crisislab/timeline": "^0.12.1",
+		"@crisislab/timeline": "^0.12.2",
 		"msgpackr": "^1.11.2"
 	},
 	"devDependencies": {
