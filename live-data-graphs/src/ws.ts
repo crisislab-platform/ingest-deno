@@ -99,6 +99,17 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 			if (message) {
 				showMessage(message);
 			}
+		} else if (parsed?.type === "channel-value-markers") {
+			const channelMarkers = parsed?.data as Record<string, Array<any>>;
+			if (channelMarkers) {
+				for (const [channel, markers] of Object.entries(
+					channelMarkers,
+				)) {
+					window.CRISiSLab.channelMarkers[channel] = [];
+					window.CRISiSLab.channelMarkers[channel].push(...markers);
+					markers.map(window.CRISiSLab.charts[channel]?.addMarker);
+				}
+			}
 		}
 	};
 }

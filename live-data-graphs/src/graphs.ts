@@ -40,6 +40,11 @@ const aliases = {
 	// CLY: "Y axis acceleration (m/s²)",
 	// CLZ: "Z axis acceleration (m/s²)",
 };
+const baseWindowMinMaxSizes: Record<string, [number, number]> = {
+	// ENN: [-0.2, 0.2],
+	// ENE: [-0.2, 0.2],
+	// ENZ: [9.7, 9.9],
+};
 let start;
 const maxDataLength = 5000;
 const timeWindow = 30 * 1000; // 30 seconds
@@ -130,6 +135,14 @@ export function handleData(packet: Datagram) {
 						"closest-x",
 					),
 			],
+			valueWindow:
+				(channel in baseWindowMinMaxSizes && {
+					min: baseWindowMinMaxSizes[channel]?.[0],
+					max: baseWindowMinMaxSizes[channel]?.[1],
+					overflowBehaviour: "scale",
+				}) ||
+				undefined,
+			markers: window.CRISiSLab.channelMarkers?.[channel] ?? undefined,
 		});
 		window.CRISiSLab.charts[channel] = chart;
 

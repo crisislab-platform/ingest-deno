@@ -36,6 +36,10 @@ declare global {
 			sensorVariety: SensorVariety;
 			charts: Record<string, TimeLine>;
 			data: Record<string, Array<TimeLineDataPoint>>;
+			channelMarkers: Record<
+				string,
+				{ colour: string; value: number; label: string }[]
+			>;
 		};
 	}
 }
