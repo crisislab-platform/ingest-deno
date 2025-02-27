@@ -143,7 +143,7 @@ export function handleData(packet: Datagram) {
 	// over the saved data and find out where this data should be inserted
 	let insertAfter: number | null = null;
 	if (
-		timeOrDateToNumber(window.CRISiSLab.data[channel].at(-1)!.time) >
+		timeOrDateToNumber(window.CRISiSLab.data[channel].at(-1)?.time ?? 0) >
 		timestamp
 	) {
 		// Cursed way to loop backwards: loop forwards then take the inverse
