@@ -29,5 +29,5 @@ export default async function removeMarker(request: IRequest) {
 
 	log.info(`Deleted marker ${id}`);
 
-	return new Response("Removed " + id, { status: 204 });
+	return new Response(null, { status: 204 });
 }
