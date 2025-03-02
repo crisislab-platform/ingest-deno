@@ -132,7 +132,7 @@ async function setupTables(sql: postgres.Sql) {
 	`;
 
 	await sql`
-	CREATE TABLE IF NOT EXISTS channel_markers (
+	CREATE TABLE IF NOT EXISTS chart_markers (
 		"id" serial NOT NULL UNIQUE,
 		"sensor_type" text NOT NULL,
 		"sensor_channel" text NOT NULL,

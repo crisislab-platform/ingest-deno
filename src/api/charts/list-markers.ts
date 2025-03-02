@@ -4,7 +4,7 @@ import { getDB } from "../../utils.ts";
 export default async function listMarkers(_request: IRequest) {
 	const sql = await getDB();
 
-	const data = await sql`SELECT * FROM channel_markers;`;
+	const data = await sql`SELECT * FROM chart_markers;`;
 
 	return new Response(JSON.stringify(data));
 }

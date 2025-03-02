@@ -55,7 +55,7 @@ export default async function createMarker(request: IRequest) {
 	const sql = await getDB();
 
 	const id = (
-		await sql`INSERT INTO channel_markers ${sql(data)} RETURNING id;`
+		await sql`INSERT INTO chart_markers ${sql(data)} RETURNING id;`
 	)?.[0]?.["id"];
 	log.info(`Created marker ${id}`);
 

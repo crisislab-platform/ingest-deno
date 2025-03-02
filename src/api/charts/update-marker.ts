@@ -13,7 +13,7 @@ export default async function updateMarker(request: IRequest) {
 	const sql = await getDB();
 
 	const sensorType = (
-		await sql`SELECT sensor_type FROM channel_markers WHERE id=${id};`
+		await sql`SELECT sensor_type FROM chart_markers WHERE id=${id};`
 	)?.[0]?.["sensor_type"];
 
 	if (!sensorType) {
@@ -24,7 +24,7 @@ export default async function updateMarker(request: IRequest) {
 		await sql<
 			ChartMarker[]
 		> //Line break to stop highlighting breaking
-		`UPDATE channel_markers SET ${sql(data)} WHERE id=${id} RETURNING *;`
+		`UPDATE chart_markers SET ${sql(data)} WHERE id=${id} RETURNING *;`
 	)?.[0];
 
 	// Publish to websockets

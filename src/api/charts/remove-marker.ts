@@ -8,7 +8,7 @@ export default async function removeMarker(request: IRequest) {
 	const sql = await getDB();
 
 	const sensorType = (
-		await sql`DELETE FROM channel_markers WHERE id=${id} RETURNING sensor_type;`
+		await sql`DELETE FROM chart_markers WHERE id=${id} RETURNING sensor_type;`
 	)?.[0]?.["sensor_type"];
 
 	if (!sensorType) {
