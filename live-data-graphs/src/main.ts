@@ -3,7 +3,12 @@ import "./graphs";
 import { pauseButton, showNoSensorFound } from "./ui";
 import { connectSocket } from "./ws";
 import { handleData } from "./graphs";
-import type { TimeLine, TimeLineDataPoint } from "@crisislab/timeline";
+import type {
+	TimeLine,
+	TimeLineDataPoint,
+	TimeLineMarker,
+} from "@crisislab/timeline";
+import { ChartMarker } from "../../src/types";
 
 export enum SensorVariety {
 	Unknown,
@@ -36,10 +41,7 @@ declare global {
 			sensorVariety: SensorVariety;
 			charts: Record<string, TimeLine>;
 			data: Record<string, Array<TimeLineDataPoint>>;
-			channelMarkers: Record<
-				string,
-				{ colour: string; value: number; label: string }[]
-			>;
+			channelMarkers: Record<string, TimeLineMarker[]>;
 		};
 	}
 }
@@ -69,6 +71,7 @@ window.CRISiSLab = {
 	unpack,
 	charts: {},
 	data: {},
+	channelMarkers: {},
 };
 
 if (new URLSearchParams(location.search).get("hide-pause-button") === "yes") {

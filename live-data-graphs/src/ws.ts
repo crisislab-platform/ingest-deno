@@ -2,6 +2,8 @@ import { Datagram } from "./graphs";
 import { SensorVariety } from "./main";
 import { showMessage, reloadButton } from "./ui";
 import { unpack } from "msgpackr";
+import type { ChartMarker } from "../../src/types";
+import { TimeLineMarker } from "@crisislab/timeline";
 
 const connectionRetryLimit = 5;
 
@@ -99,15 +101,43 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 			if (message) {
 				showMessage(message);
 			}
-		} else if (parsed?.type === "channel-value-markers") {
-			const channelMarkers = parsed?.data as Record<string, Array<any>>;
-			if (channelMarkers) {
-				for (const [channel, markers] of Object.entries(
-					channelMarkers,
+		} else if (parsed?.type === "add-markers") {
+			const _chartMakers = parsed?.data as Array<ChartMarker>;
+			if (_chartMakers) {
+				const chartMakers = _chartMakers
+					.filter((m) => m.enabled)
+					.map((m) => ({
+						value: m.value,
+						label: m.label,
+						colour: m.colour,
+						lineStyle: m.style,
+						labelSide: "center" as const,
+						alwaysShow: true,
+						orientation: "horizontal" as const,
+						id: m.id,
+						channel: m.sensor_channel,
+					}));
+				for (const marker of chartMakers) {
+					window.CRISiSLab.channelMarkers[marker.channel] ??= [];
+					window.CRISiSLab.channelMarkers[marker.channel].push(
+						marker,
+					);
+					window.CRISiSLab.charts[marker.channel]?.addMarker(marker);
+				}
+			}
+		} else if (parsed?.type === "remove-markers") {
+			const IDs = parsed?.data as number[];
+			if (IDs) {
+				for (const [, markers] of Object.entries(
+					window.CRISiSLab.channelMarkers,
 				)) {
-					window.CRISiSLab.channelMarkers[channel] = [];
-					window.CRISiSLab.channelMarkers[channel].push(...markers);
-					markers.map(window.CRISiSLab.charts[channel]?.addMarker);
+					for (const id of IDs) {
+						// @ts-expect-error shhh
+						const index = markers.findIndex((m) => m.id! === id);
+						if (index !== -1) {
+							markers.splice(index, 1);
+						}
+					}
 				}
 			}
 		}
