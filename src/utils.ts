@@ -349,7 +349,7 @@ export async function getMarkersForSensorType(
 
 	const markers = await sql<
 		ChartMarker[]
-	>`SELECT * FROM chart_markers WHERE sensor_type=${sensorType};`;
+	>`SELECT * FROM chart_markers WHERE sensor_type=${sensorType} AND enabled=true;`;
 
 	return markers;
 }

@@ -19,7 +19,7 @@ export default async function createMarker(request: IRequest) {
 		return error(400, "Specify a sensor channel");
 	}
 
-	if (!data.value) {
+	if (typeof data.value !== "number") {
 		return error(400, "Specify a value");
 	}
 
@@ -64,16 +64,17 @@ export default async function createMarker(request: IRequest) {
 	data.id = id;
 
 	// Publish to websockets
-	const message = {
-		type: "add-markers",
-		data: [data],
-	};
-	broadcastWebsocketMessage({
-		message,
-		filterTargets: {
-			sensorTypes: [data.sensor_type],
-		},
-	});
-
+	if (data.enabled) {
+		const message = {
+			type: "add-markers",
+			data: [data],
+		};
+		broadcastWebsocketMessage({
+			message,
+			filterTargets: {
+				sensorTypes: [data.sensor_type],
+			},
+		});
+	}
 	return new Response(id + "", { status: 201 });
 }
