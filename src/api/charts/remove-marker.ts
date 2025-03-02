@@ -1,4 +1,4 @@
-import { IRequest } from "itty-router";
+import { error, IRequest } from "itty-router";
 import { getDB, log } from "../../utils.ts";
 import { broadcastWebsocketMessage } from "../../connectionHandler.ts";
 
@@ -8,10 +8,12 @@ export default async function removeMarker(request: IRequest) {
 	const sql = await getDB();
 
 	const sensorType = (
-		await sql`SELECT sensor_type FROM channel_markers WHERE id=${id};`
+		await sql`DELETE FROM channel_markers WHERE id=${id} RETURNING sensor_type;`
 	)?.[0]?.["sensor_type"];
 
-	await sql`DELETE FROM channel_markers WHERE id=${id};`;
+	if (!sensorType) {
+		return error(404, "Can't find that marker");
+	}
 
 	// Publish to websockets
 	const message = {
