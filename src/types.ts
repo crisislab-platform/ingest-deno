@@ -24,9 +24,15 @@ export interface User {
 	roles: string[];
 }
 
+export interface ServerWebsocketClient {
+	ws: WebSocket;
+	plain: boolean;
+	clientIP: string;
+	sensorID: number;
+}
 export interface ServerSensor {
 	id: number;
-	webSocketClients: { ws: WebSocket; plain: boolean }[];
+	webSocketClients: ServerWebsocketClient[];
 	isDuplicateOf?: number;
 	lastMessageTimestamp?: number;
 	meta: PrivateSensorMeta;
@@ -36,7 +42,8 @@ export const chartMarkerTypes = ["fixed-value", "24h-max"] as const;
 export const chartMarkerStyles = ["dotted", "dashed", "solid"] as const;
 export interface ChartMarker {
 	id: number;
-	channel: string;
+	sensor_channel: string;
+	sensor_type: string;
 	type: (typeof chartMarkerTypes)[number];
 	label: string;
 	colour: string;

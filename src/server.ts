@@ -67,6 +67,12 @@ Deno.serve(
 				}${origin ? `(${origin})` : ""}`
 			);
 
+			// For use by other stuff later
+			req.headers.set(
+				"X-CRISISLAB-REQUEST-IP",
+				connectionInfo.remoteAddr.hostname
+			);
+
 			const res = (await router.handle(req)) as Response | null | undefined;
 
 			// Deno.serve is weak - if you don't return something the

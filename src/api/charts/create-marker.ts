@@ -5,13 +5,18 @@ import {
 	chartMarkerStyles,
 	chartMarkerTypes,
 } from "../../types.ts";
+import { broadcastWebsocketMessage } from "../../connectionHandler.ts";
 
 export default async function createMarker(request: IRequest) {
 	const data: Partial<ChartMarker> = await request.json();
 	console.log(data);
 
-	if (!data.channel) {
-		return error(400, "Specify a channel");
+	if (!data.sensor_type) {
+		return error(400, "Specify a sensor type");
+	}
+
+	if (!data.sensor_channel) {
+		return error(400, "Specify a sensor channel");
 	}
 
 	if (!data.value) {
@@ -49,14 +54,26 @@ export default async function createMarker(request: IRequest) {
 		}
 	}
 
-	// TODO: Also publish to websockets
-
 	const sql = await getDB();
 
 	const id = (
 		await sql`INSERT INTO channel_markers ${sql(data)} RETURNING id;`
 	)?.[0]?.["id"];
 	log.info(`Created marker ${id}`);
+
+	data.id = id;
+
+	// Publish to websockets
+	const message = {
+		type: "add-markers",
+		data: [data],
+	};
+	broadcastWebsocketMessage({
+		message,
+		filterTargets: {
+			sensorTypes: [data.sensor_type],
+		},
+	});
 
 	return new Response(id + "", { status: 201 });
 }

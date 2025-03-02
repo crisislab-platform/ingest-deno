@@ -2,9 +2,14 @@ import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
 import * as Sentry from "sentry";
 import "./types.ts";
 import { pack } from "msgpackr";
-import { getDB, log } from "./utils.ts";
+import { getDB, getMarkersForSensorType, getSensor, log } from "./utils.ts";
 import { IRequest } from "itty-router";
-import { ServerSensor, WithRequired, PrivateSensorMeta } from "./types.ts";
+import {
+	ServerSensor,
+	WithRequired,
+	PrivateSensorMeta,
+	ServerWebsocketClient,
+} from "./types.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -249,14 +254,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 						data: parsedData,
 					};
 
-					let serialisedData;
-					if (client.plain) {
-						serialisedData = JSON.stringify(data);
-					} else {
-						serialisedData = pack(data);
-					}
-
-					client.ws.send(serialisedData);
+					sendWebsocketMessage(client, data);
 				}
 			} catch (err) {
 				Sentry.captureException(err);
@@ -294,26 +292,37 @@ export function handleWebSockets(request: IRequest): Response {
 
 	const sensor = getSensorFromCacheByID(sensorID);
 
-	const { socket: client, response } = Deno.upgradeWebSocket(request);
-	client.binaryType = "arraybuffer";
+	const { socket: wsClient, response } = Deno.upgradeWebSocket(request);
+	wsClient.binaryType = "arraybuffer";
 
 	// We can't just send a regular 404 response,
 	// we have to send a custom close message over the websocket,
 	// otherwise the client can't understand it.
 	if (!sensor) {
 		log.info(`Couldn't find requested sensor #${sensorID}`);
-		client.addEventListener("open", () => {
-			client.close(4404, `Couldn't find a sensor with that id (#${sensorID})`);
+		wsClient.addEventListener("open", () => {
+			wsClient.close(
+				4404,
+				`Couldn't find a sensor with that id (#${sensorID})`
+			);
 		});
 		return response;
 	}
 
-	sensor.webSocketClients.push({ ws: client, plain });
+	const client = {
+		ws: wsClient,
+		plain,
+		sensorID: sensor.id,
+		clientIP: request.headers.get("X-CRISISLAB-REQUEST-IP") as string,
+	};
 
-	client.addEventListener("open", () => {
+	sensor.webSocketClients.push(client);
+
+	wsClient.addEventListener("open", async () => {
 		log.info(`Connected websocket for sensor #${sensorID}`);
 
-		const data = {
+		// Main connection message
+		sendWebsocketMessage(client, {
 			type: "sensor-meta",
 			data: {
 				// Doing this manually to avoid sending sensitive data
@@ -322,24 +331,91 @@ export function handleWebSockets(request: IRequest): Response {
 				type: sensor.meta?.type,
 				online: sensor.meta?.online,
 			},
-		};
+		});
 
-		let serialisedData;
-		if (plain) {
-			serialisedData = JSON.stringify(data);
-		} else {
-			serialisedData = pack(data);
-		}
-
-		client.send(serialisedData);
+		// Markers
+		const markers = await getMarkersForSensorType(sensor.meta.type ?? "");
+		sendWebsocketMessage(client, {
+			type: "add-markers",
+			data: markers,
+		});
 	});
 
-	client.addEventListener("close", () => {
+	wsClient.addEventListener("close", () => {
 		// Remove socket from list when it's closed
 		sensor.webSocketClients = sensor.webSocketClients.filter(
-			({ ws }) => ws === client
+			({ ws }) => ws === wsClient
 		);
 	});
 
 	return response;
+}
+
+export interface WebSocketMessage {
+	type: string;
+	data: any;
+}
+export interface BroadcastWebsocketMessageOptions {
+	message: WebSocketMessage;
+	filterTargets: {
+		clientIPs?: string[];
+		sensorIDs?: number[];
+		sensorTypes?: string[];
+	};
+}
+export function broadcastWebsocketMessage({
+	message,
+	filterTargets,
+}: BroadcastWebsocketMessageOptions) {
+	const clientsToSendTo: ServerWebsocketClient[] = ipToSensorMap
+		.entries()
+		.map(([_sensorIP, serverSensor]) => {
+			if (
+				filterTargets.sensorIDs &&
+				!filterTargets.sensorIDs.includes(serverSensor.meta.id)
+			) {
+				return [];
+			}
+
+			if (
+				filterTargets.sensorTypes &&
+				!filterTargets.sensorTypes.includes(serverSensor.meta.type ?? "")
+			) {
+				return [];
+			}
+
+			if (filterTargets.clientIPs) {
+				return serverSensor.webSocketClients.filter((client) =>
+					filterTargets.clientIPs!.includes(client.clientIP)
+				);
+			}
+
+			return serverSensor.webSocketClients;
+		})
+		.toArray()
+		.flat();
+
+	for (const client of clientsToSendTo) {
+		sendWebsocketMessage(client, message);
+	}
+}
+
+export function sendWebsocketMessage(
+	client: { ws: WebSocket; plain: boolean },
+	message: WebSocketMessage
+): boolean {
+	if (client.ws.readyState !== WebSocket.OPEN) {
+		return false;
+	}
+
+	let serialisedData;
+	if (client.plain) {
+		serialisedData = JSON.stringify(message);
+	} else {
+		serialisedData = pack(message);
+	}
+
+	client.ws.send(serialisedData);
+
+	return true;
 }

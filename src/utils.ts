@@ -1,6 +1,11 @@
 import postgres from "postgresjs";
 import chalk from "chalk";
-import { PrivateSensorMeta, PublicSensorMeta, User } from "./types.ts";
+import {
+	ChartMarker,
+	PrivateSensorMeta,
+	PublicSensorMeta,
+	User,
+} from "./types.ts";
 import process from "https://deno.land/std@0.132.0/node/process.ts";
 
 function loggerTimeAndInfo(): string {
@@ -129,7 +134,8 @@ async function setupTables(sql: postgres.Sql) {
 	await sql`
 	CREATE TABLE IF NOT EXISTS channel_markers (
 		"id" serial NOT NULL UNIQUE,
-		"channel" text NOT NULL,
+		"sensor_type" text NOT NULL,
+		"sensor_channel" text NOT NULL,
 		"type" text NOT NULL,
 		"label" text NOT NULL,
 		"colour" text NOT NULL,
@@ -334,4 +340,16 @@ export function toSecureToken(base: string): string {
 			(Math.random() * Math.random() + 3) * Math.PI +
 			Math.random() * 69420
 	);
+}
+
+export async function getMarkersForSensorType(
+	sensorType: string
+): Promise<ChartMarker[]> {
+	const sql = await getDB();
+
+	const markers = await sql<
+		ChartMarker[]
+	>`SELECT * FROM chart_markers WHERE sensor_type=${sensorType};`;
+
+	return markers;
 }
