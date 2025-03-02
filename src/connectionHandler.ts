@@ -313,7 +313,7 @@ export function handleWebSockets(request: IRequest): Response {
 		ws: wsClient,
 		plain,
 		sensorID: sensor.id,
-		clientIP: request.headers.get("X-CRISISLAB-REQUEST-IP") as string,
+		// clientIP: request.headers.get("X-CRISISLAB-REQUEST-IP") as string,
 	};
 
 	sensor.webSocketClients.push(client);
@@ -358,7 +358,7 @@ export interface WebSocketMessage {
 export interface BroadcastWebsocketMessageOptions {
 	message: WebSocketMessage;
 	filterTargets: {
-		clientIPs?: string[];
+		// clientIPs?: string[];
 		sensorIDs?: number[];
 		sensorTypes?: string[];
 	};
@@ -384,11 +384,11 @@ export function broadcastWebsocketMessage({
 				return [];
 			}
 
-			if (filterTargets.clientIPs) {
-				return serverSensor.webSocketClients.filter((client) =>
-					filterTargets.clientIPs!.includes(client.clientIP)
-				);
-			}
+			// if (filterTargets.clientIPs) {
+			// 	return serverSensor.webSocketClients.filter((client) =>
+			// 		filterTargets.clientIPs!.includes(client.clientIP)
+			// 	);
+			// }
 
 			return serverSensor.webSocketClients;
 		})

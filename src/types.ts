@@ -27,7 +27,7 @@ export interface User {
 export interface ServerWebsocketClient {
 	ws: WebSocket;
 	plain: boolean;
-	clientIP: string;
+	// clientIP: string;
 	sensorID: number;
 }
 export interface ServerSensor {

@@ -58,19 +58,12 @@ Deno.serve(
 			log.info(`HTTP server started http://${hostname}:${port}`),
 	},
 	async (req, connectionInfo) => {
+		const origin = req.headers.get("Origin");
 		try {
-			const origin = req.headers.get("Origin");
-
 			log.info(
 				`HTTP ${req.method} ${req.url} from ${
 					connectionInfo.remoteAddr.hostname
 				}${origin ? `(${origin})` : ""}`
-			);
-
-			// For use by other stuff later
-			req.headers.set(
-				"X-CRISISLAB-REQUEST-IP",
-				connectionInfo.remoteAddr.hostname
 			);
 
 			const res = (await router.handle(req)) as Response | null | undefined;
