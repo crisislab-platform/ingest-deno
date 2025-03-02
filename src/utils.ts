@@ -141,7 +141,8 @@ async function setupTables(sql: postgres.Sql) {
 		"colour" text NOT NULL,
 		"style" text NOT NULL,
 		"value" int NOT NULL,
-		"enabled" boolean NOT NULL
+		"enabled" boolean NOT NULL,
+		PRIMARY KEY ("id")
 	);
 	`;
 
