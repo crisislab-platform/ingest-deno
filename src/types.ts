@@ -31,3 +31,16 @@ export interface ServerSensor {
 	lastMessageTimestamp?: number;
 	meta: PrivateSensorMeta;
 }
+
+export const chartMarkerTypes = ["fixed-value", "24h-max"] as const;
+export const chartMarkerStyles = ["dotted", "dashed", "solid"] as const;
+export interface ChartMarker {
+	id: number;
+	channel: string;
+	type: (typeof chartMarkerTypes)[number];
+	label: string;
+	colour: string;
+	style: (typeof chartMarkerStyles)[number];
+	value: number;
+	enabled: boolean;
+}

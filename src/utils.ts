@@ -126,6 +126,19 @@ async function setupTables(sql: postgres.Sql) {
     );
 	`;
 
+	await sql`
+	CREATE TABLE IF NOT EXISTS channel_markers (
+		"id" serial NOT NULL UNIQUE,
+		"channel" text NOT NULL,
+		"type" text NOT NULL,
+		"label" text NOT NULL,
+		"colour" text NOT NULL,
+		"style" text NOT NULL,
+		"value" int NOT NULL,
+		"enabled" boolean NOT NULL
+	);
+	`;
+
 	log.info("Done setting up tables");
 }
 
