@@ -111,9 +111,8 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 						label: m.label,
 						colour: m.colour,
 						lineStyle: m.style,
-						labelSide: "center" as const,
+						labelSide: "before" as const,
 						alwaysShow: true,
-						orientation: "horizontal" as const,
 						id: m.id,
 						channel: m.sensor_channel,
 					}));
@@ -128,14 +127,29 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 		} else if (parsed?.type === "remove-markers") {
 			const IDs = parsed?.data as number[];
 			if (IDs) {
-				for (const [, markers] of Object.entries(
+				for (const [channel, markers] of Object.entries(
 					window.CRISiSLab.channelMarkers,
 				)) {
 					for (const id of IDs) {
-						// @ts-expect-error shhh
-						const index = markers.findIndex((m) => m.id! === id);
-						if (index !== -1) {
-							markers.splice(index, 1);
+						const listIndex = markers.findIndex(
+							// @ts-expect-error shhh
+							(m) => m.id! === id,
+						);
+						if (listIndex !== -1) {
+							markers.splice(listIndex, 1);
+						}
+
+						const chartIndex = window.CRISiSLab.charts[
+							channel
+						].markers.findIndex(
+							// @ts-expect-error shhh
+							(m) => m.id! === id,
+						);
+						if (chartIndex !== -1) {
+							window.CRISiSLab.charts[channel].markers.splice(
+								chartIndex,
+								1,
+							);
 						}
 					}
 				}
