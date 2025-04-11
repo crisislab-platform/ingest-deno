@@ -1,0 +1,28 @@
+#! python3
+import argparse
+import subprocess
+
+parser = argparse.ArgumentParser(description='ingest-deno testing orchestration script')
+parser.add_argument("--ui", action="store_true")
+parser.add_argument("--single", action="store_true")
+
+args = parser.parse_args()
+
+
+# Build docker image of server
+
+# Generate credentials
+
+# Start server
+
+# Populate server with dummy data (sensors & accounts, one of which we need credentials for)
+
+# Spawn background thread acting as a fake sensor
+
+# Start playwright
+playwright_command = "pnpm exec playwright test"
+if args.ui:
+    playwright_command += " --ui"
+if args.single:
+    playwright_command += " --project firefox"
+subprocess.run(playwright_command.split(" "))
