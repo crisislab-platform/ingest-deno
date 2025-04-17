@@ -7,11 +7,12 @@ test.beforeEach(async ({ page }) => {
 
 	// Change API origin to local
 	await useLocalAPI(page);
+
+	// Wait for API reqs to finish loading
+	await page.waitForResponse(/api\/v2\/sensors/);
 });
 
 test("Has sensor count", async ({ page }) => {
-	await page.waitForResponse(/api\/v2\/sensors/);
-
 	const onlineTextLabel = await page.getByText("Online: ").textContent();
 	expect(onlineTextLabel).not.toBeNull();
 	expect(onlineTextLabel).toMatch(/Online: \d+/);
