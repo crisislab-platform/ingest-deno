@@ -12,22 +12,56 @@ See this doc: https://docs.google.com/document/d/1PnOvAFujeliayv_FOyj-ooBgS3bKIT
 
 ## Usage
 
-> You can skip all this and just use Docker Compose now!
-> `docker-compose up -d`
-> Then go to https://admin.crisislab.org.nz/ and https://shakemap.crisislab.org.nz/, and use the cog in the bottom left of the side drawer to point them to wherever your server instance is running!
-> (If you want to self host those sites, they're at https://github.com/crisislab-platform/admin/ and https://github.com/crisislab-platform/map/)
+There are several ways to run the server
+- Docker Compose
+- Docker server setup + Manual database setup
+- Manual server setup + Manual database setup (Used by CRISiSLab's cannonical instance)
+
+If not using docker compose, skip to the *Database Setup* section.
+
+Once your server is up and running, you can point our hosted web UIs at your server, or you can host them yourself:
+- h[ttps://admin.crisislab.org.nz/](https://admin.crisislab.org.nz/manage/sensors) is used for managing user accounts, sensors, and the data generated from those sensors. This is where you add new sensors to your network.
+   It's code is at https://github.com/crisislab-platform/admin/.
+   You can point the admin site at your server using the button that looks like a triangle with a cog on it in the bottom left.
+- https://shakemap.crisislab.org.nz/ is designed as a UI to provide your sensor hosts with. It displays all the sensors on the network, and embeds the live graphing view.   
+   It's code is at https://github.com/crisislab-platform/map/.
+   You can point the shakemap site at your server using the button that looks like a triangle with a cog on it in the bottom left.
+
+### Docker compose
+
+Run this to start the server & database:
+
+```
+docker-compose up -d
+```
+
+Your server should now be running. Look at the Usage section for information about web UIs.
+
+You do not need to complete the following sections if you used the Docker Compose system.
+
+### Database setup
+
+> This isn't needed if you're using Docker Compose. It is needed if you're just using Docker for the server, or running everything manually.
 
 1. Install and setup [PostgreSQL](https://www.postgresql.org/download/) and [TimescaleDB](https://docs.timescale.com/self-hosted/latest/install/).
 2. Create a database called `sensor_data`.
 
-   > The server will automatically create any tables it needs. If you want compression, you will need to [enable compression](https://docs.timescale.com/use-timescale/latest/compression/compression-policy/#enabling-compression) yourself on the tables after the server has created them.
+   The server will automatically create any tables it needs. If you want compression, you will need to [enable compression](https://docs.timescale.com/use-timescale/latest/compression/compression-policy/#enabling-compression) yourself on the tables after the server has created them.
 
-3. Create a `.env` file and populate it with database credentials.
-   > Don't touch the ports if you're using Docker! Remap those in the command, and leave these the same.
+> When logged in as a superuser, you should now be able to log into the database with:
+> ```bash
+> psql sensor_data -U postgres -h localhost
+> ```
 
-Now you can run the server, either manually using commands or systemCTL, or you can use the Docker image.
+3. Create a `.env` file, using `.env.example` as a template, and populate it with database credentials.
+   
+   Don't touch the ports if you're using Docker! Remap those in the docker command, and leave the ones in the env template.
+
+Now you can move on to running the server, either with Docker, or manually with either CLI commands (SystemCTL confiuration is included in the manual section).
 
 ### With Docker
+
+> Make sure you have set up the database using the steps above first.
 
 Make sure you've set up `.env` correctly. By default it's setup to be used with docker compose, so you probably need to set `DATABASE_HOST` to `localhost`
 
@@ -37,15 +71,17 @@ Update the command below to remap ports as you desire.
 docker run --env-file .env -p 8080:8080 -p 2098:2098/udp ingest-deno
 ```
 
-You should now be done! For the admin and graphing websites, those will run on any regular static web hosting provider. Configure them to use your new container as their backend.
+Your server should now be running. Look at the Usage section for information about web UIs.
 
-If it says `Unable to find image 'ingest-deno:latest' locally`, then you need ot build the image:
+If it says `Unable to find image 'ingest-deno:latest' locally`, then you need to build the image:
 
 ```bash
 docker build -t ingest-deno .
 ```
 
-### Manually
+### Manually / CLI Commands
+
+> Make sure you have set up the database using the instructions further up first.
 
 To run the server, first install Deno:
 
@@ -64,13 +100,19 @@ npm install
 npm run build
 ```
 
-To start the server
+To start the server, run this command:
 
 ```bash
 deno run --allow-ffi --allow-net --allow-read --allow-env --allow-run --allow-sys --unstable-cron --unstable-net src/server.ts
 ```
 
-You can optionally run it as a service. Make sure to edit the service file to point to the correct directory. Then run:
+Your server should now be running. Look at the Usage section for information about web UIs.
+
+#### As a service
+
+You can optionally run the server as a SystemCTL service. Follow the steps above for manual setup, then skip the server run command and come down here.
+
+Make sure to edit the service file `ingest-deno.service` to point to the correct directory. Then run:
 
 ```bash
 git clone https://github.com/rs-Web-Interface-CRISiSLab/ingest-deno.git
@@ -80,11 +122,10 @@ sudo systemctl enable ingest-deno.service
 sudo systemctl start ingest-deno.service
 ```
 
-You may need to install Node.js and npm first.
+Your server should now be running. Look at the Usage section for information about web UIs.
 
-### Running on Massey VM
 
-For instance:
+Useful commands:
 
 ```bash
 sudo systemctl stop ingest-deno
@@ -93,11 +134,6 @@ sudo systemctl restart ingest-deno
 sudo systemctl status ingest-deno
 ```
 
-When logged in as a superuser, you can log into the database with:
-
-```bash
-psql sensor_data -U postgres -h localhost
-```
 
 ## Troubleshooting
 
@@ -107,16 +143,12 @@ Make sure you have Deno installed and that it is in your PATH. If you're running
 
 ### Sensor status is wrong
 
-Make sure you're running only one instance of the server. To temporarily fix the problem, just restart the server.
+Make sure you're running only one instance of the server.
+
+The only other thing that should cause this is a sensor with a unreliable network connection, that can send packets often enough to convince the server it's online, but not often enough to show up reliabley as packets.
 
 ### The server is not receiving data
 
 This shouldn't be a problem if you're using the correct ports. The firewall is already configured to allow ZeroTier traffic through, but just in case this is the problem, check if you can ping a sensor from the VM.
 
-### The sensors are online, but I can't receive data
-
-This could be an issue with WebSockets being blocked by the Massey reverse proxy. A telltale sign is that the Chrome Devtools network tab shows WebSocket connection is closed immediately after opening, and that it works fine from the browser on the VM. Work with Mike from IT to get this sorted.
-
-### The server is not updating the sensor status
-
-Make sure you're using the correct API token, and that it's not expired. The API endpoint is also configurable in the .env file.
+Also make sure all sensors are running Zerotier.
