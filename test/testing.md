@@ -16,11 +16,41 @@ Or with a ui for playwright
 ./tests --ui
 ```
 
-Only one browser
+Multiple browsers
 
 ```sh
-./tests --single
+./tests --multi
 ```
+
+Playwright debug mode
+
+
+
+```sh
+./tests --debug
+```
+
+Playwright codegen
+
+
+```sh
+./tests --codegen
+```
+
+Run against live server instead of spinning one up locally
+
+
+```sh
+./tests --live
+```
+
+Don't build docker container
+
+```sh
+./tests --no-docker-build
+```
+
+
 
 ## How it works
 

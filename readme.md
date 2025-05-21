@@ -37,13 +37,13 @@ Update the command below to remap ports as you desire.
 docker run --env-file .env -p 8080:8080 -p 2098:2098/udp ingest-deno
 ```
 
-You should now be done! For the admin and graphing websites, those will run on any regular static web hosting provider. Configure them to use your new container as their backend.
-
 If it says `Unable to find image 'ingest-deno:latest' locally`, then you need ot build the image:
 
 ```bash
 docker build -t ingest-deno .
 ```
+
+You should now be done! For the admin and graphing websites, those will run on any regular static web hosting provider. Configure them to use your new container as their backend.
 
 ### Manually
 

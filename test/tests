@@ -1,28 +1,63 @@
 #! python3
 import argparse
 import subprocess
+import threading
+import sys
+
+# Used for cooked background processing stuff
+def _reader(pipe, tag):
+    for line in pipe:
+        sys.stdout.write(f"[{tag}] {line}")
+        sys.stdout.flush()
 
 parser = argparse.ArgumentParser(description='ingest-deno testing orchestration script')
 parser.add_argument("--ui", action="store_true")
-parser.add_argument("--single", action="store_true")
+parser.add_argument("--multi", action="store_true")
+parser.add_argument("--debug", action="store_true")
+parser.add_argument("--codegen", action="store_true")
+parser.add_argument("--live", action="store_true")
+parser.add_argument("--no-docker-build", action="store_true")
 
 args = parser.parse_args()
 
+if not args.live:
+    if not args.no_docker_build:
+        # Build docker image of server
+        print("[Test] Building ingest-deno container")
+        subprocess.run("docker build -t ingest-deno .".split(" "), cwd="..")
 
-# Build docker image of server
+    # Generate credentials
 
-# Generate credentials
+    # Start server in background
+    print("[Test] Running ingest-deno container")
+    docker_compose_proc = subprocess.Popen("docker-compose up -d".split(" "),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1
+    )
+    # Print output to main output
+    thread = threading.Thread(target=_reader, args=(docker_compose_proc.stdout, "Server"), daemon=True)
+    thread.start()
+    
 
-# Start server
+    # Populate server with dummy data (sensors & accounts, one of which we need credentials for)
 
-# Populate server with dummy data (sensors & accounts, one of which we need credentials for)
-
-# Spawn background thread acting as a fake sensor
+    # Spawn background thread acting as a fake sensor
 
 # Start playwright
+print("[Test] Running playwright")
+
 playwright_command = "pnpm exec playwright test"
 if args.ui:
     playwright_command += " --ui"
-if args.single:
+if args.multi != True:
     playwright_command += " --project firefox"
+if args.debug:
+    playwright_command += " --debug"
+
+
+if args.codegen:
+    playwright_command = "pnpm exec playwright codegen"
+    
 subprocess.run(playwright_command.split(" "))

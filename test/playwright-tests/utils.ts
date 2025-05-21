@@ -1,6 +1,6 @@
 import { type Page, expect } from "@playwright/test";
 
-const localAPIOrigin = ""; //"http://localhost:8080";
+const localAPIOrigin = "http://localhost:8080";
 
 export async function useLocalAPI(page: Page): Promise<void> {
 	// Need to register this before triggering the dialog,
@@ -12,5 +12,8 @@ export async function useLocalAPI(page: Page): Promise<void> {
 	});
 
 	// Trigger dialog popup
-	await page.getByRole("button", { name: "Change API origin" }).click();
+	const buttonTypeA = page.getByRole("button", { name: "Change API origin" })
+	const buttonTypeB = page.getByRole("button", { name: "Use custom API origin" })
+
+	await buttonTypeA.or(buttonTypeB).click();
 }

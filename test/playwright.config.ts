@@ -36,17 +36,34 @@ export default defineConfig({
 	projects: [
 		{
 			name: "chromium",
-			use: { ...devices["Desktop Chrome"] },
+			use: {
+				...devices["Desktop Chrome"],
+				bypassCSP: true,
+				launchOptions: {
+					args: ['--disable-web-security']
+				}
+			},
+
 		},
 
 		{
 			name: "firefox",
-			use: { ...devices["Desktop Firefox"] },
+			use: {
+				...devices["Desktop Firefox"],
+				bypassCSP: true, launchOptions: {
+					args: ['--disable-web-security']
+				}
+			},
 		},
 
 		{
 			name: "webkit",
-			use: { ...devices["Desktop Safari"] },
+			use: {
+				...devices["Desktop Safari"],
+				bypassCSP: true, launchOptions: {
+					args: ['--disable-web-security']
+				}
+			},
 		},
 
 		/* Test against mobile viewports. */
