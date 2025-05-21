@@ -55,7 +55,7 @@ Don't build docker container
 ## How it works
 
 1. Build docker image of server
-   1.5. ?? Somewhere here we need to get credentials for the script
+   - 1.5. ?? Somewhere here we need to get credentials for the script
 2. Start server
 3. Fill server with dummy data
    - Dummy sensors
