@@ -12,12 +12,20 @@ See this doc: https://docs.google.com/document/d/1PnOvAFujeliayv_FOyj-ooBgS3bKIT
 
 ## Usage
 
+> [!IMPORTANT]
+> AFTER STARTING THE SERVER, YOU MUST CHANGE THE DEFAULT ACCOUNT.
+> See details below
+
 There are several ways to run the server
 - Docker Compose
 - Docker server setup + Manual database setup
 - Manual server setup + Manual database setup (Used by CRISiSLab's cannonical instance)
 
-If not using docker compose, skip to the *Database Setup* section.
+They each have instructions below. However, you must first create a `.env` file, using `.env.example` as a template, and populate it with database credentials.
+   
+   Don't touch the ports if you're using Docker! Remap those in the docker command, and leave the ones in the env template.
+
+Once that is done, go to the relevant section below. Head back here once your're done to configure the web uis.
 
 Once your server is up and running, you can point our hosted web UIs at your server, or you can host them yourself:
 - h[ttps://admin.crisislab.org.nz/](https://admin.crisislab.org.nz/manage/sensors) is used for managing user accounts, sensors, and the data generated from those sensors. This is where you add new sensors to your network.
@@ -27,9 +35,25 @@ Once your server is up and running, you can point our hosted web UIs at your ser
    It's code is at https://github.com/crisislab-platform/map/.
    You can point the shakemap site at your server using the button that looks like a triangle with a cog on it in the bottom left.
 
+### Default account
+
+This is the default account that is created. It has permission to modify user accounts.
+
+> [!IMPORTANT]
+> You must use this account to create a new admin account, and then log into that and delete the defualt one before exposing the server to the internet.
+
+Username: `delete-asap@example.com`
+Password: `password123`
+
 ### Docker compose
 
-Run this to start the server & database:
+Build the container:
+
+```
+docker build -t ingest-deno .
+```
+
+Run the server & database, in daemon mode:
 
 ```
 docker-compose up -d
@@ -52,10 +76,6 @@ You do not need to complete the following sections if you used the Docker Compos
 > ```bash
 > psql sensor_data -U postgres -h localhost
 > ```
-
-3. Create a `.env` file, using `.env.example` as a template, and populate it with database credentials.
-   
-   Don't touch the ports if you're using Docker! Remap those in the docker command, and leave the ones in the env template.
 
 Now you can move on to running the server, either with Docker, or manually with either CLI commands (SystemCTL confiuration is included in the manual section).
 
@@ -152,3 +172,18 @@ The only other thing that should cause this is a sensor with a unreliable networ
 This shouldn't be a problem if you're using the correct ports. The firewall is already configured to allow ZeroTier traffic through, but just in case this is the problem, check if you can ping a sensor from the VM.
 
 Also make sure all sensors are running Zerotier.
+
+
+### Error creating user token SyntaxError: Invalid key usage
+
+Make sure your JWKs in `.env` look like this:
+
+Private:
+```json
+{"use":"sig", "kty": "EC",  "kid": "...",  "crv": "P-256",  "x": "...",  "y": "...",  "d": "..."}
+```
+
+Public:
+```json
+{"use":"sig", "kty": "EC",  "kid": "...",  "crv": "P-256",  "x": "...",  "y": "..."}
+```

@@ -1,12 +1,15 @@
-import postgres from "postgresjs";
 import chalk from "chalk";
+import process from "https://deno.land/std@0.132.0/node/process.ts";
+import postgres from "postgresjs";
+import { pbkdf2 } from "./api/authenticate/crypto-pbkdf2.ts";
 import {
 	ChartMarker,
 	PrivateSensorMeta,
 	PublicSensorMeta,
 	User,
 } from "./types.ts";
-import process from "https://deno.land/std@0.132.0/node/process.ts";
+const createDefaultUser = Boolean(parseInt(Deno.env.get("CREATE_DEFAULT_USER") || "0"));
+
 
 function loggerTimeAndInfo(): string {
 	const inWorker =
@@ -74,6 +77,20 @@ async function setupTables(sql: postgres.Sql) {
 		PRIMARY KEY ("id", "email")
 	);
 	`;
+	// Check if users is empty, and if so, create a default user
+	if (createDefaultUser) {
+		const [{ count }] = await sql`SELECT COUNT(*)::int FROM users`;
+		if (count === 0) {
+			log.info("Creating default user")
+			const hash = await pbkdf2("password123");
+			await sql`
+				INSERT INTO users (email, name, roles, hash)
+      			VALUES ('delete-asap@example.com', 'Delete this account!', ARRAY['users:write', 'users:read'], ${hash})
+			`;
+		} else {
+			log.info("At least 1 user exists already, skipping default user creation")
+		}
+	}
 	// Sensors
 	await sql`
 	CREATE TABLE IF NOT EXISTS sensor_types (
