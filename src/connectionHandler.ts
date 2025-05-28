@@ -1,15 +1,15 @@
 import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
+import { IRequest } from "itty-router";
+import { pack } from "msgpackr";
 import * as Sentry from "sentry";
 import "./types.ts";
-import { pack } from "msgpackr";
-import { getDB, getMarkersForSensorType, getSensor, log } from "./utils.ts";
-import { IRequest } from "itty-router";
 import {
-	ServerSensor,
-	WithRequired,
 	PrivateSensorMeta,
+	ServerSensor,
 	ServerWebsocketClient,
+	WithRequired,
 } from "./types.ts";
+import { getDB, getMarkersForSensorType, log } from "./utils.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -94,10 +94,10 @@ setInterval(
 			}
 		}
 		const online = (
-			await sql`SELECT count(online) FROM sensors WHERE online IS TRUE AND removed IS NOT TRUE;`
+			await sql`SELECT count(online)::int FROM sensors WHERE online IS TRUE AND removed IS NOT TRUE;`
 		)?.[0]?.["count"];
 		const offline = (
-			await sql`SELECT count(online) FROM sensors WHERE online IS FALSE AND removed IS NOT TRUE;`
+			await sql`SELECT count(online)::int FROM sensors WHERE online IS FALSE AND removed IS NOT TRUE;`
 		)?.[0]?.["count"];
 
 		log.info(

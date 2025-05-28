@@ -1,7 +1,7 @@
 import { IRequest } from "itty-router";
-import { getDB, getSensor, log } from "../../utils.ts";
 import { serialiseToMiniSEEDUint8Array, startTimeFromDate } from "miniseed";
 import * as Sentry from "sentry";
+import { getDB, getSensor, log } from "../../utils.ts";
 
 export async function dataBulkExport(req: IRequest) {
 	const _sensorID = req.query["sensor_id"] as string;
@@ -108,7 +108,7 @@ export async function dataBulkExport(req: IRequest) {
 			// This is for the progress bar
 			const count = parseInt(
 				(
-					await sql`SELECT count(*) FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
+					await sql`SELECT count(*)::int FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
 				)[0]["count"]
 			);
 
