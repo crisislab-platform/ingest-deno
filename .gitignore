@@ -7,3 +7,6 @@
 *.crt
 *.db
 *.db-journal
+
+
+node_modules/
