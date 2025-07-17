@@ -32,6 +32,7 @@ export async function dataBulkExport(req: IRequest) {
 		});
 
 	const channels = _channels.split(",").map((c) => c.toUpperCase());
+	const useAllChannels = channels.includes("All");
 
 	if (!_from)
 		return new Response("Specify the start of the time range", {
@@ -75,10 +76,10 @@ export async function dataBulkExport(req: IRequest) {
 	switch (format) {
 		case "tsv1": {
 			let query;
-			if (channels.includes("All")) {
+			const channelsQuerySegment = sql(channels);
+			if (useAllChannels) {
 				query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 			} else {
-				const channelsQuerySegment = sql(channels);
 				query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
 			}
 			
@@ -112,11 +113,13 @@ export async function dataBulkExport(req: IRequest) {
 			});
 
 			// This is for the progress bar
-			const count = parseInt(
-				(
-					await sql`SELECT count(*)::int FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
-				)[0]["count"]
-			);
+			let countQuery;
+			if (useAllChannels){
+				countQuery = sql`SELECT count(*)::int FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
+			} else {
+				countQuery = sql`SELECT count(*)::int FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`
+			}
+			const count = parseInt((await countQuery)[0]["count"]);
 
 			if (count === 0) {
 				return new Response(
@@ -142,7 +145,7 @@ export async function dataBulkExport(req: IRequest) {
 			const channel = channels[0];
 
 			let query;
-			if (channel === "All") {
+			if (useAllChannels) {
 				query = sql<
 				{ data_timestamp: Date; data_values: number[] }[]
 			>`SELECT data_timestamp, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
