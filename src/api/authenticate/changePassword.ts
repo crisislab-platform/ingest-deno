@@ -1,18 +1,22 @@
 import { IRequest } from "itty-router";
-import { pbkdf2 } from "./crypto-pbkdf2.ts";
 import { getDB, getUserByEmail, getUserByID } from "../../utils.ts";
+import { pbkdf2 } from "./crypto-pbkdf2.ts";
 
 export async function changePassword(request: IRequest) {
 	const { password, accountID } = await request.json();
 
 	const sql = await getDB();
 
-	const accountToChange = await getUserByID(accountID);
+	if (!password || !accountID) {
+		return new Response(`Provide a new password & and an account ID`, { status: 400 });
+	}
 
 	const userMakingRequest = await getUserByEmail(request.userPayload.email);
 	if (!userMakingRequest) {
-		return new Response(`You don't seem to exist...`, { status: 400 });
+		return new Response(`You (user making this reuquest) don't seem to exist...`, { status: 400 });
 	}
+
+	const accountToChange = await getUserByID(accountID);
 
 	if (!accountToChange) {
 		return new Response(`Couldn't find account #${accountID}`, { status: 404 });
