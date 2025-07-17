@@ -74,8 +74,14 @@ export async function dataBulkExport(req: IRequest) {
 
 	switch (format) {
 		case "tsv1": {
-			const channelsQuerySegment = sql(channels);
-			const query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+			let query;
+			if (channels.includes("All")) {
+				query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+			} else {
+				const channelsQuerySegment = sql(channels);
+				query = sql`SELECT EXTRACT(EPOCH FROM data_timestamp) as data_timestamp, data_channel, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel in ${channelsQuerySegment} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+			}
+			
 			const body = new ReadableStream({
 				start(controller) {
 					controller.enqueue(
@@ -134,11 +140,20 @@ export async function dataBulkExport(req: IRequest) {
 		case "miniseed3": {
 			// TODO: Better validation
 			const channel = channels[0];
-			// TODO: Limit time range
 
-			const query = sql<
+			let query;
+			if (channel === "All") {
+				query = sql<
+				{ data_timestamp: Date; data_values: number[] }[]
+			>`SELECT data_timestamp, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+			} else {
+				query = sql<
 				{ data_timestamp: Date; data_values: number[] }[]
 			>`SELECT data_timestamp, data_values FROM sensor_data_4 WHERE sensor_id=${sensor.id} AND data_channel=${channel} AND data_timestamp >= to_timestamp(${from}) AND data_timestamp <= to_timestamp(${to});`;
+
+			}
+			
+			// TODO: Limit time range
 
 			const rows = await query.execute();
 
