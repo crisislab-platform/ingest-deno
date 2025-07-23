@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import process from "https://deno.land/std@0.132.0/node/process.ts";
 import postgres from "postgresjs";
+import * as Sentry from "sentry";
 import { pbkdf2 } from "./api/authenticate/crypto-pbkdf2.ts";
 import {
 	ChartMarker,
@@ -45,10 +46,12 @@ export const log = {
 	// deno-lint-ignore no-explicit-any
 	warn(...data: any[]) {
 		console.warn(loggerTimeAndInfo(), ...data);
+		Sentry.captureException(...data);
 	},
 	// deno-lint-ignore no-explicit-any
 	error(...data: any[]) {
 		console.error(loggerTimeAndInfo(), ...data);
+		Sentry.captureException(...data);
 	},
 };
 

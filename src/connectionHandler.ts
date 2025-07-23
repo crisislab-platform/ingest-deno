@@ -21,7 +21,7 @@ const dataWritingWorker = new Worker(
 	{
 		type: "module",
 		name: "DB Buff&Flush",
-	}
+	},
 );
 
 const ipToSensorMap = new Map<string, ServerSensor>();
@@ -40,26 +40,29 @@ await updateSensorCache();
 // }
 
 // Every 2 minutes remove zombie websocket connections
-setInterval(() => {
-	log.info("Clearing zombie WebSockets");
+setInterval(
+	() => {
+		log.info("Clearing zombie WebSockets");
 
-	for (const [, { webSocketClients }] of ipToSensorMap) {
-		// Loop backwards so we can remove items whilst iterating
-		for (let i = webSocketClients.length - 1; i >= 0; i--) {
-			const client = webSocketClients[i];
-			// If the socket is in use, skip past it
-			if (
-				client.ws.readyState === WebSocket.OPEN ||
-				client.ws.readyState === WebSocket.CONNECTING
-			) {
-				continue;
+		for (const [, { webSocketClients }] of ipToSensorMap) {
+			// Loop backwards so we can remove items whilst iterating
+			for (let i = webSocketClients.length - 1; i >= 0; i--) {
+				const client = webSocketClients[i];
+				// If the socket is in use, skip past it
+				if (
+					client.ws.readyState === WebSocket.OPEN ||
+					client.ws.readyState === WebSocket.CONNECTING
+				) {
+					continue;
+				}
+
+				// Otherwise remove it
+				webSocketClients.splice(i, 1);
 			}
-
-			// Otherwise remove it
-			webSocketClients.splice(i, 1);
 		}
-	}
-}, 2 * 60 * 1000);
+	},
+	2 * 60 * 1000,
+);
 
 // Every 15 seconds update the in-memory sensor cache
 setInterval(async () => {
@@ -105,14 +108,14 @@ setInterval(
 				nowOnline >= 0 ? "+" : ""
 			}${nowOnline}); Offline: ${offline} (${
 				nowOffline >= 0 ? "+" : ""
-			}${nowOffline})`
+			}${nowOffline})`,
 		);
 	},
-	60 * 1000 // Every minute
+	60 * 1000, // Every minute
 );
 
 function getSensorFromCacheByID(
-	_sensorID: number | string
+	_sensorID: number | string,
 ): ServerSensor | undefined {
 	let sensorID = _sensorID;
 	if (typeof _sensorID === "string") {
@@ -212,7 +215,7 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 		// Don't spam logs too much
 		if (Math.random() < 0.001)
 			log.info(
-				`Packet received from unknown sensor IP address: ${addr.hostname}`
+				`Packet received from unknown sensor IP address: ${addr.hostname}`,
 			);
 		return;
 	}
@@ -225,18 +228,17 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 		const message = new TextDecoder().decode(rawData);
 		const split = message.slice(1, -1).split(", ");
 		const channel = split[0].slice(1, -1);
-		const timestamp = Number(split[1]);
+		if (channel.length > 3) {
+			throw `Packet channel is too long (${channel.length}) - it must be 3 or less characters.`;
+		}
+		const timestampSeconds = Number(split[1]);
+		const timeStampMS = timestampSeconds * 1000;
 		const values = split.slice(2).map((v) => Number(v));
-
-		// Keep the sensor showing as online
-		sensor.lastMessageTimestamp = timestamp * 1000;
-
-		updateSensorOnlineStatus({ sensorID: sensor.id, online: true });
 
 		// Reconstruct the original data shape
 		const parsedData: [string, number, ...number[]] = [
 			channel,
-			timestamp,
+			timestampSeconds,
 			...values,
 		];
 
@@ -261,12 +263,20 @@ export function sensorHandler(addr: Deno.NetAddr, rawData: Uint8Array) {
 				log.error("Error sending packet: ", err);
 			}
 		}
+
+		// Keep the sensor showing as online
+		sensor.lastMessageTimestamp = timeStampMS;
+		updateSensorOnlineStatus({ sensorID: sensor.id, online: true });
 	} catch (err) {
 		Sentry.captureException(err);
 		log.warn(
 			`Failure when parsing/forwarding datagram from ${addr.hostname}: `,
-			err
+			err,
 		);
+		broadcastWebsocketMessage({
+			message: { type: "message", data: `Cannot parse sensor data: ${err}` },
+			filterTargets: { sensorIDs: [sensor.id] },
+		});
 	}
 }
 
@@ -303,7 +313,7 @@ export function handleWebSockets(request: IRequest): Response {
 		wsClient.addEventListener("open", () => {
 			wsClient.close(
 				4404,
-				`Couldn't find a sensor with that id (#${sensorID})`
+				`Couldn't find a sensor with that id (#${sensorID})`,
 			);
 		});
 		return response;
@@ -344,7 +354,7 @@ export function handleWebSockets(request: IRequest): Response {
 	wsClient.addEventListener("close", () => {
 		// Remove socket from list when it's closed
 		sensor.webSocketClients = sensor.webSocketClients.filter(
-			({ ws }) => ws === wsClient
+			({ ws }) => ws === wsClient,
 		);
 	});
 
@@ -402,7 +412,7 @@ export function broadcastWebsocketMessage({
 
 export function sendWebsocketMessage(
 	client: { ws: WebSocket; plain: boolean },
-	message: WebSocketMessage
+	message: WebSocketMessage,
 ): boolean {
 	if (client.ws.readyState !== WebSocket.OPEN) {
 		return false;
