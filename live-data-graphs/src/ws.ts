@@ -77,6 +77,14 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 		} else if (parsed?.type === "sensor-meta") {
 			window.CRISiSLab.sensorMeta = parsed?.data;
 
+			// Update channel aliases from sensor type data
+			if (window.CRISiSLab.sensorMeta?.channels) {
+				window.CRISiSLab.channelAliases = {};
+				for (const channel of window.CRISiSLab.sensorMeta.channels) {
+					window.CRISiSLab.channelAliases[channel.id] = channel.name;
+				}
+			}
+
 			if (
 				window.CRISiSLab.sensorMeta?.type
 					?.toLowerCase()

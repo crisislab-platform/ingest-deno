@@ -98,12 +98,14 @@ async function setupTables(sql: postgres.Sql) {
 	await sql`
 	CREATE TABLE IF NOT EXISTS sensor_types (
 		"name" text NOT NULL,
+		"channels" jsonb,
 		PRIMARY KEY ("name")
 	);`;
 	await sql`
 	CREATE TABLE IF NOT EXISTS sensors (
         "id" serial NOT NULL UNIQUE,
 		"type" text,
+		"type_fk" text,
         "ip" text,
         "online" bool,
         "location" point,
@@ -113,6 +115,7 @@ async function setupTables(sql: postgres.Sql) {
         "status_change_timestamp" timestamptz,
         "contact_email" text,
 		"removed" boolean,
+		CONSTRAINT fk_type FOREIGN KEY(type_fk) REFERENCES sensor_types(name),
         PRIMARY KEY ("id")
     );
 	`;
@@ -373,4 +376,18 @@ export async function getMarkersForSensorType(
 	>`SELECT * FROM chart_markers WHERE sensor_type=${sensorType} AND enabled=true;`;
 
 	return markers;
+}
+
+export async function getSensorTypeChannels(
+	sensorType: string
+): Promise<{ id: string; name: string }[] | null> {
+	if (!sensorType) return null;
+	
+	const sql = await getDB();
+
+	const [result] = await sql<
+		{ channels: { id: string; name: string }[] }[]
+	>`SELECT channels FROM sensor_types WHERE name=${sensorType};`;
+
+	return result?.channels || null;
 }

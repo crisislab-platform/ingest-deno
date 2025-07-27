@@ -36,12 +36,14 @@ declare global {
 			sensorMeta: null | {
 				online?: boolean;
 				type?: string;
+				channels?: { id: string; name: string }[] | null;
 				[key: string]: any;
 			};
 			sensorVariety: SensorVariety;
 			charts: Record<string, TimeLine>;
 			data: Record<string, Array<TimeLineDataPoint>>;
 			channelMarkers: Record<string, TimeLineMarker[]>;
+			channelAliases: Record<string, string>;
 		};
 	}
 }
@@ -72,6 +74,7 @@ window.CRISiSLab = {
 	charts: {},
 	data: {},
 	channelMarkers: {},
+	channelAliases: {},
 };
 
 if (new URLSearchParams(location.search).get("hide-pause-button") === "yes") {

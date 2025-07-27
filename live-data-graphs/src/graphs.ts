@@ -27,7 +27,8 @@ export type Datagram = [string, number, ...number[]];
 
 // Graphs
 const current: Record<string, number> = {};
-const aliases = {
+// Fallback aliases for backwards compatibility
+const fallbackAliases = {
 	EH3: "Geophone (counts)",
 	EN3: "Y acceleration (m/s²)",
 	EN1: "X acceleration (m/s²)",
@@ -93,7 +94,9 @@ export function handleData(packet: Datagram) {
 
 		const valueAxisLabel = window.CRISiSLab.showRawChannelNames
 			? channel
-			: aliases[channel as keyof typeof aliases] ?? channel;
+			: window.CRISiSLab.channelAliases[channel] ?? 
+			  fallbackAliases[channel as keyof typeof fallbackAliases] ?? 
+			  channel;
 
 		// For sorting
 		container.setAttribute("data-channel-id", channel);

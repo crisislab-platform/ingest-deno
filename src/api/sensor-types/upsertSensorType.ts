@@ -1,0 +1,32 @@
+import { IRequest, json } from "itty-router";
+import { getDB } from "../../utils.ts";
+import { SensorType } from "../../types.ts";
+
+export default async function upsertSensorType(request: IRequest) {
+	const sql = await getDB();
+	const { name } = request.params;
+	const { channels } = await request.json();
+	
+	if (!channels || !Array.isArray(channels)) {
+		return new Response("channels must be an array", { status: 400 });
+	}
+	
+	for (const channel of channels) {
+		if (!channel.id || !channel.name || typeof channel.id !== 'string' || typeof channel.name !== 'string') {
+			return new Response("each channel must have id and name strings", { status: 400 });
+		}
+		if (channel.id.length !== 3) {
+			return new Response("channel id must be exactly 3 characters", { status: 400 });
+		}
+	}
+	
+	const [sensorType] = await sql<SensorType[]>`
+		INSERT INTO sensor_types (name, channels) 
+		VALUES (${name}, ${JSON.stringify(channels)})
+		ON CONFLICT (name) DO UPDATE SET 
+			channels = EXCLUDED.channels
+		RETURNING *
+	`;
+	
+	return json(sensorType);
+}

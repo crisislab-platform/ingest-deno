@@ -5,6 +5,7 @@ import { authMiddleware } from "./auth.ts";
 import usersRouter from "./users/index.ts";
 import { sensorsRouter } from "./sensors/index.ts";
 import { chartsRouter } from "./charts/index.ts";
+import { sensorTypesRouter } from "./sensor-types/index.ts";
 function setCORSHeaders(req: IRequest, res: Response) {
 	// itty-router's built-in cors is broken
 	res.headers.set(
@@ -34,6 +35,7 @@ apiRouter
 		return res;
 	})
 	.all("/sensors/*", sensorsRouter.handle)
+	.all("/sensor-types/*", sensorTypesRouter.handle)
 	.all("/db/*", dbRouter.handle)
 	.all("/auth/*", authRouter.handle)
 	.all("/charts/*", chartsRouter.handle)

@@ -9,7 +9,7 @@ import {
 	ServerWebsocketClient,
 	WithRequired,
 } from "./types.ts";
-import { getDB, getMarkersForSensorType, log } from "./utils.ts";
+import { getDB, getMarkersForSensorType, getSensorTypeChannels, log } from "./utils.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -331,6 +331,9 @@ export function handleWebSockets(request: IRequest): Response {
 	wsClient.addEventListener("open", async () => {
 		log.info(`Connected websocket for sensor #${sensorID}`);
 
+		// Get channel information
+		const channels = await getSensorTypeChannels(sensor.meta.type ?? "");
+
 		// Main connection message
 		sendWebsocketMessage(client, {
 			type: "sensor-meta",
@@ -340,6 +343,7 @@ export function handleWebSockets(request: IRequest): Response {
 				secondary_id: sensor.meta?.secondary_id,
 				type: sensor.meta?.type,
 				online: sensor.meta?.online,
+				channels,
 			},
 		});
 
