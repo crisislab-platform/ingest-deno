@@ -1,6 +1,6 @@
 import { IRequest, json } from "itty-router";
-import { getDB } from "../../utils.ts";
 import { SensorType } from "../../types.ts";
+import { getDB } from "../../utils.ts";
 
 export default async function upsertSensorType(request: IRequest) {
 	const sql = await getDB();
@@ -15,8 +15,8 @@ export default async function upsertSensorType(request: IRequest) {
 		if (!channel.id || !channel.name || typeof channel.id !== 'string' || typeof channel.name !== 'string') {
 			return new Response("each channel must have id and name strings", { status: 400 });
 		}
-		if (channel.id.length !== 3) {
-			return new Response("channel id must be exactly 3 characters", { status: 400 });
+		if (channel.id.length > 3 || channel.id.length < 1) {
+			return new Response("channel id must be 1 - 3 characters", { status: 400 });
 		}
 	}
 	
