@@ -4,9 +4,14 @@ import { getDB } from "../../utils.ts";
 
 export default async function upsertSensorType(request: IRequest) {
 	const sql = await getDB();
-	const { name } = request.params;
+	const { _name } = request.params;
 	const { channels } = await request.json();
+
 	
+	if (!_name || _name.length === 0) return new Response("What's in a name?", { status: 400 });
+	const name = decodeURIComponent(_name);
+
+
 	if (!channels || !Array.isArray(channels)) {
 		return new Response("channels must be an array", { status: 400 });
 	}
