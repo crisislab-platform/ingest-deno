@@ -1,18 +1,18 @@
 import { IRequest, Router, json } from "itty-router";
-import { dbRouter } from "./db/dbRouter.ts";
-import { authRouter } from "./authenticate/index.ts";
 import { authMiddleware } from "./auth.ts";
-import usersRouter from "./users/index.ts";
-import { sensorsRouter } from "./sensors/index.ts";
+import { authRouter } from "./authenticate/index.ts";
 import { chartsRouter } from "./charts/index.ts";
+import { dbRouter } from "./db/dbRouter.ts";
 import { sensorTypesRouter } from "./sensor-types/index.ts";
+import { sensorsRouter } from "./sensors/index.ts";
+import usersRouter from "./users/index.ts";
 function setCORSHeaders(req: IRequest, res: Response) {
 	// itty-router's built-in cors is broken
 	res.headers.set(
 		"Access-Control-Allow-Methods",
 		"GET, POST, PUT, PATCH, OPTIONS, DELETE"
 	);
-	res.headers.set("Access-Control-Allow-Headers", "Authorization");
+	res.headers.set("Access-Control-Allow-Headers", "Authorization,Content-Type");
 	res.headers.set("Access-Control-Expose-Headers", "X-Number-Of-Records");
 	res.headers.set(
 		"Access-Control-Allow-Origin",
