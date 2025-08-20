@@ -1,24 +1,24 @@
 import {
-	TimeLine,
-	timeAxisPlugin,
-	valueAxisPlugin,
 	axisLabelPlugin,
 	doubleClickCopyPlugin,
-	pointerCrosshairPlugin,
-	nearestPointInfoPopupPlugin,
 	highlightNearestPointPlugin,
+	nearestPointInfoPopupPlugin,
+	pointerCrosshairPlugin,
+	timeAxisPlugin,
+	TimeLine,
 	TimeLineDataPoint,
+	valueAxisPlugin,
 } from "@crisislab/timeline";
+import { SensorVariety } from "./main";
 import {
-	hideMessages,
-	reloadButton,
 	chartsContainer,
 	formatTime,
+	hideMessages,
+	reloadButton,
 	round,
 	showMessage,
 	sortChannels,
 } from "./ui";
-import { SensorVariety } from "./main";
 
 // CSI sensors all sample at 200Hz
 const CSI_SAMPLING_RATE = 200;
@@ -47,7 +47,7 @@ const baseWindowMinMaxSizes: Record<string, [number, number]> = {
 	// ENZ: [9.7, 9.9],
 };
 let start;
-const maxDataLength = 5000;
+const maxDataLength = 5000; // Drop packets after this
 const timeWindow = 30 * 1000; // 30 seconds
 
 const firstPackets: Record<string, Datagram> = {};
@@ -55,6 +55,8 @@ const firstPackets: Record<string, Datagram> = {};
 export function handleData(packet: Datagram) {
 	const [channel, timestampSeconds, ...measurements] = packet;
 
+	// TODO: Scrap this rubbish and just have a sampling rate for
+	// each sensor type set in metadata
 	if (window.CRISiSLab.sensorVariety === SensorVariety.CSI) {
 		if (typeof window.CRISiSLab.sampleGaps[channel] !== "number") {
 			// CSI sensors all sample at 200Hz
@@ -188,6 +190,7 @@ export function handleData(packet: Datagram) {
 			channel.startsWith("EN")
 		) {
 			// Magic number to convert from counts to m/s^2
+			// TODO: Make these formulae configurable in metadata
 			value = value / 3.845e5;
 		}
 		adjustedMeasurements.push({
@@ -216,6 +219,12 @@ export function handleData(packet: Datagram) {
 	if (!window.CRISiSLab.haveRenderedPacket) {
 		window.CRISiSLab.haveRenderedPacket = true;
 		reloadButton.toggleAttribute("disabled", true);
+	}
+
+	// Drop old data we don't need
+	// TODO: Use time window + 1s or smth for this, instead of a fixed number
+	while (window.CRISiSLab.data[channel].length > maxDataLength) {
+		window.CRISiSLab.data[channel].shift();
 	}
 }
 
