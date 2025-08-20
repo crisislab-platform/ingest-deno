@@ -107,9 +107,9 @@ export function handleData(packet: Datagram) {
 		const chart = new TimeLine({
 			container,
 			data: window.CRISiSLab.data[channel],
+			valueAxisLabel,
 			timeWindow,
 			timeAxisLabel: "Time",
-			valueAxisLabel,
 			plugins: [
 				timeAxisPlugin(undefined, 5),
 				valueAxisPlugin(
