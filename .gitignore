@@ -7,6 +7,6 @@
 *.crt
 *.db
 *.db-journal
-
+*.tar
 
 node_modules/

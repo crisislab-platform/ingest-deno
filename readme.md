@@ -99,6 +99,11 @@ If it says `Unable to find image 'ingest-deno:latest' locally`, then you need to
 docker build -t ingest-deno .
 ```
 
+If you wish to export the current git commit as a Docker image tarball, use this command. Ensure you have a clean working directory first.
+```bash
+./save-docker-image.sh
+```
+
 ### Manually / CLI Commands
 
 > Make sure you have set up the database using the instructions further up first.
