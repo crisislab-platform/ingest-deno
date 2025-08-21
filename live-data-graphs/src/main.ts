@@ -1,20 +1,29 @@
-import { unpack } from "msgpackr";
-import "./graphs";
-import { pauseButton, showNoSensorFound } from "./ui";
-import { connectSocket } from "./ws";
-import { handleData } from "./graphs";
 import type {
 	TimeLine,
 	TimeLineDataPoint,
 	TimeLineMarker,
 } from "@crisislab/timeline";
-import { ChartMarker } from "../../src/types";
+import { unpack } from "msgpackr";
+import "./graphs";
+import { handleData } from "./graphs";
+import { pauseButton, showNoSensorFound } from "./ui";
+import { connectSocket } from "./ws";
 
 export enum SensorVariety {
 	Unknown,
 	RaspberryShake,
 	Palert,
 	CSI,
+}
+
+export interface SensorTypeInfo {
+	type: string;
+	displayType: string;
+	variety: SensorVariety;
+	channelAliases: Record<string,string>;
+	samplingHz: number;
+	displayUnitMultiplier: number;
+	displayUnitOffset: number;
 }
 
 declare global {
@@ -43,7 +52,7 @@ declare global {
 			charts: Record<string, TimeLine>;
 			data: Record<string, Array<TimeLineDataPoint>>;
 			channelMarkers: Record<string, TimeLineMarker[]>;
-			channelAliases: Record<string, string>;
+			sensorTypes: Record<string, SensorTypeInfo>
 		};
 	}
 }
@@ -74,7 +83,7 @@ window.CRISiSLab = {
 	charts: {},
 	data: {},
 	channelMarkers: {},
-	channelAliases: {},
+	sensorTypes: {},
 };
 
 if (new URLSearchParams(location.search).get("hide-pause-button") === "yes") {
