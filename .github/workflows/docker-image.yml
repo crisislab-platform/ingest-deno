@@ -54,9 +54,10 @@ jobs:
           echo "file_name=$file_name" >> $GITHUB_OUTPUT
   
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          name: "Docker image release"
+          name: Docker image release ${{ github.sha }}
+          tag: docker_release_${{ github.sha }}
           files: ${{ steps.get_file.outputs.file_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
