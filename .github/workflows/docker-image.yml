@@ -1,19 +1,37 @@
 name: Docker Image CI
 
 on:
-  workflow_dispatch: # allows manual triggering
+  workflow_dispatch:
   schedule:
-    - cron: '0 16 * * FRI' # runs every friday at 4PM
+    - cron: '0 16 * * FRI' # runs every Friday at 4PM
 
 jobs:
+  check_date:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.should_run.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: should_run
+        name: Determine whether to run (last commit < 1 week)
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            if git rev-list --after="1 week ago" -n 1 $GITHUB_SHA >/dev/null; then
+              echo "should_run=true" >> $GITHUB_OUTPUT
+            else
+              echo "should_run=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
 
   build:
     needs: check_date
     if: ${{ needs.check_date.outputs.should_run != 'false' }}
-    
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag ingest-deno:$(date +%s)
+      - uses: actions/checkout@v4
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag ingest-deno:$(date +%s)
