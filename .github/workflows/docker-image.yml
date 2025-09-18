@@ -15,21 +15,34 @@ jobs:
         with:
           fetch-depth: 0
       - id: should_run
-        name: Determine whether to run (last commit < 1 week)
+        name: Only build automatically if most recent commit was in the last week
         run: |
-          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
-            if git rev-list --after="1 week ago" -n 1 $GITHUB_SHA >/dev/null; then
-              echo "should_run=true" >> $GITHUB_OUTPUT
-            else
-              echo "should_run=false" >> $GITHUB_OUTPUT
-            fi
-          else
+          # manual trigger always runs
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             echo "should_run=true" >> $GITHUB_OUTPUT
+            exit 0
           fi
 
+          # get timestamp of latest commit on checked-out ref
+          last_commit_ts=$(git log -1 --format=%ct HEAD || echo "")
+          if [ -z "$last_commit_ts" ]; then
+            # conservative: do not run if we cannot determine commit time
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          now_ts=$(date +%s)
+          week_secs=$((7 * 24 * 60 * 60))
+
+          if [ $((now_ts - last_commit_ts)) -lt $week_secs ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+          
   build:
     needs: check_date
-    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+    if: ${{ needs.check_date.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
