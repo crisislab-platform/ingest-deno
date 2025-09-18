@@ -56,8 +56,7 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: "docker-$(date +%Y%m%d%H%M%S)"
-          name: "Docker image release $(date +%Y-%m-%d)"
+          name: "Docker image release"
           files: ${{ steps.get_file.outputs.file_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
