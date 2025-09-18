@@ -1,15 +1,16 @@
 name: Docker Image CI
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch: # allows manual triggering
+  schedule:
+    - cron: '0 16 * * FRI' # runs every friday at 4PM
 
 jobs:
 
   build:
-
+    needs: check_date
+    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+    
     runs-on: ubuntu-latest
 
     steps:
