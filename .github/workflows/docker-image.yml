@@ -46,5 +46,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag ingest-deno:$(date +%s)
+  
+      - name: Build & Save docker image
+        id: build_save
+        run: |
+          file_name=$(grep -oP "(?<=Saved Docker image as ).*" <(./save-docker-image.sh))
+          echo "file_name=$file_name" >> $GITHUB_OUTPUT
+  
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "docker-$(date +%Y%m%d%H%M%S)"
+          name: "Docker image release $(date +%Y-%m-%d)"
+          files: ${{ steps.get_file.outputs.file_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
