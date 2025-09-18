@@ -1,0 +1,25 @@
+name: Check last commit date
+
+on:
+  workflow_dispatch: # allows manual triggering  
+
+jobs:
+  check_date:
+    runs-on: ubuntu-latest
+    name: Check latest commit
+    outputs:
+      should_run: ${{ steps.should_run.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: print latest_commit
+        run: echo ${{ github.sha }}
+      - id: should_run
+        continue-on-error: true
+        name: check latest commit is less than a week
+        if: ${{ github.event_name == 'schedule' }}
+        run: |
+          if git rev-list --after="1 week" ${{ github.sha }} >/dev/null; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
