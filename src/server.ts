@@ -3,11 +3,11 @@ import {
 	serveDir,
 	serveFile,
 } from "https://deno.land/std@0.204.0/http/file_server.ts";
-import * as Sentry from "sentry";
-import { sensorHandler, handleWebSockets } from "./connectionHandler.ts";
-import { getDB, log } from "./utils.ts";
 import { IRequest, Router } from "itty-router";
+import * as Sentry from "sentry";
 import { handleAPI } from "./api/api.ts";
+import { handleWebSockets, sensorHandler } from "./connectionHandler.ts";
+import { getDB, log } from "./utils.ts";
 loadENV({ export: true });
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 

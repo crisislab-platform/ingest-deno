@@ -184,8 +184,7 @@ export async function getDB(): Promise<postgres.Sql> {
 				"DATABASE_NAME",
 			]) {
 				if (!Deno.env.get(envVar)) {
-					log.error(envVar + " not set in environment");
-					await exit(1);
+					throw envVar + " not set in environment";
 				}
 			}
 			sql = postgres({
