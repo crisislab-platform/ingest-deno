@@ -1,0 +1,64 @@
+name: Docker Image CI
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 16 * * FRI' # runs every Friday at 4PM
+
+jobs:
+  check_date:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.should_run.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: should_run
+        name: Only build automatically if most recent commit was in the last week
+        run: |
+          # manual trigger always runs
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # get timestamp of latest commit on checked-out ref
+          last_commit_ts=$(git log -1 --format=%ct HEAD || echo "")
+          if [ -z "$last_commit_ts" ]; then
+            # conservative: do not run if we cannot determine commit time
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          now_ts=$(date +%s)
+          week_secs=$((7 * 24 * 60 * 60))
+
+          if [ $((now_ts - last_commit_ts)) -lt $week_secs ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+          
+  build:
+    needs: check_date
+    if: ${{ needs.check_date.outputs.should_run == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+  
+      - name: Build & Save docker image
+        id: build_save
+        run: |
+          file_name=$(grep -oP "(?<=Saved Docker image as ).*" <(./save-docker-image.sh))
+          echo "file_name=$file_name" >> $GITHUB_OUTPUT
+  
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Docker image release ${{ github.sha }}
+          tag: docker_release_${{ github.sha }}
+          files: ${{ steps.get_file.outputs.file_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
