@@ -40,7 +40,7 @@ Once your server is up and running, you can point our hosted web UIs at your ser
 This is the default account that is created. It has permission to modify user accounts.
 
 > [!IMPORTANT]
-> You must use this account to create a new admin account, and then log into that and delete the defualt one before exposing the server to the internet.
+> You must use this account to create a new admin account, and then log into that and delete the default one before exposing the server to the internet.
 
 Username: `delete-asap@example.com`
 Password: `password123`
