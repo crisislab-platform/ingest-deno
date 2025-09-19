@@ -159,6 +159,11 @@ sudo systemctl restart ingest-deno
 sudo systemctl status ingest-deno
 ```
 
+## Updates
+
+Updates can be applied by simply downloading the updated system and restarting the server.
+
+If any database schema changes were made, migrations can be found in the `./migrations/` directory. These need to be applied manually (e.g. with psql). The migration files are named with the date of the commit change in YYYY-MM-DD format.
 
 ## Troubleshooting
 
@@ -168,7 +173,8 @@ Make sure you have Deno installed and that it is in your PATH. If you're running
 
 ### Sensor status is wrong
 
-Make sure you're running only one instance of the server.
+- Make sure you're running only one instance of the server.
+- Make sure the frontend you're looking at is pointed at your server.
 
 The only other thing that should cause this is a sensor with a unreliable network connection, that can send packets often enough to convince the server it's online, but not often enough to show up reliabley as packets.
 
