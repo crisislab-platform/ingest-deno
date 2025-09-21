@@ -14,12 +14,12 @@ jobs:
   
       - name: Build & Save docker image
         id: build_save
-        run: |
-          file_name=$(grep -oP "(?<=Saved Docker image as ).*" <(./save-docker-image.sh))
-          echo "file_name=$file_name" >> $GITHUB_OUTPUT
+        run: ./save-docker-image.sh ${{ github.ref_name }}.tar
+          
+          
   
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          name: Docker image release ${{ github.sha }}
-          files: ${{ steps.get_file.outputs.file_name }}
+          name: Docker image release ${{ github.ref_name }}
+          files: ${{ github.ref_name }}.tar
