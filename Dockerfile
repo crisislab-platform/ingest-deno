@@ -28,10 +28,9 @@ COPY ./wait-for-db.sh ./
 # Copy the built Vite app from the frontend stage to the correct location
 COPY --from=frontend /app/live-data-graphs/dist ./live-data-graphs/dist
 
-# Cache Deno dependencies (if applicable)
-RUN deno cache server.ts --allow-scripts=npm:msgpackr-extract,npm:msgpackr-extract
+# Cache Deno dependencies 
+RUN deno cache server.ts 
 
-# Set the default command to run the Deno server with environment variables
 CMD [  "run",  "--allow-ffi", "--allow-net", "--allow-read", "--allow-env", "--allow-run", "--allow-sys", "--unstable-cron", "--unstable-net", "server.ts"]
 
 # Expose the HTTP and UDP ports
