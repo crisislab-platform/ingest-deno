@@ -16,5 +16,6 @@
         "miniseed": "npm:miniseed@0.2.1",
         "postgresjs": "https://deno.land/x/postgresjs@v3.4.3/mod.js",
         "chalk": "npm:chalk@5.3.0"
-    }
+    },
+    "nodeModulesDir": "auto"
 }

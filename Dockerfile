@@ -8,7 +8,7 @@ RUN npm install -g pnpm
 
 # Copy package.json and pnpm lockfile, then install dependencies
 COPY ./live-data-graphs/pnpm-lock.yaml ./live-data-graphs/package*.json ./
-RUN pnpm install
+RUN pnpm install --dangerously-allow-all-builds
 
 # Copy the rest of the frontend source code and build it
 COPY ./live-data-graphs ./
