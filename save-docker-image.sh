@@ -3,7 +3,11 @@ if [ -z "$(git status --porcelain)" ]; then
     echo "Building & saving Docker image..."
 
     git_hash=$(git rev-parse --verify --short HEAD)
-    file_name="ingest-deno-image-$git_hash.tar"
+    if [ -z "$1" ]; then
+        file_name="ingest-deno-image-$git_hash.tar"
+    else
+      file_name=$1
+    fi
 
     docker build -t ingest-deno .
 
