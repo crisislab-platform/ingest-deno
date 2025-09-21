@@ -29,7 +29,7 @@ COPY ./wait-for-db.sh ./
 COPY --from=frontend /app/live-data-graphs/dist ./live-data-graphs/dist
 
 # Cache Deno dependencies (if applicable)
-RUN deno cache server.ts
+RUN deno cache server.ts --allow-scripts=npm:msgpackr-extract,npm:msgpackr-extract
 
 # Set the default command to run the Deno server with environment variables
 CMD [  "run",  "--allow-ffi", "--allow-net", "--allow-read", "--allow-env", "--allow-run", "--allow-sys", "--unstable-cron", "--unstable-net", "server.ts"]
