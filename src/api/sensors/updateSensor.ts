@@ -1,6 +1,6 @@
-import { PrivateSensorMeta } from "../../types.ts";
-import { randomizeLocation, getSensor, getDB, log } from "../../utils.ts";
 import { IRequest, json } from "itty-router";
+import { PrivateSensorMeta } from "../../types.ts";
+import { getDB, getSensor, log, randomizeLocation } from "../../utils.ts";
 
 export default async function updateSensor(request: IRequest) {
 	const id = parseInt(request.params.id);
@@ -28,6 +28,11 @@ export default async function updateSensor(request: IRequest) {
 
 	if (data.location) {
 		data.public_location = randomizeLocation(data.location);
+	}
+
+	// Make sure these match
+	if (data.type_fk){
+		data.type = data.type_fk;
 	}
 
 	const sql = await getDB();

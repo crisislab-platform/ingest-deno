@@ -1,6 +1,6 @@
 import { IRequest } from "itty-router";
-import { getDB, log, randomizeLocation } from "../../utils.ts";
 import { PrivateSensorMeta } from "../../types.ts";
+import { getDB, log, randomizeLocation } from "../../utils.ts";
 
 /**
  * This function creates a sensor with the given data.
@@ -23,6 +23,11 @@ export default async function createSensor(request: IRequest) {
 	// Run `SELECT setval('sensors_id_seq', max(id)) FROM sensors;` to fix it.
 	if (data.id) {
 		delete data.id;
+	}
+
+	// Make type match type_fk
+	if (data.type_fk) {
+		data.type = data.type_fk;
 	}
 
 	const id = (await sql`INSERT INTO sensors ${sql(data)} RETURNING id;`)?.[0]?.[

@@ -15,6 +15,7 @@ export type PrivateSensorMeta = PublicSensorMeta & {
 	location?: [number, number];
 	name?: string;
 	ip?: string;
+	type_fk?:string;
 };
 
 export interface User {
