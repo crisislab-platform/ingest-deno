@@ -10,3 +10,7 @@
 *.tar
 
 node_modules/
+
+temp*
+deno-bin/
+logs
