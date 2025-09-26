@@ -47,7 +47,7 @@ Password: `password123`
 
 ### Docker compose
 
-Download the prebuilt image from the [releases tab](./releases), or Build the container:
+Download the prebuilt image from the [releases tab](https://github.com/crisislab-platform/ingest-deno/releases), or build the container:
 
 ```
 docker build -t ingest-deno .
@@ -93,7 +93,7 @@ docker run --env-file .env -p 8080:8080 -p 2098:2098/udp ingest-deno
 
 Your server should now be running. Look at the Usage section for information about web UIs.
 
-If it says `Unable to find image 'ingest-deno:latest' locally`, then you need to build the image:
+If it says `Unable to find image 'ingest-deno:latest' locally`, then you need to either download the prebuilt image from the [releases tab](https://github.com/crisislab-platform/ingest-deno/releases) or build the image:
 
 ```bash
 docker build -t ingest-deno .
