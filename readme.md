@@ -28,7 +28,7 @@ They each have instructions below. However, you must first create a `.env` file,
 Once that is done, go to the relevant section below. Head back here once your're done to configure the web uis.
 
 Once your server is up and running, you can point our hosted web UIs at your server, or you can host them yourself:
-- h[ttps://admin.crisislab.org.nz/](https://admin.crisislab.org.nz/manage/sensors) is used for managing user accounts, sensors, and the data generated from those sensors. This is where you add new sensors to your network.
+- [https://admin.crisislab.org.nz/](https://admin.crisislab.org.nz/manage/sensors) is used for managing user accounts, sensors, and the data generated from those sensors. This is where you add new sensors to your network.
    It's code is at https://github.com/crisislab-platform/admin/.
    You can point the admin site at your server using the button that looks like a triangle with a cog on it in the bottom left.
 - https://shakemap.crisislab.org.nz/ is designed as a UI to provide your sensor hosts with. It displays all the sensors on the network, and embeds the live graphing view.   
@@ -47,7 +47,7 @@ Password: `password123`
 
 ### Docker compose
 
-Build the container:
+Download the prebuilt image from the [releases tab](./releases), or Build the container:
 
 ```
 docker build -t ingest-deno .
