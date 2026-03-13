@@ -2,7 +2,7 @@ import { Router } from "itty-router";
 import { databaseSize, databaseSizeHistory } from "./database-size.ts";
 import { dataBulkExport } from "./dataBulkExport.ts";
 import { authMiddleware } from "../auth.ts";
-import { dropManually, setRetentionPolicy } from "./data-deletion.ts";
+import { dropManually, getCurrentRetentionPolicy, setRetentionPolicy } from "./data-deletion.ts";
 
 export const dbRouter = Router({ base: "/api/v2/db" });
 
@@ -19,15 +19,15 @@ dbRouter
 		dataBulkExport
 	)
 	.patch(
-		"/retention/policy",
+		"/retention-policy",
 		authMiddleware("sensor-data:bulk-delete"),
 		setRetentionPolicy
 	)
-	// .delete(
-	// 	"/retention/manual-drop",
-	// 	authMiddleware("sensor-data:bulk-delete"),
-	// 	dropManually
-	// )
+	.get(
+		"/retention-policy",
+		authMiddleware(),
+		getCurrentRetentionPolicy
+	)
 	.get(
 		"/data-bulk-export",
 		authMiddleware("sensor-data:bulk-export"),

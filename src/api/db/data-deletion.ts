@@ -27,10 +27,24 @@ export async function setRetentionPolicy(request: IRequest) {
     } else {
         const interval = retentionPolicies[policy].sqlInterval;
         await sql`SELECT add_retention_policy('sensor_data_4', INTERVAL ${interval});`
-
     }
+
+    await sql`INSERT INTO system_config (key, value) VALUES ('retention_policy', ${policy}) ON CONFLICT (key) DO UPDATE SET value = ${policy};`;
 
     const name = retentionPolicies[policy].name;
 
     return new Response(name, { status: 200 })
+}
+
+
+export async function getCurrentRetentionPolicy() {
+    const sql = await getDB();
+
+    const currentPolicy = await sql`SELECT value FROM system_config WHERE key = 'retention_policy';`[0].value;
+
+    if (currentPolicy) return new Response(currentPolicy, { status: 200 })
+    else {
+        await sql`INSERT INTO system_config (key, value) VALUES ('retention_policy', 'retain');`;
+        return new Response("retain", { status: 200 })
+    }
 }
