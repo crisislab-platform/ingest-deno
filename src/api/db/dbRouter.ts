@@ -2,7 +2,7 @@ import { Router } from "itty-router";
 import { databaseSize, databaseSizeHistory } from "./database-size.ts";
 import { dataBulkExport } from "./dataBulkExport.ts";
 import { authMiddleware } from "../auth.ts";
-import { dropManually, getCurrentRetentionPolicy, setRetentionPolicy } from "./data-deletion.ts";
+import { getCurrentRetentionPolicy, setRetentionPolicy } from "./data-deletion.ts";
 
 export const dbRouter = Router({ base: "/api/v2/db" });
 
