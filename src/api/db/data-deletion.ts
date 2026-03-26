@@ -27,7 +27,7 @@ export async function setRetentionPolicy(request: IRequest) {
         await sql`SELECT remove_retention_policy('sensor_data_4');`
     } else {
         const interval = retentionPolicies[policy].sqlInterval;
-        await sql`SELECT add_retention_policy('sensor_data_4', INTERVAL ${interval});`
+        await sql`SELECT add_retention_policy('sensor_data_4', ${interval}::interval);`
     }
 
     await sql`INSERT INTO system_config (key, value) VALUES ('retention_policy', ${policy}) ON CONFLICT (key) DO UPDATE SET value = ${policy};`;
