@@ -169,6 +169,14 @@ async function setupTables(sql: postgres.Sql) {
 	);
 	`;
 
+	await sql`
+	CREATE TABLE IF NOT EXISTS system_config (
+        "key" text NOT NULL UNQIUE,
+        "value" text NOT NULL,
+		PRIMARY KEY ("key")
+    );
+	`;
+
 	log.info("Done setting up tables");
 }
 
@@ -390,3 +398,5 @@ export async function getSensorTypeChannels(
 
 	return result?.channels || null;
 }
+
+
