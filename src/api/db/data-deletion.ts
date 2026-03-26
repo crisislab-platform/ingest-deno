@@ -1,4 +1,4 @@
-import { getDB } from "../../utils.ts";
+import { getDB, log } from "../../utils.ts";
 import { error, IRequest, json } from "itty-router";
 
 const retentionPolicies: Record<string,{sqlInterval:string,name:string}> = {
@@ -19,6 +19,7 @@ export async function setRetentionPolicy(request: IRequest) {
     const { policy } = await request.json();
 
     if (!policy || typeof policy !== "string" || !(policy in retentionPolicies)) {
+        log.warn("Invalid data retention policy name: "+policy);
         return error(400, "Choose a valid policy: " + Object.keys(retentionPolicies).join(", "))
     }
 
@@ -33,6 +34,9 @@ export async function setRetentionPolicy(request: IRequest) {
 
     const name = retentionPolicies[policy].name;
 
+    log.info("Updated data retention policy: "+name);
+
+
     return new Response(name, { status: 200 })
 }
 
@@ -40,8 +44,8 @@ export async function setRetentionPolicy(request: IRequest) {
 export async function getCurrentRetentionPolicy() {
     const sql = await getDB();
 
-    const currentPolicy = await sql`SELECT value FROM system_config WHERE key = 'retention_policy';`[0]?.value;
-
+    const currentPolicy = (await sql`SELECT value FROM system_config WHERE key = 'retention_policy';`)[0]?.value;
+    log.info("Current data retention policy: "+currentPolicy)
     if (currentPolicy) return new Response(currentPolicy, { status: 200 })
     else {
         await sql`INSERT INTO system_config (key, value) VALUES ('retention_policy', 'retain');`;
