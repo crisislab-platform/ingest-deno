@@ -171,7 +171,7 @@ async function setupTables(sql: postgres.Sql) {
 
 	await sql`
 	CREATE TABLE IF NOT EXISTS system_config (
-        "key" text NOT NULL UNQIUE,
+        "key" text NOT NULL UNIQUE,
         "value" text NOT NULL,
 		PRIMARY KEY ("key")
     );
