@@ -23,12 +23,39 @@ Sentry.init({
 // Every hour, save DB size
 Deno.cron("Save DB size", "0 */1 * * *", async () => {
 	const sql = await getDB();
-	try {
-		await sql`WITH subquery AS (SELECT pg_database_size('sensor_data') as size, NOW() as timestamp) INSERT INTO db_size_history (size, timestamp) SELECT * FROM subquery;`;
-	} catch (err) {
-		log.error("Error saving DB size:", err);
-	} finally {
-		log.info("Saved DB size");
+
+	const dir = Deno.env.get("READ_FS_SIZE")
+	if (dir && dir != "0") {
+		try {
+			// Read mount drive size
+			const cmd = new Deno.Command("df", {
+				args: ["-B1", dir],  // bytes
+				stdout: "piped",
+			});
+			const { stdout } = await cmd.output();
+			const output = new TextDecoder().decode(stdout);
+
+			const lines = output.trim().split("\n");
+			const parts = lines[1].split(/\s+/);
+			const totalAllocated = Number(parts[1]);
+			const usedSoFar = Number(parts[2]);
+			// const available = Number(parts[3]);
+			// const percentUsed = parts[4];
+
+			await sql`INSERT INTO db_size_history (size, timestamp) VALUES (${usedSoFar}, NOW());`;
+			await sql`INSERT INTO system_config (key, value) VALUES ('max_disk_size', ${totalAllocated}) ON CONFLICT (key) DO UPDATE SET value = ${totalAllocated};`;
+
+			log.info("Saved DB size");
+		} catch (err) {
+			log.error("Error saving DB size:", err);
+		}
+	} else {
+		try {
+			await sql`WITH subquery AS (SELECT pg_database_size('sensor_data') as size, NOW() as timestamp) INSERT INTO db_size_history (size, timestamp) SELECT * FROM subquery;`;
+			log.info("Saved DB size");
+		} catch (err) {
+			log.error("Error saving DB size:", err);
+		}
 	}
 });
 
@@ -61,8 +88,7 @@ Deno.serve(
 		const origin = req.headers.get("Origin");
 		try {
 			log.info(
-				`HTTP ${req.method} ${req.url} from ${
-					connectionInfo.remoteAddr.hostname
+				`HTTP ${req.method} ${req.url} from ${connectionInfo.remoteAddr.hostname
 				}${origin ? `(${origin})` : ""}`
 			);
 
@@ -72,28 +98,23 @@ Deno.serve(
 			// whole server crashes.
 			if (!res) {
 				log.info(
-					`Sending non-fatal top-level 404 response for HTTP ${req.method} ${
-						req.url
-					} from ${connectionInfo.remoteAddr.hostname}${
-						origin ? `(${origin})` : ""
+					`Sending non-fatal top-level 404 response for HTTP ${req.method} ${req.url
+					} from ${connectionInfo.remoteAddr.hostname}${origin ? `(${origin})` : ""
 					}`
 				);
 				return new Response("Not found", { status: 404 });
 			}
 
 			log.info(
-				`Sending non-fatal ${res.status} response for HTTP ${req.method} ${
-					req.url
-				} from ${connectionInfo.remoteAddr.hostname}${
-					origin ? `(${origin})` : ""
+				`Sending non-fatal ${res.status} response for HTTP ${req.method} ${req.url
+				} from ${connectionInfo.remoteAddr.hostname}${origin ? `(${origin})` : ""
 				}`
 			);
 			return res;
 		} catch (err) {
 			Sentry.captureException(err);
 			log.error(
-				`Error handling HTTP  ${req.method} ${req.url} from ${
-					connectionInfo.remoteAddr.hostname
+				`Error handling HTTP  ${req.method} ${req.url} from ${connectionInfo.remoteAddr.hostname
 				}${origin ? `(${origin})` : ""}: `,
 				err
 			);
