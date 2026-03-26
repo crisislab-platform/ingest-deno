@@ -16,9 +16,9 @@ const retentionPolicies: Record<string,{sqlInterval:string,name:string}> = {
 
 export async function setRetentionPolicy(request: IRequest) {
     const sql = await getDB();
-    const { policy } = await request.json();
+    const policy = (await request.text()).trim();
 
-    if (!policy || typeof policy !== "string" || !(policy in retentionPolicies)) {
+    if (!policy || !(policy in retentionPolicies)) {
         log.warn("Invalid data retention policy name: "+policy);
         return error(400, "Choose a valid policy: " + Object.keys(retentionPolicies).join(", "))
     }
