@@ -11,7 +11,7 @@ export async function databaseSize() {
 	if (dir && dir != "0") {
 		const res = (await sql`SELECT size, timestamp FROM db_size_history ORDER BY timestamp LIMIT 1;`)[0]
 		size = res.size;
-		time = res.time.toISOString();
+		time = res.time?.toISOString();
 	} else {
 
 		size = (await sql`SELECT pg_database_size('sensor_data');`)[0]
