@@ -40,7 +40,7 @@ export async function setRetentionPolicy(request: IRequest) {
 export async function getCurrentRetentionPolicy() {
     const sql = await getDB();
 
-    const currentPolicy = await sql`SELECT value FROM system_config WHERE key = 'retention_policy';`[0].value;
+    const currentPolicy = await sql`SELECT value FROM system_config WHERE key = 'retention_policy';`[0]?.value;
 
     if (currentPolicy) return new Response(currentPolicy, { status: 200 })
     else {
