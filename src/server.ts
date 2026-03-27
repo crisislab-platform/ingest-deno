@@ -40,12 +40,12 @@ Deno.cron("Save DB size", "0 */1 * * *", async () => {
 			const totalAllocated = Number(parts[1]);
 			const usedSoFar = Number(parts[2]);
 			// const available = Number(parts[3]);
-			// const percentUsed = parts[4];
+			const percentUsed = parts[4];
 
-			await sql`INSERT INTO db_size_history (size, timestamp) VALUES (${usedSoFar}, NOW());`;
+			await sql`INSERT INTO db_size_history (size, timestamp) VALUES (${usedSoFar}, ${new Date()});`;
 			await sql`INSERT INTO system_config (key, value) VALUES ('max_disk_size', ${totalAllocated}) ON CONFLICT (key) DO UPDATE SET value = ${totalAllocated};`;
 
-			log.info("Saved DB size");
+			log.info(`Saved DB size (${percentUsed} used)`);
 		} catch (err) {
 			log.error("Error saving DB size:", err);
 		}
