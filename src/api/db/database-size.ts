@@ -9,7 +9,7 @@ export async function databaseSize() {
 
 	const dir = Deno.env.get("READ_FS_SIZE")
 	if (dir && dir != "0") {
-		const res = (await sql`SELECT size, timestamp FROM db_size_history ORDER BY timestamp LIMIT 1;`)[0]
+		const res = (await sql`SELECT size, timestamp FROM db_size_history ORDER BY timestamp DESC LIMIT 1;`)[0]
 		size = res.size;
 		time = res.time?.toISOString();
 	} else {
