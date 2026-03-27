@@ -7,7 +7,10 @@ import { IRequest, Router } from "itty-router";
 import * as Sentry from "sentry";
 import { handleAPI } from "./api/api.ts";
 import { handleWebSockets, sensorHandler } from "./connectionHandler.ts";
-import { getDB, log } from "./utils.ts";
+import { log, saveDBSize } from "./utils.ts";
+
+log.info("Server starting")
+
 loadENV({ export: true });
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 
@@ -21,43 +24,8 @@ Sentry.init({
 });
 
 // Every hour, save DB size
-Deno.cron("Save DB size", "0 */1 * * *", async () => {
-	const sql = await getDB();
-
-	const dir = Deno.env.get("READ_FS_SIZE")
-	if (dir && dir != "0") {
-		try {
-			// Read mount drive size
-			const cmd = new Deno.Command("df", {
-				args: ["-B1", dir],  // bytes
-				stdout: "piped",
-			});
-			const { stdout } = await cmd.output();
-			const output = new TextDecoder().decode(stdout);
-
-			const lines = output.trim().split("\n");
-			const parts = lines[1].split(/\s+/);
-			const totalAllocated = Number(parts[1]);
-			const usedSoFar = Number(parts[2]);
-			// const available = Number(parts[3]);
-			const percentUsed = parts[4];
-
-			await sql`INSERT INTO db_size_history (size, timestamp) VALUES (${usedSoFar}, ${new Date()});`;
-			await sql`INSERT INTO system_config (key, value) VALUES ('max_disk_size', ${totalAllocated}) ON CONFLICT (key) DO UPDATE SET value = ${totalAllocated};`;
-
-			log.info(`Saved DB size (${percentUsed} used)`);
-		} catch (err) {
-			log.error("Error saving DB size:", err);
-		}
-	} else {
-		try {
-			await sql`WITH subquery AS (SELECT pg_database_size('sensor_data') as size, NOW() as timestamp) INSERT INTO db_size_history (size, timestamp) SELECT * FROM subquery;`;
-			log.info("Saved DB size");
-		} catch (err) {
-			log.error("Error saving DB size:", err);
-		}
-	}
-});
+saveDBSize();
+Deno.cron("Save DB size", "0 */1 * * *",saveDBSize);
 
 // Imports
 
@@ -136,3 +104,5 @@ log.info(`UDP listening on ${socketAddr.hostname}:${socketAddr.port}`);
 for await (const [data, addr] of socket) {
 	sensorHandler(addr as Deno.NetAddr, data);
 }
+
+log.error("UDP socket closed! This should be unreachable!")
