@@ -114,10 +114,10 @@ To run the server, first install Deno:
 curl -fsSL https://deno.land/x/install/install.sh | sh
 ```
 
-> Deno v1.44.4 has been tested, no grantees for other versions
+> Deno v2.70 has been tested, no grantees for other versions
 
 Compile the graphing website:
-(this requires NodeJS 20+)
+(this requires NodeJS 22+)
 
 ```bash
 cd live-data-graphs

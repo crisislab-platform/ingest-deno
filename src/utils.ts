@@ -407,11 +407,10 @@ export async function saveDBSize() {
 	if (dir && dir != "0") {
 		try {
 			// Read mount drive size
-			const cmd = new Deno.Command("df", {
+			const {stdout } = await Deno.spawnAndWait("df", {
 				args: ["-B1", dir],  // bytes
 				stdout: "piped",
 			});
-			const { stdout } = await cmd.output();
 			const output = new TextDecoder().decode(stdout);
 
 			const lines = output.trim().split("\n");
