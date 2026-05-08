@@ -15,7 +15,7 @@ loadENV({ export: true });
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 
 Sentry.init({
-	dsn: "https://4d03235cf86ab4491bf144c3f1185969@o4505671371784192.ingest.sentry.io/4505671374667776",
+	dsn: Deno.env.get("SENTRY_DSN"),
 
 	// Performance Monitoring
 	tracesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
