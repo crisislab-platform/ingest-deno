@@ -21,7 +21,7 @@ There are several ways to run the server
 - Docker server setup + Manual database setup
 - Manual server setup + Manual database setup (Used by CRISiSLab's cannonical instance)
 
-They each have instructions below. However, you must first create a `.env` file, using `.env.example` as a template, and populate it with database credentials.
+They each have instructions below. However, you must first create a `.env` file, using `.env__example` as a template, and populate it with database credentials.
    
    Don't touch the ports if you're using Docker! Remap those in the docker command, and leave the ones in the env template.
 
