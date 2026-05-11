@@ -48,7 +48,7 @@ apiRouter
 	.get("*", () => new Response("API route not found", { status: 404 }));
 
 export const handleAPI = async (req: IRequest) => {
-	const res: Response = (await apiRouter.fetch(req)) ?? new Response();
+	const res: Response = (await apiRouter.handle(req)) ?? new Response();
 	setCORSHeaders(req, res);
 	return res;
 };

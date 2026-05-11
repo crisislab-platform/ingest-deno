@@ -9,8 +9,8 @@
     },
     "imports": {
         "@std/dotenv": "jsr:@std/dotenv@^0.225.6",
-        "itty-router": "npm:itty-router@5.0.23",
-        "msgpackr": "npm:msgpackr@2.0.1",
+        "itty-router": "npm:itty-router@^4.2.2",
+        "msgpackr": "npm:msgpackr@^2.0.1",
         "sentry": "https://deno.land/x/sentry@7.93.0/index.mjs",
         "js-base64": "npm:js-base64@3.7.8",
         "miniseed": "npm:miniseed@0.2.1",

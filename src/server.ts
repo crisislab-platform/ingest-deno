@@ -60,7 +60,7 @@ Deno.serve(
 				}${origin ? `(${origin})` : ""}`
 			);
 
-			const res = (await router.fetch(req)) as Response | null | undefined;
+			const res = (await router.handle(req)) as Response | null | undefined;
 
 			// Deno.serve is weak - if you don't return something the
 			// whole server crashes.

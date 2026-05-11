@@ -5,10 +5,10 @@
     "npm:@sentry/node@*": "7.73.0",
     "npm:@types/node@*": "22.12.0",
     "npm:chalk@5.6.2": "5.6.2",
-    "npm:itty-router@5.0.23": "5.0.23",
+    "npm:itty-router@^4.2.2": "4.2.2",
     "npm:js-base64@3.7.8": "3.7.8",
     "npm:miniseed@0.2.1": "0.2.1",
-    "npm:msgpackr@2.0.1": "2.0.1"
+    "npm:msgpackr@^2.0.1": "2.0.1"
   },
   "jsr": {
     "@std/dotenv@0.225.6": {
@@ -124,8 +124,8 @@
         "debug"
       ]
     },
-    "itty-router@5.0.23": {
-      "integrity": "sha512-i49WU+SNPrwOZA4Z61En1RYd5h2Lcqa+5IvCpMrNi4dxymzJK15ozUUnRrWIUAv95Zamd4eJPAot2UvHRrQg7w=="
+    "itty-router@4.2.2": {
+      "integrity": "sha512-KegPW0l9SNPadProoFT07AB84uOqLUwzlXQ7HsqkS31WUrxkjdhcemRpTDUuetbMJ89uBtWeQSVoiEmUAu31uw=="
     },
     "js-base64@3.7.8": {
       "integrity": "sha512-hNngCeKxIUQiEUN3GPJOkz4wF/YvdUdbNL9hsBcMQTkKzboD7T/q3OYOuuPZLUE6dBxSGpwhk5mwuDud7JVAow=="
@@ -535,10 +535,10 @@
     "dependencies": [
       "jsr:@std/dotenv@~0.225.6",
       "npm:chalk@5.6.2",
-      "npm:itty-router@5.0.23",
+      "npm:itty-router@^4.2.2",
       "npm:js-base64@3.7.8",
       "npm:miniseed@0.2.1",
-      "npm:msgpackr@2.0.1"
+      "npm:msgpackr@^2.0.1"
     ]
   }
 }
