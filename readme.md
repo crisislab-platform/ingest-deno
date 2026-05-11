@@ -191,10 +191,12 @@ Make sure your JWKs in `.env` look like this:
 
 Private:
 ```json
-{"use":"sig", "kty": "EC",  "kid": "...",  "crv": "P-256",  "x": "...",  "y": "...",  "d": "..."}
+PRIVATE_JWK={"use":"sig", "kty": "EC",  "kid": "...",  "crv": "P-256",  "x": "...",  "y": "...",  "d": "..."}
+PUBLIC_JWK={"use":"sig", "kty": "EC",  "kid": "...",  "crv": "P-256",  "x": "...",  "y": "..."}
 ```
 
-Public:
-```json
-{"use":"sig", "kty": "EC",  "kid": "...",  "crv": "P-256",  "x": "...",  "y": "..."}
+A script is included to generate these:
+
+```
+deno run .\scripts\generate-jwk.js
 ```
