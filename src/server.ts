@@ -3,7 +3,7 @@ import {
 	serveDir,
 	serveFile,
 } from "https://deno.land/std@0.204.0/http/file_server.ts";
-import { IRequest, IttyRouter as Router } from "itty-router";
+import { IRequest, Router } from "itty-router";
 import * as Sentry from "sentry";
 import { handleAPI } from "./api/api.ts";
 import { handleWebSockets, sensorHandler } from "./connectionHandler.ts";
@@ -74,7 +74,7 @@ Deno.serve(
 			}
 
 			log.info(
-				`Sending non-fatal ${res.status} response for HTTP ${req.method} ${req.url
+				`Sending ${res.status} response for HTTP ${req.method} ${req.url
 				} from ${connectionInfo.remoteAddr.hostname}${origin ? `(${origin})` : ""
 				}`
 			);

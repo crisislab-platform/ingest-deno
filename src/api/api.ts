@@ -1,4 +1,4 @@
-import { IRequest, IttyRouter as Router, json } from "itty-router";
+import { IRequest, Router, json } from "itty-router";
 import { authMiddleware } from "./auth.ts";
 import { authRouter } from "./authenticate/index.ts";
 import { chartsRouter } from "./charts/index.ts";
