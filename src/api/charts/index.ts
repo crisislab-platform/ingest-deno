@@ -1,4 +1,4 @@
-import { Router } from "itty-router/Router";
+import { IttyRouter as Router } from "itty-router";
 import createMarker from "./create-marker.ts";
 import listMarkers from "./list-markers.ts";
 import removeMarker from "./remove-marker.ts";

@@ -1,4 +1,4 @@
-import { IRequest, Router, json } from "itty-router";
+import { IRequest, IttyRouter as Router, json } from "itty-router";
 import { authMiddleware } from "./auth.ts";
 import { authRouter } from "./authenticate/index.ts";
 import { chartsRouter } from "./charts/index.ts";
@@ -48,7 +48,7 @@ apiRouter
 	.get("*", () => new Response("API route not found", { status: 404 }));
 
 export const handleAPI = async (req: IRequest) => {
-	const res: Response = (await apiRouter.handle(req)) ?? new Response();
+	const res: Response = (await apiRouter.fetch(req)) ?? new Response();
 	setCORSHeaders(req, res);
 	return res;
 };

@@ -3,7 +3,7 @@ import {
 	serveDir,
 	serveFile,
 } from "https://deno.land/std@0.204.0/http/file_server.ts";
-import { IRequest, Router } from "itty-router";
+import { IRequest, IttyRouter as Router } from "itty-router";
 import * as Sentry from "sentry";
 import { handleAPI } from "./api/api.ts";
 import { handleWebSockets, sensorHandler } from "./connectionHandler.ts";
@@ -60,7 +60,7 @@ Deno.serve(
 				}${origin ? `(${origin})` : ""}`
 			);
 
-			const res = (await router.handle(req)) as Response | null | undefined;
+			const res = (await router.fetch(req)) as Response | null | undefined;
 
 			// Deno.serve is weak - if you don't return something the
 			// whole server crashes.
