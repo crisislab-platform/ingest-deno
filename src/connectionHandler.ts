@@ -329,37 +329,48 @@ export function handleWebSockets(request: IRequest): Response {
 	sensor.webSocketClients.push(client);
 
 	wsClient.addEventListener("open", async () => {
-		log.info(`Connected websocket for sensor #${sensorID}`);
+		try {
+			log.info(`Connected websocket for sensor #${sensorID}`);
 
-		// Get channel information
-		const channels = await getSensorTypeChannels(sensor.meta.type ?? "");
+			// Get channel information
+			const channels = await getSensorTypeChannels(sensor.meta.type ?? "");
 
-		// Main connection message
-		sendWebsocketMessage(client, {
-			type: "sensor-meta",
-			data: {
-				// Doing this manually to avoid sending sensitive data
-				id: sensor.id,
-				secondary_id: sensor.meta?.secondary_id,
-				type: sensor.meta?.type,
-				online: sensor.meta?.online,
-				channels,
-			},
-		});
+			// Main connection message
+			if (!sendWebsocketMessage(client, {
+				type: "sensor-meta",
+				data: {
+					// Doing this manually to avoid sending sensitive data
+					id: sensor.id,
+					secondary_id: sensor.meta?.secondary_id,
+					type: sensor.meta?.type,
+					online: sensor.meta?.online,
+					channels,
+				},
+			})) {
+				return;
+			}
 
-		// Markers
-		const markers = await getMarkersForSensorType(sensor.meta.type ?? "");
-		sendWebsocketMessage(client, {
-			type: "add-markers",
-			data: markers,
-		});
+			// Markers
+			const markers = await getMarkersForSensorType(sensor.meta.type ?? "");
+			sendWebsocketMessage(client, {
+				type: "add-markers",
+				data: markers,
+			});
+		} catch (err) {
+			Sentry.captureException(err);
+			log.error(`Error preparing websocket for sensor #${sensorID}:`, err);
+			removeWebsocketClient(sensor, wsClient);
+			closeWebSocket(wsClient, 1011, "Unable to initialize websocket");
+		}
+	});
+
+	wsClient.addEventListener("error", (err) => {
+		log.warn(`Websocket error for sensor #${sensorID}:`, err);
 	});
 
 	wsClient.addEventListener("close", () => {
 		// Remove socket from list when it's closed
-		sensor.webSocketClients = sensor.webSocketClients.filter(
-			({ ws }) => ws === wsClient,
-		);
+		removeWebsocketClient(sensor, wsClient);
 	});
 
 	return response;
@@ -369,6 +380,27 @@ export interface WebSocketMessage {
 	type: string;
 	data: any;
 }
+
+function removeWebsocketClient(sensor: ServerSensor, wsClient: WebSocket) {
+	sensor.webSocketClients = sensor.webSocketClients.filter(
+		({ ws }) => ws === wsClient,
+	);
+}
+
+function closeWebSocket(ws: WebSocket, code: number, reason: string) {
+	try {
+		if (
+			ws.readyState === WebSocket.OPEN ||
+			ws.readyState === WebSocket.CONNECTING
+		) {
+			ws.close(code, reason);
+		}
+	} catch (err) {
+		Sentry.captureException(err);
+		log.warn("Error closing websocket:", err);
+	}
+}
+
 export interface BroadcastWebsocketMessageOptions {
 	message: WebSocketMessage;
 	filterTargets: {
@@ -422,14 +454,21 @@ export function sendWebsocketMessage(
 		return false;
 	}
 
-	let serialisedData;
-	if (client.plain) {
-		serialisedData = JSON.stringify(message);
-	} else {
-		serialisedData = pack(message);
-	}
+	try {
+		let serialisedData: string | Uint8Array;
+		if (client.plain) {
+			serialisedData = JSON.stringify(message);
+		} else {
+			serialisedData = pack(message);
+		}
 
-	client.ws.send(serialisedData);
+		client.ws.send(serialisedData);
+	} catch (err) {
+		Sentry.captureException(err);
+		log.error(`Error sending websocket message (${message.type}):`, err);
+		closeWebSocket(client.ws, 1011, "Unable to send websocket message");
+		return false;
+	}
 
 	return true;
 }
