@@ -12,7 +12,7 @@ import {
 import { getDB, getMarkersForSensorType, getSensorTypeChannels, log } from "./utils.ts";
 
 // Load .env file. This needs to happen before other files run
-loadSync({ export: true });
+loadSync({ export: true, allowEmptyValues: true });
 
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 
