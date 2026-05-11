@@ -1,4 +1,4 @@
-import { loadSync } from "https://deno.land/std@0.197.0/dotenv/mod.ts";
+import { loadSync } from "@std/dotenv";
 import { IRequest } from "itty-router";
 import { pack } from "msgpackr";
 import * as Sentry from "sentry";
@@ -12,7 +12,7 @@ import {
 import { getDB, getMarkersForSensorType, getSensorTypeChannels, log } from "./utils.ts";
 
 // Load .env file. This needs to happen before other files run
-loadSync({ export: true, allowEmptyValues: true });
+loadSync({ export: true });
 
 const devMode = Boolean(parseInt(Deno.env.get("DEV") || "0"));
 
