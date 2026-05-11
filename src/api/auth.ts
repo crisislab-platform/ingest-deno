@@ -1,6 +1,6 @@
 import { IRequest } from "itty-router";
 import { verifyToken } from "./jwt.ts";
-import { getUserByEmail, log } from "../utils.ts";
+import { log, normalizeEmail } from "../utils.ts";
 
 // Middleware to make sure a user is logged in, and has the correct role
 export const authMiddleware = (role?: string) => async (request: IRequest) => {
@@ -20,18 +20,27 @@ export const authMiddleware = (role?: string) => async (request: IRequest) => {
 		log.error(error);
 		return new Response("Unauthorized", { status: 401 });
 	}
+	const audience = payload.aud;
+	const hasAdminAudience = Array.isArray(audience)
+		? audience.includes("admin")
+		: audience === "admin";
+	const roles = Array.isArray(payload.roles) ? payload.roles : [];
 
 	// Check that payload has the required audience
-	if (!payload.aud.includes("admin")) {
+	if (!hasAdminAudience) {
 		log.warn("Invalid audience");
 		return new Response("Invalid audience", { status: 401 });
-	} else if (role && !payload["roles"].includes(role)) {
+	} else if (role && !roles.includes(role)) {
 		log.warn(`Requires role ${role}`);
 		return new Response(`Requires role ${role}`, { status: 401 });
 	}
+	if (typeof payload.email !== "string") {
+		log.warn("Token missing email");
+		return new Response("Unauthorized", { status: 401 });
+	}
 
 	// Set user email to lowercase
-	payload.email = payload.email.toLowerCase();
+	payload.email = normalizeEmail(payload.email);
 
 	request.userPayload = payload;
 };

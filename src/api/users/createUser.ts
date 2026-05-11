@@ -1,10 +1,13 @@
 import { IRequest, json } from "itty-router";
-import { getDB, validateEmail } from "../../utils.ts";
+import { getDB, normalizeEmail, validateEmail } from "../../utils.ts";
 
 export async function createUser(request: IRequest) {
 	const data = await request.json();
+	const email = typeof data.email === "string"
+		? normalizeEmail(data.email)
+		: "";
 	const userData = {
-		email: data.email,
+		email,
 		name: data.name ?? "",
 		roles: data.roles ?? [],
 	};
@@ -16,12 +19,11 @@ export async function createUser(request: IRequest) {
 
 	const sql = await getDB();
 
-	const emailUsed =
-		Number((
-			await sql`SELECT count(*)::int FROM users WHERE email=${userData.email};`
-		)?.[0]?.["count"] ?? 0);
-
-	console.log(emailUsed)
+	const emailUsed = Number(
+		(
+			await sql`SELECT count(*)::int FROM users WHERE lower(email)=${userData.email};`
+		)?.[0]?.["count"] ?? 0
+	);
 
 	if (emailUsed !== 0) return new Response("Email in use", { status: 400 });
 

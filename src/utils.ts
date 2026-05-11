@@ -9,8 +9,9 @@ import {
 	PublicSensorMeta,
 	User,
 } from "./types.ts";
-const createDefaultUser = Boolean(parseInt(Deno.env.get("CREATE_DEFAULT_USER") || "0"));
-
+const createDefaultUser = Boolean(
+	parseInt(Deno.env.get("CREATE_DEFAULT_USER") || "0")
+);
 
 function loggerTimeAndInfo(): string {
 	const inWorker =
@@ -80,19 +81,47 @@ async function setupTables(sql: postgres.Sql) {
 		PRIMARY KEY ("id", "email")
 	);
 	`;
-	// Check if users is empty, and if so, create a default user
+	// Create a default user when explicitly enabled. Check by email instead of
+	// total user count so bootstrap still works if another row already exists.
 	if (createDefaultUser) {
-		const [{ count }] = await sql`SELECT COUNT(*)::int FROM users`;
-		if (count === 0) {
-			log.info("Creating default user")
-			const hash = await pbkdf2("password123");
+		const defaultUserEmail = "delete-asap@example.com";
+		const defaultUserPassword =
+			Deno.env.get("DEFAULT_USER_PASSWORD") || "password123";
+		if (defaultUserPassword === "password123") {
+			log.warn(
+				"Using well-known default user password; set DEFAULT_USER_PASSWORD for new deployments"
+			);
+		}
+		const defaultUsers = await sql<{ id: number; hash: string | null }[]>`
+			SELECT id, hash FROM users WHERE lower(email)=${defaultUserEmail} ORDER BY id;
+		`;
+		if (defaultUsers.length === 0) {
+			log.info("Creating default user");
+			const hash = await pbkdf2(defaultUserPassword);
 			await sql`
 				INSERT INTO users (email, name, roles, hash)
-      			VALUES ('delete-asap@example.com', 'Delete this account!', ARRAY['users:write', 'users:read'], ${hash})
+				VALUES (${defaultUserEmail}, 'Delete this account!', ARRAY['users:write', 'users:read'], ${hash})
 			`;
+		} else if (!defaultUsers[0].hash) {
+			log.warn(
+				"Default user exists without a password hash; refusing to re-enable it automatically"
+			);
 		} else {
-			log.info("At least 1 user exists already, skipping default user creation")
+			log.info("Default user exists already, skipping default user creation");
 		}
+	} else {
+		log.info("Default user creation disabled");
+	}
+	const duplicateEmails = await sql<{ email: string; count: number }[]>`
+		SELECT lower(email) AS email, COUNT(*)::int AS count
+		FROM users
+		GROUP BY lower(email)
+		HAVING COUNT(*) > 1;
+	`;
+	for (const duplicate of duplicateEmails) {
+		log.warn(
+			`Duplicate user email detected: ${duplicate.email} appears ${duplicate.count} times`
+		);
 	}
 	// Sensors
 	await sql`
@@ -219,13 +248,16 @@ export async function getDB(): Promise<postgres.Sql> {
  */
 export async function getUserByEmail(email: string): Promise<User | null> {
 	const sql = await getDB();
+	const normalizedEmail = normalizeEmail(email);
 
-	const user: User | null =
-		(
-			await sql<
-				User[]
-			>`SELECT id, name, email, roles FROM users WHERE email=${email}`
-		)?.[0] ?? null;
+	const users = await sql<
+		User[]
+	>`SELECT id, name, email, roles FROM users WHERE lower(email)=${normalizedEmail} ORDER BY id`;
+	if (users.length > 1) {
+		log.warn(`Multiple users found for ${normalizedEmail}`);
+		return null;
+	}
+	const user: User | null = users[0] ?? null;
 
 	return user;
 }
@@ -361,6 +393,9 @@ export const validateEmail = (email: string): boolean => {
 		);
 };
 
+export const normalizeEmail = (email: string): string =>
+	email.trim().toLowerCase();
+
 // Secure token generator 9000 copyright 2023 Zade Viggers
 // I wasn't sure how if what I was doing was secure enough, so I just made it really hard for people to figure out what I'm doing
 export function toSecureToken(base: string): string {
@@ -408,7 +443,7 @@ export async function saveDBSize() {
 		try {
 			// Read mount drive size
 			const {stdout } = await Deno.spawnAndWait("df", {
-				args: ["-B1", dir],  // bytes
+				args: ["-B1", dir], // bytes
 				stdout: "piped",
 			});
 			const output = new TextDecoder().decode(stdout);

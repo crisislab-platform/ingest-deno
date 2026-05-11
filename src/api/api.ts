@@ -43,7 +43,7 @@ apiRouter
 	.get(
 		"/user",
 		authMiddleware(),
-		({ user }: { user: Record<string, unknown> } & IRequest) => json(user)
+		(request: IRequest) => json(request.userPayload)
 	)
 	.get("*", () => new Response("API route not found", { status: 404 }));
 

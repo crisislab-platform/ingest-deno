@@ -1,5 +1,5 @@
 import { IRequest, json } from "itty-router";
-import { getDB, log } from "../../utils.ts";
+import { getDB, log, normalizeEmail } from "../../utils.ts";
 import createUserToken from "./createUserToken.ts";
 import { pbkdf2Verify } from "./crypto-pbkdf2.ts";
 
@@ -15,25 +15,38 @@ import { pbkdf2Verify } from "./crypto-pbkdf2.ts";
 export default async function usernameAndPassword(request: IRequest) {
 	const data = await request.json();
 
-	const email = data.email.toLowerCase();
-	const password = data.password;
+	const email = typeof data?.email === "string"
+		? normalizeEmail(data.email)
+		: null;
+	const password = typeof data?.password === "string" ? data.password : null;
 
-	if (email === null || password === null) {
+	if (!email || !password) {
 		return new Response("Bad request", { status: 400 });
 	}
 
 	const sql = await getDB();
 
-	const hash = (
-		await sql<{ hash: string }[]>`SELECT hash FROM users WHERE email=${email};`
-	)?.[0]?.["hash"];
+	const matchingUsers = await sql<{ hash: string }[]>`
+		SELECT hash FROM users WHERE lower(email)=${email} ORDER BY id;
+	`;
+	if (matchingUsers.length > 1) {
+		log.warn(`Multiple users found for ${email}`);
+		return new Response("Invalid username/password", { status: 401 });
+	}
+	const hash = matchingUsers[0]?.hash;
 
-	if (hash === null) {
-		log.info(`No hash for ${email}`)
+	if (!hash) {
+		log.info(`No hash for ${email}`);
 		return new Response("Invalid username/password", { status: 401 });
 	}
 
-	const isValid = await pbkdf2Verify(hash, password);
+	let isValid = false;
+	try {
+		isValid = await pbkdf2Verify(hash, password);
+	} catch (err) {
+		log.warn(`Invalid password hash for ${email}`, err);
+		return new Response("Invalid username/password", { status: 401 });
+	}
 
 	if (!isValid) {
 		return new Response("Invalid username/password", { status: 401 });

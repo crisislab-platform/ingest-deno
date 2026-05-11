@@ -3,17 +3,24 @@ import { getDB, getUserByEmail, getUserByID } from "../../utils.ts";
 import { pbkdf2 } from "./crypto-pbkdf2.ts";
 
 export async function changePassword(request: IRequest) {
-	const { password, accountID } = await request.json();
+	const data = await request.json();
+	const password = typeof data?.password === "string" ? data.password : null;
+	const accountID = Number(data?.accountID);
 
 	const sql = await getDB();
 
-	if (!password || !accountID) {
-		return new Response(`Provide a new password & and an account ID`, { status: 400 });
+	if (!password || !Number.isInteger(accountID)) {
+		return new Response(`Provide a new password & and an account ID`, {
+			status: 400,
+		});
 	}
 
 	const userMakingRequest = await getUserByEmail(request.userPayload.email);
 	if (!userMakingRequest) {
-		return new Response(`You (user making this reuquest) don't seem to exist...`, { status: 400 });
+		return new Response(
+			`You (user making this reuquest) don't seem to exist...`,
+			{ status: 400 }
+		);
 	}
 
 	const accountToChange = await getUserByID(accountID);
