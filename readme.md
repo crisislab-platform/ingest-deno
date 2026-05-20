@@ -8,7 +8,7 @@ The compressed Web Socket for live sensor data is hosted at `/consume/$sensorID/
 
 ## Network overview
 
-See this doc: https://docs.google.com/document/d/1PnOvAFujeliayv_FOyj-ooBgS3bKITYmaEFsyHCt90c/edit#heading=h.6xyuzekua218
+See [CRISiSLab Platform Documentation.pdf](doc/CRISiSLab%20Platform%20Documentation.pdf)
 
 ## Usage
 
@@ -163,7 +163,25 @@ sudo systemctl status ingest-deno
 
 Updates can be applied by simply downloading the updated system and restarting the server.
 
-If any database schema changes were made, migrations can be found in the `./migrations/` directory. These need to be applied manually (e.g. with psql). The migration files are named with the date of the commit change in YYYY-MM-DD format.
+If any database schema changes were made, migrations can usually be found in the `./migrations/` directory. These need to be applied manually (e.g. with psql). The migration files are named with the date of the commit change in YYYY-MM-DD format.
+
+If you are running the server via the systemd service file included (ingest-deno.service), you can restart it with this command:
+
+```
+sudo systemctl restart ingest-deno
+```
+
+To check if the server is running correctly post-update, check the log file liek so:
+
+```
+tail -f logs -n 100
+```
+
+Note that this log file is only generated when using the systemd service - Docker has it's own logs.
+
+## Adding sensors to the network
+
+See [How to set up a sensor (public).pdf](doc/How%20to%20set%20up%20a%20sensor%20(public).pdf).
 
 ## Troubleshooting
 
@@ -190,7 +208,7 @@ Also make sure all sensors are running Zerotier.
 Make sure your JWKs in `.env` look like this:
 
 Private:
-```json
+```
 PRIVATE_JWK={"use":"sig", "kty": "EC",  "kid": "...",  "crv": "P-256",  "x": "...",  "y": "...",  "d": "..."}
 PUBLIC_JWK={"use":"sig", "kty": "EC",  "kid": "...",  "crv": "P-256",  "x": "...",  "y": "..."}
 ```
