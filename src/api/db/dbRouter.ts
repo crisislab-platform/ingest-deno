@@ -1,5 +1,10 @@
 import { Router } from "itty-router";
-import { databaseSize, databaseSizeHistory, totalDiskSize } from "./database-size.ts";
+import {
+	databaseSize,
+	databaseSizeByMonth,
+	databaseSizeHistory,
+	totalDiskSize,
+} from "./database-size.ts";
 import { dataBulkExport } from "./dataBulkExport.ts";
 import { authMiddleware } from "../auth.ts";
 import { getCurrentRetentionPolicy, setRetentionPolicy } from "./data-deletion.ts";
@@ -13,6 +18,11 @@ dbRouter
 		"/database-size-history",
 		authMiddleware("sensor-data:db-size"),
 		databaseSizeHistory
+	)
+	.get(
+		"/database-size-by-month",
+		authMiddleware("sensor-data:db-size"),
+		databaseSizeByMonth
 	)
 	.get(
 		"/data-bulk-export",
