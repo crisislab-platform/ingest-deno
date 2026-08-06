@@ -3,7 +3,7 @@ import { getDB } from "../../utils.ts";
 
 export default async function deleteSensorType(request: IRequest) {
 	const sql = await getDB();
-	const { name } = request.params;
+	const name = decodeURIComponent(request.params.name);
 	
 	const [sensorsUsingType] = await sql`SELECT COUNT(*)::int as count FROM sensors WHERE type_fk = ${name} AND removed IS NOT TRUE`;
 	
@@ -11,9 +11,9 @@ export default async function deleteSensorType(request: IRequest) {
 		return new Response(`Cannot delete sensor type: ${sensorsUsingType.count} sensors are using this type`, { status: 400 });
 	}
 	
-	const result = await sql`DELETE FROM sensor_types WHERE name = ${name}`;
+	const [deletedSensorType] = await sql`DELETE FROM sensor_types WHERE name = ${name} RETURNING name`;
 	
-	if (result.count === 0) {
+	if (!deletedSensorType) {
 		return new Response("Sensor type not found", { status: 404 });
 	}
 	
