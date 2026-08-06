@@ -56,4 +56,5 @@ export interface ChartMarker {
 export interface SensorType {
 	name: string;
 	channels: { id: string; name: string }[];
+	response: string | null;
 }
