@@ -126,7 +126,12 @@ function reprocessChannelData(channel: string) {
 	let displayData: TimeLineDataPoint[];
 	let mode: ChannelDisplayMode;
 
-	if (window.CRISiSLab.responseRemovalFailed) {
+	if (window.CRISiSLab.disableResponseRemoval) {
+		displayData = legacyAdjustedData(channel, rawData);
+		mode = window.CRISiSLab.enableLegacyRaspberryShakeScaling
+			? "legacy"
+			: "counts";
+	} else if (window.CRISiSLab.responseRemovalFailed) {
 		displayData = copyPoints(rawData);
 		mode = "counts";
 	} else {
@@ -162,10 +167,18 @@ function reprocessChannelData(channel: string) {
 			mode = "counts";
 		} else {
 			displayData = legacyAdjustedData(channel, rawData);
-			mode = "legacy";
+			mode = window.CRISiSLab.enableLegacyRaspberryShakeScaling
+				? "legacy"
+				: "counts";
 		}
 	}
 
+	if (
+		mode === "response" &&
+		channelDisplayModes[channel] !== "response"
+	) {
+		console.info(`Instrument response removal active for ${channel}`);
+	}
 	channelDisplayModes[channel] = mode;
 	const chartData = window.CRISiSLab.data[channel];
 	chartData.splice(0, chartData.length, ...displayData);
@@ -198,6 +211,7 @@ function legacyAdjustedData(
 	rawData: TimeLineDataPoint[],
 ): TimeLineDataPoint[] {
 	const adjustRaspberryShakeAccelerometer =
+		window.CRISiSLab.enableLegacyRaspberryShakeScaling &&
 		window.CRISiSLab.sensorVariety === SensorVariety.RaspberryShake &&
 		channel.startsWith("EN");
 	return rawData.map((point) => ({

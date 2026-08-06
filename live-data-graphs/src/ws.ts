@@ -107,20 +107,24 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 				);
 			}
 		} else if (parsed?.type === "sensor-response-seiscompxml") {
-			try {
-				if (typeof parsed?.data !== "string") {
-					throw new Error("SeisComP response packet data is not XML text");
+			if (window.CRISiSLab.disableResponseRemoval) {
+				console.info("Ignoring SeisComP response because removal is disabled");
+			} else {
+				try {
+					if (typeof parsed?.data !== "string") {
+						throw new Error("SeisComP response packet data is not XML text");
+					}
+					window.CRISiSLab.responses = parseSeiscompResponses(parsed.data);
+					window.CRISiSLab.responseRemovalFailed = false;
+					window.CRISiSLab.responseRemovalFailedChannels = {};
+				} catch (error) {
+					console.error(
+						"Unable to use SeisComP instrument responses; showing counts",
+						error,
+					);
+					window.CRISiSLab.responses = {};
+					window.CRISiSLab.responseRemovalFailed = true;
 				}
-				window.CRISiSLab.responses = parseSeiscompResponses(parsed.data);
-				window.CRISiSLab.responseRemovalFailed = false;
-				window.CRISiSLab.responseRemovalFailedChannels = {};
-			} catch (error) {
-				console.error(
-					"Unable to use SeisComP instrument responses; showing counts",
-					error,
-				);
-				window.CRISiSLab.responses = {};
-				window.CRISiSLab.responseRemovalFailed = true;
 			}
 			reprocessAllChannelData();
 		} else if (parsed?.type === "message") {

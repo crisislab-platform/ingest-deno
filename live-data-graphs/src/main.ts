@@ -28,6 +28,8 @@ declare global {
 			haveRenderedPacket: boolean;
 			hideHoverInspector: boolean;
 			showRawChannelNames: boolean;
+			disableResponseRemoval: boolean;
+			enableLegacyRaspberryShakeScaling: boolean;
 			sortChannels: string | null;
 			wsURL: string | null;
 			sensorID: string | null;
@@ -70,6 +72,14 @@ window.CRISiSLab = {
 	showRawChannelNames:
 		new URLSearchParams(location.search).get("show-raw-channel-names") ===
 		"yes",
+	disableResponseRemoval:
+		new URLSearchParams(location.search).get(
+			"disable-response-removal",
+		) === "yes",
+	enableLegacyRaspberryShakeScaling:
+		new URLSearchParams(location.search).get(
+			"enable-legacy-raspberry-shake-scaling",
+		) === "yes",
 	yAxisSide:
 		(new URLSearchParams(location.search).get("y-axis-side") as
 			| "left"
@@ -85,6 +95,13 @@ window.CRISiSLab = {
 	channelMarkers: {},
 	channelAliases: {},
 };
+
+if (window.CRISiSLab.disableResponseRemoval) {
+	console.info("Instrument response removal disabled by query parameter");
+}
+if (window.CRISiSLab.enableLegacyRaspberryShakeScaling) {
+	console.info("Legacy Raspberry Shake accelerometer scaling enabled");
+}
 
 if (new URLSearchParams(location.search).get("hide-pause-button") === "yes") {
 	const reloadButton = document.getElementById("reload");
