@@ -54,6 +54,9 @@ declare global {
 		};
 	}
 }
+
+const queryParameters = new URLSearchParams(location.search);
+
 window.CRISiSLab = {
 	connected: false,
 	debugData: false,
@@ -65,23 +68,15 @@ window.CRISiSLab = {
 	sampleGaps: {},
 	sensorMeta: null,
 	sensorVariety: SensorVariety.Unknown,
-	hideHoverInspector:
-		new URLSearchParams(location.search).get("hide-hover-inspector") ===
-		"yes",
-	sortChannels: new URLSearchParams(location.search).get("sort-channels"),
-	showRawChannelNames:
-		new URLSearchParams(location.search).get("show-raw-channel-names") ===
-		"yes",
-	disableResponseRemoval:
-		new URLSearchParams(location.search).get(
-			"disable-response-removal",
-		) === "yes",
-	enableLegacyRaspberryShakeScaling:
-		new URLSearchParams(location.search).get(
-			"enable-legacy-raspberry-shake-scaling",
-		) === "yes",
+	hideHoverInspector: queryParameters.has("hide-hover-inspector"),
+	sortChannels: queryParameters.get("sort-channels"),
+	showRawChannelNames: queryParameters.has("show-raw-channel-names"),
+	disableResponseRemoval: queryParameters.has("disable-response-removal"),
+	enableLegacyRaspberryShakeScaling: queryParameters.has(
+		"enable-legacy-raspberry-shake-scaling",
+	),
 	yAxisSide:
-		(new URLSearchParams(location.search).get("y-axis-side") as
+		(queryParameters.get("y-axis-side") as
 			| "left"
 			| "right") ?? "left",
 	// For debugging in console
@@ -103,7 +98,7 @@ if (window.CRISiSLab.enableLegacyRaspberryShakeScaling) {
 	console.info("Legacy Raspberry Shake accelerometer scaling enabled");
 }
 
-if (new URLSearchParams(location.search).get("hide-pause-button") === "yes") {
+if (queryParameters.has("hide-pause-button")) {
 	const reloadButton = document.getElementById("reload");
 	if (reloadButton) reloadButton.style.display = "none";
 }
@@ -126,7 +121,7 @@ else {
 		// Otherwise we connect (securely) to the server on the origin the page is being served from
 		window.CRISiSLab.wsURL = `${
 			import.meta.env.DEV
-				? new URLSearchParams(location.search).has("local")
+				? queryParameters.has("local")
 					? `ws://localhost:8080`
 					: "wss://crisislab-data.massey.ac.nz"
 				: location.host.startsWith("localhost")
