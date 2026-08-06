@@ -10,6 +10,7 @@ import {
 	valueAxisPlugin,
 } from "@crisislab/timeline";
 import { SensorVariety } from "./main";
+import { removeInstrumentResponse } from "./response-removal";
 import {
 	chartsContainer,
 	formatTime,
@@ -22,11 +23,12 @@ import {
 
 // CSI sensors all sample at 200Hz
 const CSI_SAMPLING_RATE = 200;
+const EVIL_CURSED_RASPBERRY_SHAKE_ACCELEROMETER_GAIN = 3.845e5;
 
 export type Datagram = [string, number, ...number[]];
 
-// Graphs
-const current: Record<string, number> = {};
+type ChannelDisplayMode = "legacy" | "counts" | "response";
+
 // Fallback aliases for backwards compatibility
 const fallbackAliases = {
 	EH3: "Geophone (counts)",
@@ -50,7 +52,9 @@ let start;
 const maxDataLength = 5000; // Drop packets after this
 const timeWindow = 30 * 1000; // 30 seconds
 
+const current: Record<string, number> = {};
 const firstPackets: Record<string, Datagram> = {};
+const channelDisplayModes: Record<string, ChannelDisplayMode> = {};
 
 export function handleData(packet: Datagram) {
 	const [channel, timestampSeconds, ...measurements] = packet;
@@ -59,160 +63,47 @@ export function handleData(packet: Datagram) {
 	// each sensor type set in metadata
 	if (window.CRISiSLab.sensorVariety === SensorVariety.CSI) {
 		if (typeof window.CRISiSLab.sampleGaps[channel] !== "number") {
-			// CSI sensors all sample at 200Hz
 			window.CRISiSLab.sampleGaps[channel] = 1000 / CSI_SAMPLING_RATE;
 		}
-	} else {
-		if (!firstPackets[channel]) {
-			firstPackets[channel] = packet;
-			showMessage("Waiting for second sample...");
-			return;
-		} else if (!window.CRISiSLab.sampleGaps[channel]) {
-			showMessage("Calculating sampling rate...");
+	} else if (!firstPackets[channel]) {
+		firstPackets[channel] = packet;
+		showMessage("Waiting for second sample...");
+		return;
+	} else if (!window.CRISiSLab.sampleGaps[channel]) {
+		showMessage("Calculating sampling rate...");
 
-			const firstPacket = firstPackets[channel]!;
-			const [, firstTimestampSeconds, ...firstMeasurements] = firstPacket;
+		const firstPacket = firstPackets[channel];
+		const [, firstTimestampSeconds, ...firstMeasurements] = firstPacket;
+		const timeGapSeconds = timestampSeconds - firstTimestampSeconds;
+		const samplingRate = firstMeasurements.length / timeGapSeconds;
+		window.CRISiSLab.sampleGaps[channel] = 1000 / samplingRate;
 
-			const timeGapSeconds = timestampSeconds - firstTimestampSeconds;
-			const samplingRate = firstMeasurements.length / timeGapSeconds;
-			window.CRISiSLab.sampleGaps[channel] = 1000 / samplingRate;
-
-			// Do the first packet, then keep doing this one
-			handleData(firstPacket);
-		}
+		// Process the saved packet before continuing with the current packet.
+		handleData(firstPacket);
 	}
 
 	const timestamp = timestampSeconds * 1000;
-
-	start ||= timestamp;
+	window.CRISiSLab.rawData[channel] ||= [];
 	window.CRISiSLab.data[channel] ||= [];
 	current[channel] ||= 0;
 
-	if (!window.CRISiSLab.charts[channel]) {
-		const container = document.createElement("div");
-		container.className = "chart";
-		container.id = channel;
-		chartsContainer.appendChild(container);
-
-		const valueAxisLabel = window.CRISiSLab.showRawChannelNames
-			? channel
-			: window.CRISiSLab.channelAliases[channel] ?? 
-			  fallbackAliases[channel as keyof typeof fallbackAliases] ?? 
-			  channel;
-
-		// For sorting
-		container.setAttribute("data-channel-id", channel);
-		container.setAttribute("data-channel-display", valueAxisLabel);
-
-		const chart = new TimeLine({
-			container,
-			data: window.CRISiSLab.data[channel],
-			valueAxisLabel,
-			timeWindow,
-			timeAxisLabel: "Time",
-			plugins: [
-				timeAxisPlugin(undefined, 5),
-				valueAxisPlugin(
-					(y) => {
-						const rounded = round(y);
-						const fixed = rounded.toFixed(2);
-						if (fixed.length > 3) return rounded + "";
-						return fixed;
-					},
-					5,
-					window.CRISiSLab.yAxisSide,
-				),
-				doubleClickCopyPlugin("closest-x"),
-				axisLabelPlugin(
-					false,
-					true,
-					"bottom",
-					window.CRISiSLab.yAxisSide,
-				),
-				!window.CRISiSLab.hideHoverInspector &&
-					pointerCrosshairPlugin(),
-				!window.CRISiSLab.hideHoverInspector &&
-					highlightNearestPointPlugin("closest-x"),
-				!window.CRISiSLab.hideHoverInspector &&
-					nearestPointInfoPopupPlugin(
-						formatTime,
-						(y) => round(y) + "",
-						"closest-x",
-					),
-			],
-			valueWindow:
-				(channel in baseWindowMinMaxSizes && {
-					min: baseWindowMinMaxSizes[channel]?.[0],
-					max: baseWindowMinMaxSizes[channel]?.[1],
-					overflowBehaviour: "scale",
-				}) ||
-				undefined,
-		});
-		window.CRISiSLab.charts[channel] = chart;
-		for (const marker of window.CRISiSLab.channelMarkers?.[channel] ?? []) {
-			chart.addMarker(marker);
-		}
-		container.style.opacity = "1";
-
-		sortChannels();
-	}
-
-	// Sometimes data gets sent out-of order! We check if this packet
-	// is older than the newest data, and if it is, loop backwards
-	// over the saved data and find out where this data should be inserted
-	let insertAfter: number | null = null;
-	if (
-		timeOrDateToNumber(window.CRISiSLab.data[channel].at(-1)?.time ?? 0) >
-		timestamp
-	) {
-		// Cursed way to loop backwards: loop forwards then take the inverse
-		// of the index.
-		for (let i = window.CRISiSLab.data[channel].length - 1; i >= 0; i++) {
-			const prev = window.CRISiSLab.data[channel][i];
-			// Saved data is older than new data!
-			if (
-				(typeof prev.time == "number"
-					? prev.time
-					: prev.time.getTime()) < timestamp
-			) {
-				insertAfter = i;
-			}
-		}
-	}
-
-	const adjustedMeasurements: TimeLineDataPoint[] = [];
-	for (const i of measurements) {
-		let value = i;
-		if (
-			// If the sensor is a raspberry shake
-			window.CRISiSLab.sensorVariety === SensorVariety.RaspberryShake &&
-			// and the channel is an accelerometer
-			channel.startsWith("EN")
-		) {
-			// Magic number to convert from counts to m/s^2
-			// TODO: Make these formulae configurable in metadata
-			value = value / 3.845e5;
-		}
-		adjustedMeasurements.push({
+	const rawMeasurements: TimeLineDataPoint[] = measurements.map((value) => {
+		const point = {
 			time: timestamp + current[channel],
 			value,
-		});
-		current[channel] += window.CRISiSLab.sampleGaps[channel]!;
-	}
-
-	if (insertAfter == null) {
-		window.CRISiSLab.data[channel].push(...adjustedMeasurements);
-	} else {
-		// Array#splice(i, 0, ..data) inserts at i, pushing everything else down
-		window.CRISiSLab.data[channel].splice(
-			insertAfter + 1,
-			0,
-			...adjustedMeasurements,
-		);
-	}
-
+		};
+		current[channel] += window.CRISiSLab.sampleGaps[channel];
+		return point;
+	});
 	current[channel] = 0;
 
+	insertRawData(channel, timestamp, rawMeasurements);
+	while (window.CRISiSLab.rawData[channel].length > maxDataLength) {
+		window.CRISiSLab.rawData[channel].shift();
+	}
+
+	reprocessChannelData(channel);
+	ensureChart(channel);
 	window.CRISiSLab.charts[channel].recompute();
 
 	hideMessages();
@@ -220,14 +111,209 @@ export function handleData(packet: Datagram) {
 		window.CRISiSLab.haveRenderedPacket = true;
 		reloadButton.toggleAttribute("disabled", true);
 	}
+}
 
-	// Drop old data we don't need
-	// TODO: Use time window + 1s or smth for this, instead of a fixed number
-	while (window.CRISiSLab.data[channel].length > maxDataLength) {
-		window.CRISiSLab.data[channel].shift();
+export function reprocessAllChannelData() {
+	for (const channel of Object.keys(window.CRISiSLab.rawData)) {
+		reprocessChannelData(channel);
+		updateChartLabel(channel);
+		window.CRISiSLab.charts[channel]?.recompute();
 	}
 }
 
-function timeOrDateToNumber(t: Date | number): number {
-	return typeof t == "number" ? t : t.getTime();
+function reprocessChannelData(channel: string) {
+	const rawData = window.CRISiSLab.rawData[channel] ?? [];
+	let displayData: TimeLineDataPoint[];
+	let mode: ChannelDisplayMode;
+
+	if (window.CRISiSLab.responseRemovalFailed) {
+		displayData = copyPoints(rawData);
+		mode = "counts";
+	} else {
+		const response = window.CRISiSLab.responses[channel];
+		if (response && !window.CRISiSLab.responseRemovalFailedChannels[channel]) {
+			try {
+				const corrected = removeInstrumentResponse(
+					rawData,
+					window.CRISiSLab.sampleGaps[channel],
+					response,
+				);
+				if (corrected) {
+					displayData = corrected;
+					mode = "response";
+				} else {
+					displayData = copyPoints(rawData);
+					mode = "counts";
+				}
+			} catch (error) {
+				console.error(
+					`Unable to remove the instrument response for ${channel}; showing counts`,
+					error,
+				);
+				window.CRISiSLab.responseRemovalFailedChannels[channel] = true;
+				displayData = copyPoints(rawData);
+				mode = "counts";
+			}
+		} else if (
+			response ||
+			Object.keys(window.CRISiSLab.responses).length > 0
+		) {
+			displayData = copyPoints(rawData);
+			mode = "counts";
+		} else {
+			displayData = legacyAdjustedData(channel, rawData);
+			mode = "legacy";
+		}
+	}
+
+	channelDisplayModes[channel] = mode;
+	const chartData = window.CRISiSLab.data[channel];
+	chartData.splice(0, chartData.length, ...displayData);
+	updateChartLabel(channel);
+}
+
+function insertRawData(
+	channel: string,
+	timestamp: number,
+	measurements: TimeLineDataPoint[],
+) {
+	const rawData = window.CRISiSLab.rawData[channel];
+	if (timeOrDateToNumber(rawData.at(-1)?.time ?? 0) <= timestamp) {
+		rawData.push(...measurements);
+		return;
+	}
+
+	let insertAfter = -1;
+	for (let index = rawData.length - 1; index >= 0; index--) {
+		if (timeOrDateToNumber(rawData[index].time) < timestamp) {
+			insertAfter = index;
+			break;
+		}
+	}
+	rawData.splice(insertAfter + 1, 0, ...measurements);
+}
+
+function legacyAdjustedData(
+	channel: string,
+	rawData: TimeLineDataPoint[],
+): TimeLineDataPoint[] {
+	const adjustRaspberryShakeAccelerometer =
+		window.CRISiSLab.sensorVariety === SensorVariety.RaspberryShake &&
+		channel.startsWith("EN");
+	return rawData.map((point) => ({
+		time: point.time,
+		value: adjustRaspberryShakeAccelerometer
+			? point.value / EVIL_CURSED_RASPBERRY_SHAKE_ACCELEROMETER_GAIN
+			: point.value,
+	}));
+}
+
+function copyPoints(data: TimeLineDataPoint[]): TimeLineDataPoint[] {
+	return data.map((point) => ({ time: point.time, value: point.value }));
+}
+
+function ensureChart(channel: string) {
+	if (window.CRISiSLab.charts[channel]) {
+		updateChartLabel(channel);
+		return;
+	}
+
+	const container = document.createElement("div");
+	container.className = "chart";
+	container.id = channel;
+	chartsContainer.appendChild(container);
+
+	const valueAxisLabel = valueAxisLabelFor(channel);
+	container.setAttribute("data-channel-id", channel);
+	container.setAttribute("data-channel-display", valueAxisLabel);
+
+	const chart = new TimeLine({
+		container,
+		data: window.CRISiSLab.data[channel],
+		valueAxisLabel,
+		timeWindow,
+		timeAxisLabel: "Time",
+		plugins: [
+			timeAxisPlugin(undefined, 5),
+			valueAxisPlugin(
+				(y) => {
+					const rounded = round(y);
+					const fixed = rounded.toFixed(2);
+					if (fixed.length > 3) return rounded + "";
+					return fixed;
+				},
+				5,
+				window.CRISiSLab.yAxisSide,
+			),
+			doubleClickCopyPlugin("closest-x"),
+			axisLabelPlugin(
+				false,
+				true,
+				"bottom",
+				window.CRISiSLab.yAxisSide,
+			),
+			!window.CRISiSLab.hideHoverInspector && pointerCrosshairPlugin(),
+			!window.CRISiSLab.hideHoverInspector &&
+				highlightNearestPointPlugin("closest-x"),
+			!window.CRISiSLab.hideHoverInspector &&
+				nearestPointInfoPopupPlugin(
+					formatTime,
+					(y) => round(y) + "",
+					"closest-x",
+				),
+		],
+		valueWindow:
+			(channel in baseWindowMinMaxSizes && {
+				min: baseWindowMinMaxSizes[channel]?.[0],
+				max: baseWindowMinMaxSizes[channel]?.[1],
+				overflowBehaviour: "scale",
+			}) ||
+			undefined,
+	});
+	window.CRISiSLab.charts[channel] = chart;
+	for (const marker of window.CRISiSLab.channelMarkers[channel] ?? []) {
+		chart.addMarker(marker);
+	}
+	container.style.opacity = "1";
+	sortChannels();
+}
+
+function updateChartLabel(channel: string) {
+	const chart = window.CRISiSLab.charts[channel];
+	if (!chart) return;
+
+	const label = valueAxisLabelFor(channel);
+	if (chart.valueAxisLabel === label) return;
+	chart.valueAxisLabel = label;
+	chart.container.setAttribute("data-channel-display", label);
+	const axisLabel = chart.container.querySelector(
+		".crisislab-timeline-value-axis",
+	);
+	if (axisLabel) axisLabel.textContent = label;
+	if (window.CRISiSLab.sortChannels === "display") sortChannels();
+}
+
+function valueAxisLabelFor(channel: string): string {
+	const baseLabel = window.CRISiSLab.showRawChannelNames
+		? channel
+		: window.CRISiSLab.channelAliases[channel] ??
+			fallbackAliases[channel as keyof typeof fallbackAliases] ??
+			channel;
+
+	switch (channelDisplayModes[channel]) {
+		case "response":
+			return withUnit(baseLabel, "m");
+		case "counts":
+			return withUnit(baseLabel, "counts");
+		default:
+			return baseLabel;
+	}
+}
+
+function withUnit(label: string, unit: string): string {
+	return `${label.replace(/\s*\([^)]*\)\s*$/, "")} (${unit})`;
+}
+
+function timeOrDateToNumber(time: Date | number): number {
+	return typeof time === "number" ? time : time.getTime();
 }

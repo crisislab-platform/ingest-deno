@@ -128,6 +128,7 @@ async function setupTables(sql: postgres.Sql) {
 	CREATE TABLE IF NOT EXISTS sensor_types (
 		"name" text NOT NULL,
 		"channels" jsonb,
+		"response" text,
 		PRIMARY KEY ("name")
 	);`;
 	await sql`
@@ -434,6 +435,19 @@ export async function getSensorTypeChannels(
 	return result?.channels || null;
 }
 
+export async function getSensorTypeResponse(
+	sensorType: string,
+): Promise<string | null> {
+	if (!sensorType) return null;
+
+	const sql = await getDB();
+
+	const [result] = await sql<
+		{ response: string | null }[]
+	>`SELECT response FROM sensor_types WHERE name=${sensorType};`;
+
+	return result?.response ?? null;
+}
 
 export async function saveDBSize() {
 	const sql = await getDB();

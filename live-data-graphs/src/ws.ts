@@ -1,5 +1,7 @@
-import { Datagram } from "./graphs";
+import { reprocessAllChannelData } from "./graphs";
+import type { Datagram } from "./graphs";
 import { SensorVariety } from "./main";
+import { parseSeiscompResponses } from "./seiscomp-response";
 import { showMessage, reloadButton } from "./ui";
 import { unpack } from "msgpackr";
 import type { ChartMarker } from "../../src/types";
@@ -104,6 +106,23 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 					`Sensor #${window.CRISiSLab.sensorID} seems to be offline.`,
 				);
 			}
+		} else if (parsed?.type === "sensor-response-seiscompxml") {
+			try {
+				if (typeof parsed?.data !== "string") {
+					throw new Error("SeisComP response packet data is not XML text");
+				}
+				window.CRISiSLab.responses = parseSeiscompResponses(parsed.data);
+				window.CRISiSLab.responseRemovalFailed = false;
+				window.CRISiSLab.responseRemovalFailedChannels = {};
+			} catch (error) {
+				console.error(
+					"Unable to use SeisComP instrument responses; showing counts",
+					error,
+				);
+				window.CRISiSLab.responses = {};
+				window.CRISiSLab.responseRemovalFailed = true;
+			}
+			reprocessAllChannelData();
 		} else if (parsed?.type === "message") {
 			const message = parsed?.data?.message;
 			if (message) {
@@ -119,6 +138,7 @@ function makeHandleMessage(handleData: HandleDataFunction) {
 						label: m.label,
 						colour: m.colour,
 						lineStyle: m.style,
+						orientation: "horizontal" as const,
 						labelSide: "before" as const,
 						alwaysShow: true,
 						id: m.id,

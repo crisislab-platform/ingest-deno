@@ -8,6 +8,7 @@ import type {
 	TimeLineDataPoint,
 	TimeLineMarker,
 } from "@crisislab/timeline";
+import type { stationxml as PCStationXML } from "seisplotjs";
 import { ChartMarker } from "../../src/types";
 
 export enum SensorVariety {
@@ -41,7 +42,11 @@ declare global {
 			};
 			sensorVariety: SensorVariety;
 			charts: Record<string, TimeLine>;
+			rawData: Record<string, Array<TimeLineDataPoint>>;
 			data: Record<string, Array<TimeLineDataPoint>>;
+			responses: Record<string, PCStationXML.Response>;
+			responseRemovalFailed: boolean;
+			responseRemovalFailedChannels: Record<string, boolean>;
 			channelMarkers: Record<string, TimeLineMarker[]>;
 			channelAliases: Record<string, string>;
 		};
@@ -72,7 +77,11 @@ window.CRISiSLab = {
 	// For debugging in console
 	unpack,
 	charts: {},
+	rawData: {},
 	data: {},
+	responses: {},
+	responseRemovalFailed: false,
+	responseRemovalFailedChannels: {},
 	channelMarkers: {},
 	channelAliases: {},
 };

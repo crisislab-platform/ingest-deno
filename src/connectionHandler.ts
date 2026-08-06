@@ -9,7 +9,13 @@ import {
 	ServerWebsocketClient,
 	WithRequired,
 } from "./types.ts";
-import { getDB, getMarkersForSensorType, getSensorTypeChannels, log } from "./utils.ts";
+import {
+	getDB,
+	getMarkersForSensorType,
+	getSensorTypeChannels,
+	getSensorTypeResponse,
+	log,
+} from "./utils.ts";
 
 // Load .env file. This needs to happen before other files run
 loadSync({ export: true });
@@ -334,6 +340,9 @@ export function handleWebSockets(request: IRequest): Response {
 
 			// Get channel information
 			const channels = await getSensorTypeChannels(sensor.meta.type ?? "");
+			const sensorResponse = await getSensorTypeResponse(
+				sensor.meta.type ?? "",
+			);
 
 			// Main connection message
 			if (!sendWebsocketMessage(client, {
@@ -347,6 +356,15 @@ export function handleWebSockets(request: IRequest): Response {
 					channels,
 				},
 			})) {
+				return;
+			}
+
+			if (
+				!sendWebsocketMessage(client, {
+					type: "sensor-response-seiscompxml",
+					data: sensorResponse,
+				})
+			) {
 				return;
 			}
 

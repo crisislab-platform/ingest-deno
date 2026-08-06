@@ -5,7 +5,7 @@ import { getDB } from "../../utils.ts";
 export default async function upsertSensorType(request: IRequest) {
 	const sql = await getDB();
 	const { name: _name } = request.params;
-	const { channels } = await request.json();
+	const { channels, response = null } = await request.json();
 
 	if (!_name || _name.length === 0)
 		return new Response("What's in a name?", { status: 400 });
@@ -34,10 +34,11 @@ export default async function upsertSensorType(request: IRequest) {
 	}
 
 	const [sensorType] = await sql<SensorType[]>`
-		INSERT INTO sensor_types (name, channels) 
-		VALUES (${name}, ${JSON.stringify(channels)})
+		INSERT INTO sensor_types (name, channels, response) 
+		VALUES (${name}, ${JSON.stringify(channels)}, ${response})
 		ON CONFLICT (name) DO UPDATE SET 
-			channels = EXCLUDED.channels
+			channels = EXCLUDED.channels,
+			response = EXCLUDED.response
 		RETURNING *
 	`;
 
