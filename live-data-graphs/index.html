@@ -118,6 +118,29 @@ Try running this: '(new WebSocket("https://crisislab-data.massey.ac.nz/consume/"
 The CRISiSLab object also has some other interesting stuff on it.
 
 Go forth and prosper!`)
+console.info(`
+There are some options avaiable for this web page. Set them as query paramaters on the page, e.g. https://crisislab-data.massey.ac.nz/consume/44?sort-channels=display&hide-hover-inspector.
+
+Most of them you set just by adding the parameter, some take options:
+`)
+console.table({
+  "hide-hover-inspector":
+    "Hides the crosshair, nearest-point highlight, and hover values.",
+  "sort-channels=id|display":
+    "Sorts charts by channel ID or displayed label.",
+  "show-raw-channel-names":
+    "Shows channel IDs such as EHZ instead of friendly names.",
+  "disable-response-removal":
+    "Disables SeisComP instrument-response removal.",
+  "enable-legacy-raspberry-shake-scaling":
+    "Enables the legacy / 3.845e5 accelerometer conversion.",
+  "y-axis-side=left|right":
+    "Selects the value-axis side. Defaults to left.",
+  "hide-pause-button":
+    "Currently hides the Reload button, despite its name.",
+  local:
+    "During development, connects to ws://localhost:8080 instead of production.",
+});
 	</script>
 
 </body>
