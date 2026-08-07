@@ -10,7 +10,10 @@ import {
 	valueAxisPlugin,
 } from "@crisislab/timeline";
 import { SensorVariety } from "./main";
-import { removeInstrumentResponse } from "./response-removal";
+import {
+	removeInstrumentResponse,
+	resetInstrumentResponseProcessor,
+} from "./response-removal";
 import {
 	chartsContainer,
 	formatTime,
@@ -55,6 +58,7 @@ const timeWindow = 30 * 1000; // 30 seconds
 const current: Record<string, number> = {};
 const firstPackets: Record<string, Datagram> = {};
 const channelDisplayModes: Record<string, ChannelDisplayMode> = {};
+const channelResponseUnits: Record<string, string> = {};
 
 export function handleData(packet: Datagram) {
 	const [channel, timestampSeconds, ...measurements] = packet;
@@ -114,6 +118,7 @@ export function handleData(packet: Datagram) {
 }
 
 export function reprocessAllChannelData() {
+	resetInstrumentResponseProcessor();
 	for (const channel of Object.keys(window.CRISiSLab.rawData)) {
 		reprocessChannelData(channel);
 		updateChartLabel(channel);
@@ -139,12 +144,14 @@ function reprocessChannelData(channel: string) {
 		if (response && !window.CRISiSLab.responseRemovalFailedChannels[channel]) {
 			try {
 				const corrected = removeInstrumentResponse(
+					channel,
 					rawData,
 					window.CRISiSLab.sampleGaps[channel],
 					response,
 				);
 				if (corrected) {
-					displayData = corrected;
+					displayData = corrected.data;
+					channelResponseUnits[channel] = corrected.unit;
 					mode = "response";
 				} else {
 					displayData = copyPoints(rawData);
@@ -177,8 +184,11 @@ function reprocessChannelData(channel: string) {
 		mode === "response" &&
 		channelDisplayModes[channel] !== "response"
 	) {
-		console.info(`Instrument response removal active for ${channel}`);
+		console.info(
+			`Instrument response removal active for ${channel} (${channelResponseUnits[channel]})`,
+		);
 	}
+	if (mode !== "response") delete channelResponseUnits[channel];
 	channelDisplayModes[channel] = mode;
 	const chartData = window.CRISiSLab.data[channel];
 	chartData.splice(0, chartData.length, ...displayData);
@@ -196,6 +206,7 @@ function insertRawData(
 		return;
 	}
 
+	resetInstrumentResponseProcessor(channel);
 	let insertAfter = -1;
 	for (let index = rawData.length - 1; index >= 0; index--) {
 		if (timeOrDateToNumber(rawData[index].time) < timestamp) {
@@ -316,7 +327,10 @@ function valueAxisLabelFor(channel: string): string {
 
 	switch (channelDisplayModes[channel]) {
 		case "response":
-			return withUnit(baseLabel, "m");
+			return withUnit(
+				baseLabel,
+				channelResponseUnits[channel] ?? "physical units",
+			);
 		case "counts":
 			return withUnit(baseLabel, "counts");
 		default:
