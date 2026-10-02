@@ -82,7 +82,7 @@ export function handleData(packet: Datagram) {
 		console.info(`Sampling rate [${channel}] = ${samplingRate}/s`)
 		window.CRISiSLab.sampleGaps[channel] = 1000 / samplingRate;
 		// Used for dropping old samples
-		window.CRISiSLab.sampleBufferSize[channel] = (samplingRate * window.CRISiSLab.timeWindow) + samplePadding;
+		window.CRISiSLab.sampleBufferSize[channel] = (samplingRate * (window.CRISiSLab.timeWindow/1000)) + samplePadding;
 
 		// Process the saved packet before continuing with the current packet.
 		handleData(firstPacket);
@@ -104,9 +104,14 @@ export function handleData(packet: Datagram) {
 	current[channel] = 0;
 
 	insertRawData(channel, timestamp, rawMeasurements);
-	while (window.CRISiSLab.rawData[channel].length > window.CRISiSLab.sampleBufferSize[channel]) {
-		console.log("Dropping packet")
-		window.CRISiSLab.rawData[channel].shift();
+
+	// TODO: Change to using a ring buffer. That will make everything
+	// so much more efficent it will be insane holy. The number of arrays
+	// getting shifted up and down here, let alone keeping 3-ish copies
+	// inside TimeLine instances is so wasteful it's astounding.
+	if (window.CRISiSLab.rawData[channel].length > window.CRISiSLab.sampleBufferSize[channel]) {
+		const toDrop = window.CRISiSLab.rawData[channel].length - window.CRISiSLab.sampleBufferSize[channel];
+		window.CRISiSLab.rawData[channel] = window.CRISiSLab.rawData[channel].slice(toDrop-1);
 	}
 
 	reprocessChannelData(channel);
