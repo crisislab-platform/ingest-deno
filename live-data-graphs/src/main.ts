@@ -18,6 +18,8 @@ export enum SensorVariety {
 	CSI,
 }
 
+const DEFAULT_TIME_WINDOW_SECS = 30;
+
 declare global {
 	interface Window {
 		CRISiSLab: {
@@ -51,6 +53,8 @@ declare global {
 			responseRemovalFailedChannels: Record<string, boolean>;
 			channelMarkers: Record<string, TimeLineMarker[]>;
 			channelAliases: Record<string, string>;
+			sampleBufferSize: Record<string, number>;
+			timeWindow: number;
 		};
 	}
 }
@@ -89,6 +93,8 @@ window.CRISiSLab = {
 	responseRemovalFailedChannels: {},
 	channelMarkers: {},
 	channelAliases: {},
+	sampleBufferSize: {},
+	timeWindow: (queryParameters.has("time-window") ? Number(queryParameters.get("time-window")) : DEFAULT_TIME_WINDOW_SECS) *1000,
 };
 
 if (window.CRISiSLab.disableResponseRemoval) {

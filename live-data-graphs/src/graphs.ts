@@ -52,8 +52,7 @@ const baseWindowMinMaxSizes: Record<string, [number, number]> = {
 	// ENZ: [9.7, 9.9],
 };
 let start;
-const maxDataLength = 5000; // Drop packets after this
-const timeWindow = 30 * 1000; // 30 seconds
+const samplePadding = 100; // Samples beyond ((time window * sample rate) + packetPadding) are abandonded to the GC
 
 const current: Record<string, number> = {};
 const firstPackets: Record<string, Datagram> = {};
@@ -80,7 +79,10 @@ export function handleData(packet: Datagram) {
 		const [, firstTimestampSeconds, ...firstMeasurements] = firstPacket;
 		const timeGapSeconds = timestampSeconds - firstTimestampSeconds;
 		const samplingRate = firstMeasurements.length / timeGapSeconds;
+		console.info(`Sampling rate [${channel}] = ${samplingRate}/s`)
 		window.CRISiSLab.sampleGaps[channel] = 1000 / samplingRate;
+		// Used for dropping old samples
+		window.CRISiSLab.sampleBufferSize[channel] = (samplingRate * window.CRISiSLab.timeWindow) + samplePadding;
 
 		// Process the saved packet before continuing with the current packet.
 		handleData(firstPacket);
@@ -102,7 +104,8 @@ export function handleData(packet: Datagram) {
 	current[channel] = 0;
 
 	insertRawData(channel, timestamp, rawMeasurements);
-	while (window.CRISiSLab.rawData[channel].length > maxDataLength) {
+	while (window.CRISiSLab.rawData[channel].length > window.CRISiSLab.sampleBufferSize[channel]) {
+		console.log("Dropping packet")
 		window.CRISiSLab.rawData[channel].shift();
 	}
 
@@ -256,7 +259,7 @@ function ensureChart(channel: string) {
 		container,
 		data: window.CRISiSLab.data[channel],
 		valueAxisLabel,
-		timeWindow,
+		timeWindow: window.CRISiSLab.timeWindow,
 		timeAxisLabel: "Time",
 		plugins: [
 			timeAxisPlugin(undefined, 5),
