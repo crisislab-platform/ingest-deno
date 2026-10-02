@@ -78,7 +78,7 @@ export function handleData(packet: Datagram) {
 		const firstPacket = firstPackets[channel];
 		const [, firstTimestampSeconds, ...firstMeasurements] = firstPacket;
 		const timeGapSeconds = timestampSeconds - firstTimestampSeconds;
-		const samplingRate = firstMeasurements.length / timeGapSeconds;
+		const samplingRate = Math.round(firstMeasurements.length / timeGapSeconds);
 		console.info(`Sampling rate [${channel}] = ${samplingRate}/s`)
 		window.CRISiSLab.sampleGaps[channel] = 1000 / samplingRate;
 		// Used for dropping old samples
