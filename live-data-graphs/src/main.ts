@@ -54,6 +54,7 @@ declare global {
 			channelMarkers: Record<string, TimeLineMarker[]>;
 			channelAliases: Record<string, string>;
 			sampleBufferSize: Record<string, number>;
+			sampleRate: Record<string, number>; // This is duplicate info and unsued in code, but is good for debugging in console
 			timeWindow: number;
 		};
 	}
@@ -94,6 +95,7 @@ window.CRISiSLab = {
 	channelMarkers: {},
 	channelAliases: {},
 	sampleBufferSize: {},
+	sampleRate: {},
 	timeWindow: (queryParameters.has("time-window") ? Number(queryParameters.get("time-window")) : DEFAULT_TIME_WINDOW_SECS) *1000,
 };
 
