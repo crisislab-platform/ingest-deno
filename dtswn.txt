@@ -1,0 +1,84 @@
+From https://deno.com/blog/cloudflare:
+> We will support the Deno runtime for another year with monthly releases
+> containing bug fixes and security updates. After that year we will end
+> our development of the Deno runtime. [...]
+
+Well that sucks. We were kinda married to Deno. What now?
+
+This is a great opportunity to solve lots of problems!!
+
+Current major problems:
+1. Updating the managment API requires a ingest server restart, losing packets
+2. Deployment currently includes cloning a git repo, restarting a service, and building a Vite app
+3. Exporting data can drop packets, since it's all still a single JS main thread (or two)
+4. Builds are hard to reproduce, even with a Docker image
+
+Ideal architecture sketch assuming we keep the current single database model
+[though a better service might use object storage for the data lowkey]
+
+- Dependencies will be managed through Nix
+- Seperate systemd services will run each part of the server
+
+Goals:
+- No more implicit deps
+- API surface must remain unchanged
+- Unified & seperate logging is desireable
+- Restarting services independently would be nice
+- Easier dev environments would be nice
+- Stretch: Perhaps look into decoupling from Timescale as data bulk storage provider - pluggable adapter system? S3 adapter?
+- Stretch: Shardable UDP ingest for better perf - maybe a manager/router process and child handlers? How to split up blind incoming udp packets based on their IP?
+- Come up with a good new name - Ingest-deno (with the unified monolith design: API, UDP ingest, and live graphs in one server) is V2 - V1 was serverless on CF workers and pioneered using Durable objects (though they turned out not to be the best abtraction in this case)
+
+Questions:
+- Nix+Systemd (preferred) v.s. Docker? (What about *BSD over Linux+systemd systems?)
+- Unified logging how?
+- Best static http server / router
+- Sharding UDP ingest how?
+
+Current API surface:
+- Database is automatically configuted (tables created, etc on process startup
+- UDP packets from sensors come in on port 2098
+- HTTP is served on 0.0.0.0, port 8080
+
+Services:
+1. HTTP router - nginx (or more free alternative? or maybe caddy?)
+2. API server - need to rewrite this in something. Will probably switch to another workers-fetch-api compatible js runtime to avoid rewriting everything. Node? Workerd?
+3. UDP Ingest daemon (sharded) - This is to be rewritten in a faster programming language than javascript. Perhaps
+4. Static HTTP server (-perhaps built-in to router?) - Could decouple and run on a cf-pages like service, or just switch to nginx or similar.
+5. PostgreSQL database
+
+
+Diagram
+            +------------------------+
+            | PostgreSQL / Timescale |
++-----+     +------------------------+
+| RPi |--\  +-------------+  ^      ^
++-----+  |  |  UDP Ingest |  |      |
++-----+  |  | +---------+ |  |      |
+| RPi |--+->| | IngestA |-0--+     +------------+
++-----+  |  | +---------+ |  |     | API Server |
++-----+  |  | +---------+ |  |     +------------+
+| RPi |--/  | | IngestA |-0--+            ^
++-----+     | +---------+ |  |            |
+            | +---------+ |  |            |
+            | | IngestA |-0--/            |
+            | +---------+ |               |
+            +-------------+               |
+                        ^                 |
++-------------------+   |                 |
+| Static HTTP server|   |                 |
++-------------------+   |                 |
+              ^         |                 |
+              |         |                 |
+            +-------------+               |
+            | HTTP Router |---------------/
+            +-------------+
+                ^
+                |
+     /----------+-------+--\
+ ____|____  ____|____  ____|____
+/ Browser \/ Browser \/ Browser \
+\_________/\_________/\_________/
+
+Note to self: why isn't 2D copy/paste for text a thing? Maybe there should be a Kate plugin.
+UPDTAE: WOAH THIS EXISTS. Selection>Block selection mode. WOAH. Magic. Love it. Ctrl+Shift+B
